@@ -8,19 +8,6 @@
 
 config_version=5
 
-[application]
-config/name="GCG Godot Engine"
-run/main_scene="res://test_scene.tscn"
-config/features=PackedStringArray("4.7", "Forward Plus")
-
-[rendering]
-renderer/rendering_method="forward_plus"
-viewport/transparent_background=true
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/fmod/plugin.cfg")
-
 [Fmod]
 
 General/banks_path="res://Audio"
@@ -32,6 +19,24 @@ DSP_Buffer/num_buffers=4
 Channels/channel_count=1024
 Initialization/live_update=true
 
+[application]
+
+config/name="GCG Godot Engine"
+run/main_scene="res://test_scene.tscn"
+config/features=PackedStringArray("4.6", "Forward Plus")
+
+[autoload]
+
+ImGuiRoot="*res://addons/imgui-godot/data/ImGuiRoot.tscn"
+
 [display]
 
 window/vsync/vsync_mode=0
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/fmod/plugin.cfg", "res://addons/imgui-godot/plugin.cfg")
+
+[rendering]
+
+viewport/transparent_background=false
