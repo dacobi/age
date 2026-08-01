@@ -59,6 +59,17 @@ private:
         String clicked_script;
         uint64_t container_id = 0;
     };
+    struct BouncerPhysics {
+        bool enabled = false;
+        Vector2 velocity;
+        float speed = 1.0f;
+        float friction = 1.0f;
+        
+        bool has_ttl = false;
+        float ttl = 0.0f;
+    };
+    std::map<uint64_t, BouncerPhysics> bouncer_physics;
+
     std::map<uint64_t, InteractiveData> interactive_bouncers;
 
     void _add_bouncer_deferred(const String& syntax);
