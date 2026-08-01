@@ -1,7 +1,7 @@
 print("Space Invaders Logic Started (GDScript Optimized)")
 
-setBG("[tscn:space_invaders_game.tscn]")
-selectGodot(-1)
+godotLoadScene("space_invaders_game.tscn")
+
 delay(200) -- give it a moment to load
 
 -- Capture mouse for consistent relative control

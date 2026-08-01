@@ -153,17 +153,20 @@ function updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_nam
 	end
 	
 	if godotInputGetAxis and godotInputIsActionPressed then
-		local g_steer = godotInputGetAxis("ui_left", "ui_right")
-		local g_forward = godotInputGetAxis("ui_up", "ui_down")
+		local g_steer = godotInputGetAxis("steer_left", "steer_right")
+		local g_accel = godotInputGetAxis("brake", "accelerate")
 		
-		if g_steer ~= 0.0 or g_forward ~= 0.0 then
+		-- Fallbacks to default UI keys if no custom input is detected
+		if g_steer == 0.0 then g_steer = godotInputGetAxis("ui_left", "ui_right") end
+		
+		if g_steer ~= 0.0 or g_accel ~= 0.0 then
 			steer = g_steer
-			if g_forward < 0.0 then
-				accel = -g_forward
-				brake = 0.0
-			else
+			if g_accel < 0.0 then
 				accel = 0.0
-				brake = g_forward
+				brake = -g_accel
+			else
+				accel = g_accel
+				brake = 0.0
 			end
 		end
 		
