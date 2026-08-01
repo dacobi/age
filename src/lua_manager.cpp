@@ -577,8 +577,7 @@ void LuaManager::_play_audio_deferred(const String& filename) {
         }
         return;
     }
-    
-    _play_audio_dynamic_deferred(filename);
+    this->call_deferred("_play_audio_dynamic_deferred", filename);
 }
 
 void LuaManager::_play_audio_dynamic_deferred(const String& filename) {
