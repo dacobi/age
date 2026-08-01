@@ -551,7 +551,7 @@ void LuaManager::_clear_and_run_deferred(const String& filename) {
     run_script(filename);
 }
 
-void LuaManager::_play_audio_deferred(const String& filename) {
+bool LuaManager::_play_audio_deferred(const String& filename) {
     if (filename.begins_with("ytdlp://")) {
         String url = filename.substr(8);
         String temp_file = "user://yt_temp.mp3";
@@ -572,12 +572,15 @@ void LuaManager::_play_audio_deferred(const String& filename) {
         int32_t ret = OS::get_singleton()->execute("yt-dlp", args, out, false, true);
         if (ret == 0) {
             this->call_deferred("_play_audio_dynamic_deferred", temp_file);
+            return true;
         } else {
             UtilityFunctions::printerr("ytdlp failed for url: ", url, " code: ", ret);
+            return false;
         }
-        return;
     }
+    
     this->call_deferred("_play_audio_dynamic_deferred", filename);
+    return true;
 }
 
 void LuaManager::_play_audio_dynamic_deferred(const String& filename) {
@@ -704,8 +707,13 @@ void LuaManager::_ready() {
         [](bool, bool) { UtilityFunctions::print("Stub: randomizeFunc"); },
         // setAudioFunc
         [this](const std::string& filename, std::shared_ptr<LuaSyncData> sd) {
-            this->_play_audio_deferred(String(filename.c_str()));
-            if (sd) { std::unique_lock<std::mutex> lock(sd->mtx); sd->done = true; sd->cv.notify_one(); }
+            bool success = this->_play_audio_deferred(String(filename.c_str()));
+            if (sd) { 
+                std::unique_lock<std::mutex> lock(sd->mtx); 
+                sd->b_res = success;
+                sd->done = true; 
+                sd->cv.notify_one(); 
+            }
         },
         // playAudioFunc
         []() { UtilityFunctions::print("Stub: playAudioFunc"); },

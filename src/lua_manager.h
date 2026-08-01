@@ -66,7 +66,7 @@ private:
     void _set_bouncer_param_deferred(int index, String name, double value);
     void _set_bg_deferred(const String& syntax);
     void _clear_and_run_deferred(const String& filename);
-    void _play_audio_deferred(const String& filename);
+    bool _play_audio_deferred(const String& filename);
     void _play_audio_dynamic_deferred(const String& filename);
     void _set_audio_volume_deferred(int vol);
     void _rewind_audio_deferred();
