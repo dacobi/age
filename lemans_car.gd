@@ -392,7 +392,6 @@ func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, i
 	w.is_steer = is_front
 	w.grip_curve = grip_curve
 	w.z_brake_traction = 0.5
-	w.show_debug = false
 	
 	# Dynamically bind visual node references
 	var pivot_name := ""
