@@ -1,3 +1,6 @@
+#include <godot_cpp/classes/sub_viewport.hpp>
+#include <godot_cpp/classes/sub_viewport_container.hpp>
+#include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/display_server.hpp>
 #include "lua_manager.h"
 #include <godot_cpp/core/class_db.hpp>
@@ -267,7 +270,23 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         Ref<PackedScene> scn = ResourceLoader::get_singleton()->load(scene_path);
         if (scn.is_valid()) {
             Node* inst = scn->instantiate();
-            container->add_child(inst);
+            if (Object::cast_to<Node3D>(inst)) {
+                SubViewportContainer* svc = memnew(SubViewportContainer);
+                SubViewport* vp = memnew(SubViewport);
+                vp->set_transparent_background(true);
+                if (rect.x > 0 && rect.y > 0) {
+                    vp->set_size(rect);
+                    svc->set_size(rect);
+                } else {
+                    vp->set_size(Vector2(512, 512));
+                    svc->set_size(Vector2(512, 512));
+                }
+                vp->add_child(inst);
+                svc->add_child(vp);
+                container->add_child(svc);
+            } else {
+                container->add_child(inst);
+            }
         }
     }
     
