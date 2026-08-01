@@ -1,3 +1,4 @@
+#include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/sub_viewport.hpp>
 #include <godot_cpp/classes/sub_viewport_container.hpp>
 #include <godot_cpp/classes/node3d.hpp>
@@ -173,6 +174,15 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     Color hover_color;
     String clicked_script = "";
 
+    bool has_phys = false;
+    Vector2 phys_pos;
+    Vector2 phys_vel;
+    float phys_speed = 1.0f;
+    float phys_friction = 1.0f;
+    
+    bool has_ttl = false;
+    float ttl_val = 0.0f;
+
     int current_idx = 0;
     while (current_idx < s.length()) {
         int start = s.find("[", current_idx);
@@ -232,6 +242,18 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
                     text += String::num(lua_engine->getGlobalFloat(gname.utf8().get_data()));
                 }
             }
+        } else if (tag.begins_with("phys:")) {
+            PackedStringArray p = tag.substr(5).split(",");
+            if (p.size() >= 4) {
+                has_phys = true;
+                phys_pos = Vector2(p[0].to_float(), p[1].to_float());
+                phys_vel = Vector2(p[2].to_float(), p[3].to_float());
+                if (p.size() >= 5) phys_speed = p[4].to_float();
+                if (p.size() >= 6) phys_friction = p[5].to_float();
+            }
+        } else if (tag.begins_with("ttl:")) {
+            has_ttl = true;
+            ttl_val = tag.substr(4).to_float() / 1000.0f;
         }
         
         current_idx = end + 1;
@@ -365,6 +387,21 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     }
     
     target_layer->add_child(container);
+    
+    if (has_phys || has_ttl) {
+        if (has_phys) container->set_position(phys_pos);
+        BouncerPhysics bp;
+        bp.enabled = true;
+        if (has_phys) {
+            bp.velocity = phys_vel;
+            bp.speed = phys_speed;
+            bp.friction = phys_friction;
+        }
+        bp.has_ttl = has_ttl;
+        bp.ttl = ttl_val;
+        bouncer_physics[container->get_instance_id()] = bp;
+    }
+    
     bouncers.push_back(container->get_instance_id());
 }
 
@@ -1046,6 +1083,55 @@ void LuaManager::_process(double delta) {
             }
             ++it;
         }
+    }
+    
+    Rect2 vp_rect = get_viewport()->get_visible_rect();
+    for (auto it = bouncer_physics.begin(); it != bouncer_physics.end(); ) {
+        uint64_t id = it->first;
+        BouncerPhysics& bp = it->second;
+        Object* obj = ObjectDB::get_instance(id);
+        if (!obj) {
+            it = bouncer_physics.erase(it);
+            continue;
+        }
+        
+        Node2D* n2d = Object::cast_to<Node2D>(obj);
+        if (!n2d) {
+            ++it;
+            continue;
+        }
+
+        if (bp.has_ttl) {
+            bp.ttl -= delta;
+            if (bp.ttl <= 0) {
+                for (auto b_it = bouncers.begin(); b_it != bouncers.end(); ++b_it) {
+                    if (*b_it == id) {
+                        bouncers.erase(b_it);
+                        break;
+                    }
+                }
+                n2d->queue_free();
+                it = bouncer_physics.erase(it);
+                continue;
+            }
+        }
+        
+        if (bp.enabled) {
+            Vector2 pos = n2d->get_position();
+            pos += bp.velocity * bp.speed * delta;
+            
+            if (bp.friction < 1.0f) {
+                bp.velocity *= Math::pow((float)bp.friction, (float)(delta * 60.0));
+            }
+            
+            if (pos.x < 0) { pos.x = 0; bp.velocity.x *= -1; }
+            if (pos.y < 0) { pos.y = 0; bp.velocity.y *= -1; }
+            if (pos.x > vp_rect.size.x) { pos.x = vp_rect.size.x; bp.velocity.x *= -1; }
+            if (pos.y > vp_rect.size.y) { pos.y = vp_rect.size.y; bp.velocity.y *= -1; }
+            
+            n2d->set_position(pos);
+        }
+        ++it;
     }
 }
 
