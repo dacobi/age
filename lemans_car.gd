@@ -181,18 +181,18 @@ func _ready():
 			child.add_child(mi)
 			
 	# --- PROP-ONLY ANGLED BUMPER ---
-	# We use a frozen Kinematic RigidBody so it follows the car's transform perfectly without joints
-	var bumper = RigidBody3D.new()
+	# We use an AnimatableBody3D so it perfectly inherits parent teleportation without physics desync
+	var bumper = AnimatableBody3D.new()
 	bumper.name = "AngledBumper"
-	bumper.mass = 1.0
-	bumper.gravity_scale = 0.0
-	bumper.freeze = true
-	bumper.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+	bumper.sync_to_physics = false
 	bumper.collision_layer = 8 # Bumper layer
 	bumper.collision_mask = 4  # ONLY collides with Props (Cones/Barriers)
-	bumper.contact_monitor = true
-	bumper.max_contacts_reported = 2
-	bumper.body_entered.connect(_on_prop_collided)
+	
+	var bumper_area = Area3D.new()
+	bumper_area.collision_layer = 0
+	bumper_area.collision_mask = 4
+	bumper_area.body_entered.connect(_on_prop_collided)
+	bumper.add_child(bumper_area)
 	
 	var bumper_col = CollisionShape3D.new()
 	var bumper_shape = BoxShape3D.new()
@@ -216,20 +216,24 @@ func _ready():
 	
 	bumper_col.add_child(bumper_mi)
 	bumper.add_child(bumper_col)
+	
+	var bumper_area_col = bumper_col.duplicate()
+	bumper_area.add_child(bumper_area_col)
+	
 	add_child(bumper)
 	
 	# --- PROP-ONLY REAR BUMPER ---
-	var rear_bumper = RigidBody3D.new()
+	var rear_bumper = AnimatableBody3D.new()
 	rear_bumper.name = "RearBumper"
-	rear_bumper.mass = 1.0
-	rear_bumper.gravity_scale = 0.0
-	rear_bumper.freeze = true
-	rear_bumper.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+	rear_bumper.sync_to_physics = false
 	rear_bumper.collision_layer = 8 # Bumper layer
 	rear_bumper.collision_mask = 4  # ONLY collides with Props (Cones/Barriers)
-	rear_bumper.contact_monitor = true
-	rear_bumper.max_contacts_reported = 2
-	rear_bumper.body_entered.connect(_on_prop_collided)
+	
+	var rear_bumper_area = Area3D.new()
+	rear_bumper_area.collision_layer = 0
+	rear_bumper_area.collision_mask = 4
+	rear_bumper_area.body_entered.connect(_on_prop_collided)
+	rear_bumper.add_child(rear_bumper_area)
 	
 	var rear_bumper_col = CollisionShape3D.new()
 	var rear_bumper_shape = BoxShape3D.new()
@@ -250,6 +254,10 @@ func _ready():
 	
 	rear_bumper_col.add_child(rear_bumper_mi)
 	rear_bumper.add_child(rear_bumper_col)
+	
+	var rear_bumper_area_col = rear_bumper_col.duplicate()
+	rear_bumper_area.add_child(rear_bumper_area_col)
+	
 	add_child(rear_bumper)
 			
 	# Dynamically build wheels at startup
@@ -833,6 +841,15 @@ func _physics_process(delta: float) -> void:
 			fmod_event.set_parameter_by_name("Load", clamp(motor_input, 0.0, 1.0))
 			if fmod_event.has_method("set_3d_attributes"):
 				fmod_event.set_3d_attributes(global_transform)
+
+func reset_position(new_transform: Transform3D):
+	global_transform = new_transform
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	
+	PhysicsServer3D.body_set_state(get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM, new_transform)
+	PhysicsServer3D.body_set_state(get_rid(), PhysicsServer3D.BODY_STATE_LINEAR_VELOCITY, Vector3.ZERO)
+	PhysicsServer3D.body_set_state(get_rid(), PhysicsServer3D.BODY_STATE_ANGULAR_VELOCITY, Vector3.ZERO)
 
 func _on_prop_collided(body: Node):
 	if body.has_method("on_nitro_collected"):
