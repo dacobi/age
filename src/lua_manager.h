@@ -32,6 +32,7 @@ private:
     std::vector<GodotCommand> cmd_queue;
 
     std::vector<uint64_t> bouncers;
+    std::vector<uint64_t> loaded_nodes;
     std::map<int, uint64_t> bouncer_layers;
     uint64_t bg_layer_id = 0;
     uint64_t bg_rect_id = 0;

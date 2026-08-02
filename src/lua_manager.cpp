@@ -507,6 +507,9 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     }
     
     target_layer->add_child(container);
+    if (is_addhscore && interactive_control) {
+        interactive_control->grab_focus();
+    }
     
     if (has_phys || has_ttl) {
         if (has_phys) container->set_position(phys_pos);
@@ -700,6 +703,15 @@ void LuaManager::_clear_and_run_deferred(const String& filename) {
     }
     bouncers.clear();
     
+    for (uint64_t id : loaded_nodes) {
+        Object* obj = ObjectDB::get_instance(id);
+        if (obj) {
+            Node* node = Object::cast_to<Node>(obj);
+            if (node) node->queue_free();
+        }
+    }
+    loaded_nodes.clear();
+    
     for (auto const& [idx, layer_id] : bouncer_layers) {
         Object* obj = ObjectDB::get_instance(layer_id);
         if (obj) {
@@ -724,6 +736,7 @@ void LuaManager::_clear_and_run_deferred(const String& filename) {
         lua_engine->stop();
     }
     
+    godot::Input::get_singleton()->set_mouse_mode(godot::Input::MOUSE_MODE_VISIBLE);
     run_script(filename);
 }
 
@@ -1104,6 +1117,7 @@ void LuaManager::_process(double delta) {
                         }
                     }
                     cmd.sd->object_id_res = inst->get_instance_id();
+                    loaded_nodes.push_back(inst->get_instance_id());
                     cmd.sd->b_res = true;
                 } else {
                     cmd.sd->b_res = false;
