@@ -65,6 +65,7 @@ private:
         Vector2 velocity;
         float speed = 1.0f;
         float friction = 1.0f;
+        bool has_gravity = false;
         
         bool has_ttl = false;
         float ttl = 0.0f;

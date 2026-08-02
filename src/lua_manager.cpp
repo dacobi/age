@@ -242,8 +242,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     String clicked_script = "";
 
     bool has_phys = false;
+    bool has_linear = false;
     Vector2 phys_pos;
     Vector2 phys_vel;
+    Vector2 linear_vel;
     float phys_speed = 1.0f;
     float phys_friction = 1.0f;
     
@@ -273,6 +275,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         if (tag.begins_with("pos:")) {
             PackedStringArray p = tag.substr(4).split(",");
             if (p.size() >= 2) pos = Vector2(p[0].to_float(), p[1].to_float());
+            if (p.size() >= 4) {
+                has_linear = true;
+                linear_vel = Vector2(p[2].to_float(), p[3].to_float());
+            }
         } else if (tag.begins_with("image:") || tag.begins_with("stencil:")) {
             int colon = tag.find(":");
             image_path = tag.substr(colon + 1).strip_edges();
@@ -567,14 +573,20 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         interactive_control->grab_focus();
     }
     
-    if (has_phys || has_ttl) {
-        if (has_phys) container->set_position(phys_pos);
+    if (has_phys || has_linear || has_ttl) {
+        if (has_phys || has_linear) container->set_position(has_phys ? phys_pos : pos);
         BouncerPhysics bp;
         bp.enabled = true;
         if (has_phys) {
             bp.velocity = phys_vel;
             bp.speed = phys_speed;
             bp.friction = phys_friction;
+            bp.has_gravity = true;
+        } else if (has_linear) {
+            bp.velocity = linear_vel;
+            bp.speed = 1.0f;
+            bp.friction = 1.0f;
+            bp.has_gravity = false;
         }
         bp.has_ttl = has_ttl;
         bp.ttl = ttl_val;
@@ -1319,6 +1331,11 @@ void LuaManager::_process(double delta) {
         
         if (bp.enabled) {
             Vector2 pos = n2d->get_position();
+            
+            if (bp.has_gravity) {
+                bp.velocity.y += 980.0f * delta;
+            }
+            
             pos += bp.velocity * bp.speed * delta;
             
             if (bp.friction < 1.0f) {
