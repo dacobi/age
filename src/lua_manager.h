@@ -89,6 +89,7 @@ private:
     void _on_bouncer_mouse_entered(uint64_t control_id);
     void _on_bouncer_mouse_exited(uint64_t control_id);
     void _on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id);
+    void _on_addhscore_submitted(String text, int score, int level, uint64_t bouncer_id);
 
 protected:
     static void _bind_methods();

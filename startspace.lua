@@ -7,7 +7,7 @@ addBouncer("[fontsize: 1.3][pos:130,200][hover:22,255,176,10][rgb: 172,118,34][c
 addBouncer("[pos: 700,130][stencil: ssoftcap.png][rect: 255,255][plasma:4]")
 addBouncer("[fontsize: 1.3][pos:770,200][hover:22,255,176,10][rgb: 172,118,34][clicked:appQuit.lua]Quit")
 addBouncer("[rect: 270,350][pos: 380,350][hscore: 18]")
-addBouncer("[layer:1][rect: 512,512][phys:300,300,100,100,10,1][ttscn:res://tardis.tscn]")
+addBouncer("[layer:1][rect: 512,512][phys:300,300,100,100,5,1.5][ttscn:res://tardis.tscn]")
 setAudioVolume(80)
 rewindAudio()
 skipAudio(20) --[RGB 58, 130, 46]

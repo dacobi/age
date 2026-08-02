@@ -1,3 +1,11 @@
+#include <godot_cpp/classes/panel_container.hpp>
+#include <godot_cpp/classes/style_box_flat.hpp>
+#include <godot_cpp/classes/grid_container.hpp>
+#include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/dir_access.hpp>
+#include <algorithm>
+#include <godot_cpp/classes/line_edit.hpp>
+#include <godot_cpp/classes/v_box_container.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/sub_viewport.hpp>
 #include <godot_cpp/classes/sub_viewport_container.hpp>
@@ -104,6 +112,7 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_entered", "control_id"), &LuaManager::_on_bouncer_mouse_entered);
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
     ClassDB::bind_method(D_METHOD("_on_bouncer_gui_input", "event", "control_id"), &LuaManager::_on_bouncer_gui_input);
+    ClassDB::bind_method(D_METHOD("_on_addhscore_submitted", "text", "score", "level", "bouncer_id"), &LuaManager::_on_addhscore_submitted);
     ClassDB::bind_method(D_METHOD("_add_bouncer_deferred", "syntax"), &LuaManager::_add_bouncer_deferred);
     ClassDB::bind_method(D_METHOD("_del_bouncer_deferred", "index"), &LuaManager::_del_bouncer_deferred);
     ClassDB::bind_method(D_METHOD("_set_bouncer_param_deferred", "index", "name", "value"), &LuaManager::_set_bouncer_param_deferred);
@@ -123,6 +132,37 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_global_int", "name"), &LuaManager::get_global_int);
     ClassDB::bind_method(D_METHOD("set_global_float", "name", "val"), &LuaManager::set_global_float);
     ClassDB::bind_method(D_METHOD("get_global_float", "name"), &LuaManager::get_global_float);
+}
+
+void LuaManager::_on_addhscore_submitted(String text, int score, int level, uint64_t bouncer_id) {
+    if (text.length() > 3) text = text.substr(0, 3);
+    text = text.to_upper();
+    
+    highscores.push_back({text, score, level});
+    std::sort(highscores.begin(), highscores.end(), [](const HighScoreEntry& a, const HighScoreEntry& b) {
+        return a.score > b.score;
+    });
+    if (highscores.size() > 10) highscores.resize(10);
+    
+    String hs_dir = OS::get_singleton()->get_environment("HOME") + "/.age";
+    String hs_path = hs_dir + "/high.score";
+    if (!DirAccess::dir_exists_absolute(hs_dir)) {
+        DirAccess::make_dir_absolute(hs_dir);
+    }
+    Ref<FileAccess> file = FileAccess::open(hs_path, FileAccess::WRITE);
+    if (file.is_valid()) {
+        for (const auto& hs : highscores) {
+            file->store_line(hs.name + String(",") + String::num_int64(hs.score) + String(",") + String::num_int64(hs.level));
+        }
+    }
+    
+    Object* obj = ObjectDB::get_instance(bouncer_id);
+    if (obj) {
+        Node* node = Object::cast_to<Node>(obj);
+        if (node) node->queue_free();
+    }
+    
+    this->call_deferred("_clear_and_run_deferred", "loozer.lua");
 }
 
 LuaManager::LuaManager() {
@@ -169,6 +209,14 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     float font_size = 1.0;
     int hscore_idx = -1;
     int plasma_idx = -1;
+    
+    bool is_hscore = false;
+    float hscore_font_size = 18.0f;
+    
+    bool is_addhscore = false;
+    float addhscore_font_size = 18.0f;
+    int addhscore_score = 0;
+    int addhscore_level = 0;
     
     bool has_hover = false;
     Color hover_color;
@@ -222,7 +270,14 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         } else if (tag.begins_with("layer:")) {
             layer_idx = tag.substr(6).to_int();
         } else if (tag.begins_with("hscore:")) {
-            hscore_idx = tag.substr(7).to_int();
+            is_hscore = true;
+            hscore_font_size = tag.substr(7).to_float();
+        } else if (tag.begins_with("addhscore:")) {
+            is_addhscore = true;
+            PackedStringArray p = tag.substr(10).split(",");
+            if (p.size() >= 1) addhscore_font_size = p[0].to_float();
+            if (p.size() >= 2) addhscore_score = p[1].to_int();
+            if (p.size() >= 3) addhscore_level = p[2].to_int();
         } else if (tag.begins_with("plasma:")) {
             plasma_idx = tag.substr(7).to_int();
         } else if (tag.begins_with("hover:")) {
@@ -281,10 +336,6 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     container->set_position(pos);
     container->set_modulate(color);
     
-    if (hscore_idx >= 0 && hscore_idx < highscores.size()) {
-        text = highscores[hscore_idx].name + " " + String::num_int64(highscores[hscore_idx].score);
-    }
-    
     Control* interactive_control = nullptr;
     
     if (!scene_path.is_empty()) {
@@ -330,6 +381,53 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         container->add_child(tex_rect);
         interactive_control = tex_rect;
         visual_item = tex_rect;
+    } else if (is_hscore) {
+        PanelContainer* pc = memnew(PanelContainer);
+        Ref<StyleBoxFlat> sb = memnew(StyleBoxFlat);
+        sb->set_bg_color(Color(0, 0, 0, 0.6));
+        sb->set_corner_radius_all(10);
+        sb->set_content_margin_all(20);
+        pc->add_theme_stylebox_override("panel", sb);
+        
+        GridContainer* grid = memnew(GridContainer);
+        grid->set_columns(4);
+        grid->add_theme_constant_override("h_separation", 40);
+        
+        if (highscores.size() == 0) {
+            grid->set_columns(1);
+            Label* lbl = memnew(Label);
+            lbl->set_text("NO HIGH SCORES");
+            lbl->add_theme_font_size_override("font_size", (int)hscore_font_size);
+            grid->add_child(lbl);
+        } else {
+            for (int i = 0; i < highscores.size(); i++) {
+                Label* rank = memnew(Label);
+                rank->set_text(String::num_int64(i + 1) + ".");
+                rank->add_theme_font_size_override("font_size", (int)hscore_font_size);
+                
+                Label* name = memnew(Label);
+                name->set_text(highscores[i].name);
+                name->add_theme_font_size_override("font_size", (int)hscore_font_size);
+                
+                Label* score = memnew(Label);
+                score->set_text(String::num_int64(highscores[i].score));
+                score->add_theme_font_size_override("font_size", (int)hscore_font_size);
+                score->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_RIGHT);
+                
+                Label* lvl = memnew(Label);
+                lvl->set_text("LVL" + String::num_int64(highscores[i].level));
+                lvl->add_theme_font_size_override("font_size", (int)hscore_font_size);
+                
+                grid->add_child(rank);
+                grid->add_child(name);
+                grid->add_child(score);
+                grid->add_child(lvl);
+            }
+        }
+        pc->add_child(grid);
+        container->add_child(pc);
+        interactive_control = pc;
+        visual_item = pc;
     } else if (!text.is_empty()) {
         Label* label = memnew(Label);
         label->set_text(text);
@@ -344,6 +442,28 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             dl.syntax = syntax;
             dynamic_labels.push_back(dl);
         }
+    } else if (is_addhscore) {
+        VBoxContainer* vbox = memnew(VBoxContainer);
+        if (rect.x > 0 && rect.y > 0) {
+            vbox->set_custom_minimum_size(rect);
+            vbox->set_size(rect);
+        }
+        
+        Label* title = memnew(Label);
+        title->set_text("NEW HIGH SCORE!\nEnter 3 letters:");
+        title->add_theme_font_size_override("font_size", (int)addhscore_font_size);
+        vbox->add_child(title);
+        
+        LineEdit* le = memnew(LineEdit);
+        le->set_max_length(3);
+        le->add_theme_font_size_override("font_size", (int)addhscore_font_size);
+        vbox->add_child(le);
+        
+        container->add_child(vbox);
+        interactive_control = le;
+        visual_item = vbox;
+        
+        le->connect("text_submitted", Callable(this, "_on_addhscore_submitted").bind(addhscore_score, addhscore_level, container->get_instance_id()));
     } else if (plasma_idx >= 0) {
         ColorRect* cr = memnew(ColorRect);
         if (rect.x > 0 && rect.y > 0) {
@@ -858,7 +978,8 @@ void LuaManager::_ready() {
         },
         // loadHSFunc
         [this]() {
-            Ref<FileAccess> file = FileAccess::open("user://highscore.dat", FileAccess::READ);
+            String hs_path = OS::get_singleton()->get_environment("HOME") + "/.age/high.score";
+            Ref<FileAccess> file = FileAccess::open(hs_path, FileAccess::READ);
             if (file.is_valid()) {
                 this->highscores.clear();
                 while (!file->eof_reached()) {
@@ -874,7 +995,12 @@ void LuaManager::_ready() {
         },
         // saveHSFunc
         [this]() {
-            Ref<FileAccess> file = FileAccess::open("user://highscore.dat", FileAccess::WRITE);
+            String hs_dir = OS::get_singleton()->get_environment("HOME") + "/.age";
+            String hs_path = hs_dir + "/high.score";
+            if (!DirAccess::dir_exists_absolute(hs_dir)) {
+                DirAccess::make_dir_absolute(hs_dir);
+            }
+            Ref<FileAccess> file = FileAccess::open(hs_path, FileAccess::WRITE);
             if (file.is_valid()) {
                 for (const auto& hs : this->highscores) {
                     file->store_line(hs.name + String(",") + String::num_int64(hs.score) + String(",") + String::num_int64(hs.level));
@@ -1124,10 +1250,18 @@ void LuaManager::_process(double delta) {
                 bp.velocity *= Math::pow((float)bp.friction, (float)(delta * 60.0));
             }
             
+            Vector2 size = Vector2(0, 0);
+            if (n2d->get_child_count() > 0) {
+                Node* child = n2d->get_child(0);
+                if (Control* ctrl = Object::cast_to<Control>(child)) {
+                    size = ctrl->get_size() * ctrl->get_scale();
+                }
+            }
+            
             if (pos.x < 0) { pos.x = 0; bp.velocity.x *= -1; }
             if (pos.y < 0) { pos.y = 0; bp.velocity.y *= -1; }
-            if (pos.x > vp_rect.size.x) { pos.x = vp_rect.size.x; bp.velocity.x *= -1; }
-            if (pos.y > vp_rect.size.y) { pos.y = vp_rect.size.y; bp.velocity.y *= -1; }
+            if (pos.x + size.x > vp_rect.size.x) { pos.x = vp_rect.size.x - size.x; bp.velocity.x *= -1; }
+            if (pos.y + size.y > vp_rect.size.y) { pos.y = vp_rect.size.y - size.y; bp.velocity.y *= -1; }
             
             n2d->set_position(pos);
         }
