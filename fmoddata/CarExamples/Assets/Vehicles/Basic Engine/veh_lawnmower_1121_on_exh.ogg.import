@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dobidhrv0pw25"
+path="res://.godot/imported/veh_lawnmower_1121_on_exh.ogg-b67c8d5bcdde03507fea8adc12fc79c7.oggvorbisstr"
+
+[deps]
+
+source_file="res://fmoddata/CarExamples/Assets/Vehicles/Basic Engine/veh_lawnmower_1121_on_exh.ogg"
+dest_files=["res://.godot/imported/veh_lawnmower_1121_on_exh.ogg-b67c8d5bcdde03507fea8adc12fc79c7.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://ck4g85qq0xj2p"
+path="res://.godot/imported/veh_car_engine_190E_01104.ogg-59c328a4b58bdc497550885eccc1c478.oggvorbisstr"
+
+[deps]
+
+source_file="res://fmoddata/CarExamples/Assets/Vehicles/Car Engine/veh_car_engine_190E_01104.ogg"
+dest_files=["res://.godot/imported/veh_car_engine_190E_01104.ogg-59c328a4b58bdc497550885eccc1c478.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
