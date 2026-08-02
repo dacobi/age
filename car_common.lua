@@ -222,6 +222,13 @@ function updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_nam
 		local shift_down = ((math.floor(hat / 4) % 2) == 1) or ioJoystickGetButtonDown(joy_handle, 12) or ioJoystickGetButtonDown(joy_handle, 10)
 
 		if is_manual_trans then
+			-- Sync gear from Godot in case the car auto-dropped to neutral
+			local sync_gear = godotGetProperty("manual_gear_input", supercar)
+			if sync_gear ~= nil then
+				local parsed = tonumber(sync_gear)
+				if parsed ~= nil then manual_gear_val = math.floor(parsed) end
+			end
+
 			if shift_up and not last_shift_up then
 				if manual_gear_val == 0 then
 					manual_gear_val = 1
