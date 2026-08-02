@@ -1889,6 +1889,106 @@ void LuaScripting::renderLuaImGui() {
         }
         ImGui::End();
     }
+    
+    static bool show_gamepad_diagnostic = false;
+    static bool f3_was_pressed = false;
+    bool f3_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F3);
+    if (f3_is_pressed && !f3_was_pressed) {
+        show_gamepad_diagnostic = !show_gamepad_diagnostic;
+    }
+    f3_was_pressed = f3_is_pressed;
+    
+    if (show_gamepad_diagnostic) {
+        static int device_id = 0;
+        
+        ImGui::Begin("Gamepad Diagnostic Panel", &show_gamepad_diagnostic);
+        ImGui::SliderInt("Device ID", &device_id, 0, 8);
+        
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 p = ImGui::GetCursorScreenPos();
+        ImVec2 center = ImVec2(p.x + 200, p.y + 120);
+        
+        draw_list->AddRectFilled(ImVec2(center.x - 150, center.y - 80), ImVec2(center.x + 150, center.y + 80), IM_COL32(50, 50, 50, 255), 40.0f);
+        
+        godot::Input* input = godot::Input::get_singleton();
+        
+        float lx = input->get_joy_axis(device_id, godot::JOY_AXIS_LEFT_X);
+        float ly = input->get_joy_axis(device_id, godot::JOY_AXIS_LEFT_Y);
+        bool l3 = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_LEFT_STICK);
+        ImVec2 lstick(center.x - 60, center.y + 40);
+        draw_list->AddCircleFilled(lstick, 30.0f, IM_COL32(30, 30, 30, 255));
+        draw_list->AddCircleFilled(ImVec2(lstick.x + lx * 20, lstick.y + ly * 20), 15.0f, l3 ? IM_COL32(255, 100, 100, 255) : IM_COL32(100, 100, 255, 255));
+
+        float rx = input->get_joy_axis(device_id, godot::JOY_AXIS_RIGHT_X);
+        float ry = input->get_joy_axis(device_id, godot::JOY_AXIS_RIGHT_Y);
+        bool r3 = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_RIGHT_STICK);
+        ImVec2 rstick(center.x + 60, center.y + 40);
+        draw_list->AddCircleFilled(rstick, 30.0f, IM_COL32(30, 30, 30, 255));
+        draw_list->AddCircleFilled(ImVec2(rstick.x + rx * 20, rstick.y + ry * 20), 15.0f, r3 ? IM_COL32(255, 100, 100, 255) : IM_COL32(100, 100, 255, 255));
+
+        int hat = 0;
+        if (input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_DPAD_UP)) hat |= 1;
+        if (input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_DPAD_RIGHT)) hat |= 2;
+        if (input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_DPAD_DOWN)) hat |= 4;
+        if (input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_DPAD_LEFT)) hat |= 8;
+        
+        ImVec2 dpad(center.x - 100, center.y - 30);
+        draw_list->AddRectFilled(ImVec2(dpad.x - 10, dpad.y - 30), ImVec2(dpad.x + 10, dpad.y + 30), IM_COL32(70, 70, 70, 255), 5.0f);
+        draw_list->AddRectFilled(ImVec2(dpad.x - 30, dpad.y - 10), ImVec2(dpad.x + 30, dpad.y + 10), IM_COL32(70, 70, 70, 255), 5.0f);
+        if (hat & 1) draw_list->AddRectFilled(ImVec2(dpad.x - 10, dpad.y - 30), ImVec2(dpad.x + 10, dpad.y), IM_COL32(100, 255, 100, 255), 5.0f);
+        if (hat & 2) draw_list->AddRectFilled(ImVec2(dpad.x, dpad.y - 10), ImVec2(dpad.x + 30, dpad.y + 10), IM_COL32(100, 255, 100, 255), 5.0f);
+        if (hat & 4) draw_list->AddRectFilled(ImVec2(dpad.x - 10, dpad.y), ImVec2(dpad.x + 10, dpad.y + 30), IM_COL32(100, 255, 100, 255), 5.0f);
+        if (hat & 8) draw_list->AddRectFilled(ImVec2(dpad.x - 30, dpad.y - 10), ImVec2(dpad.x, dpad.y + 10), IM_COL32(100, 255, 100, 255), 5.0f);
+
+        ImVec2 face(center.x + 100, center.y - 30);
+        bool bCross = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_A);
+        bool bCircle = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_B);
+        bool bSquare = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_X);
+        bool bTri = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_Y);
+        
+        draw_list->AddCircleFilled(ImVec2(face.x, face.y + 20), 10.0f, bCross ? IM_COL32(100, 100, 255, 255) : IM_COL32(70, 70, 70, 255));
+        draw_list->AddCircleFilled(ImVec2(face.x + 20, face.y), 10.0f, bCircle ? IM_COL32(255, 100, 100, 255) : IM_COL32(70, 70, 70, 255));
+        draw_list->AddCircleFilled(ImVec2(face.x - 20, face.y), 10.0f, bSquare ? IM_COL32(255, 100, 255, 255) : IM_COL32(70, 70, 70, 255));
+        draw_list->AddCircleFilled(ImVec2(face.x, face.y - 20), 10.0f, bTri ? IM_COL32(100, 255, 100, 255) : IM_COL32(70, 70, 70, 255));
+
+        bool l1 = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_LEFT_SHOULDER);
+        bool r1 = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_RIGHT_SHOULDER);
+        float l2 = input->get_joy_axis(device_id, godot::JOY_AXIS_TRIGGER_LEFT);
+        float r2 = input->get_joy_axis(device_id, godot::JOY_AXIS_TRIGGER_RIGHT);
+        
+        draw_list->AddRectFilled(ImVec2(center.x - 120, center.y - 95), ImVec2(center.x - 80, center.y - 80), l1 ? IM_COL32(255,255,255,255) : IM_COL32(70,70,70,255), 5.0f);
+        draw_list->AddRectFilled(ImVec2(center.x + 80, center.y - 95), ImVec2(center.x + 120, center.y - 80), r1 ? IM_COL32(255,255,255,255) : IM_COL32(70,70,70,255), 5.0f);
+        
+        // Godot's trigger axes are 0.0 to 1.0, not -1.0 to 1.0 like SDL
+        float l2_val = l2;
+        float r2_val = r2;
+        draw_list->AddRectFilled(ImVec2(center.x - 120, center.y - 120), ImVec2(center.x - 80, center.y - 100), IM_COL32(50,50,50,255), 2.0f);
+        draw_list->AddRectFilled(ImVec2(center.x - 120, center.y - 120 + 20 * (1 - l2_val)), ImVec2(center.x - 80, center.y - 100), IM_COL32(255,200,100,255), 2.0f);
+        
+        draw_list->AddRectFilled(ImVec2(center.x + 80, center.y - 120), ImVec2(center.x + 120, center.y - 100), IM_COL32(50,50,50,255), 2.0f);
+        draw_list->AddRectFilled(ImVec2(center.x + 80, center.y - 120 + 20 * (1 - r2_val)), ImVec2(center.x + 120, center.y - 100), IM_COL32(255,200,100,255), 2.0f);
+
+        // Touchpad button if supported
+        bool touch = input->is_joy_button_pressed(device_id, (godot::JoyButton)15);
+        draw_list->AddRectFilled(ImVec2(center.x - 40, center.y - 60), ImVec2(center.x + 40, center.y), touch ? IM_COL32(150,150,150,255) : IM_COL32(30,30,30,255), 10.0f);
+
+        bool share = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_BACK);
+        bool ps = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_GUIDE);
+        bool options = input->is_joy_button_pressed(device_id, godot::JOY_BUTTON_START);
+        
+        draw_list->AddRectFilled(ImVec2(center.x - 60, center.y - 45), ImVec2(center.x - 45, center.y - 25), share ? IM_COL32(200,200,255,255) : IM_COL32(40,40,40,255), 2.0f);
+        draw_list->AddCircleFilled(ImVec2(center.x, center.y + 25), 8.0f, ps ? IM_COL32(255,255,255,255) : IM_COL32(20,20,20,255));
+        draw_list->AddRectFilled(ImVec2(center.x + 45, center.y - 45), ImVec2(center.x + 60, center.y - 25), options ? IM_COL32(200,200,255,255) : IM_COL32(40,40,40,255), 2.0f);
+
+        ImGui::Dummy(ImVec2(400, 250));
+        
+        godot::Array connected_pads = input->get_connected_joypads();
+        ImGui::Separator();
+        ImGui::Text("Diagnostic Device ID: %d", device_id);
+        ImGui::Text("Connected Gamepads: %d", (int)connected_pads.size());
+        
+        ImGui::End();
+    }
 }
 
 int LuaScripting::lua_imguiBegin(lua_State* L) {
