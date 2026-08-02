@@ -66,6 +66,7 @@ var slip_RR: float = 0.0
 var engine_rpm: float = 1000.0
 
 var fmod_event = null
+var tire_fmod_event = null
 var fmod_banks = []
 var fmod_banks_loaded = false
 var engine_audio: AudioStreamPlayer = null
@@ -838,15 +839,21 @@ func _physics_process(delta: float) -> void:
 	# --- FMOD ENGINE UPDATE ---
 	if ClassDB.class_exists("FmodServer"):
 		FmodServer.update()
-		if fmod_event == null and not fmod_banks_loaded:
+		if (fmod_event == null or tire_fmod_event == null) and not fmod_banks_loaded:
 			# FMOD bank loading takes a few frames to populate the event descriptions
 			var events = FmodServer.get_all_event_descriptions()
 			if events.size() > 0:
 				fmod_banks_loaded = true
 				for e in events:
+					var e_path = ""
+					if e.has_method("get_path"): e_path = str(e.get_path())
+					
 					if str(e.get_guid()) == "{0c8363b4-23af-4f9c-af4b-0951bfd37d84}":
 						fmod_event = FmodServer.create_event_instance_from_description(e)
 						if fmod_event: fmod_event.start()
+					elif "tires" in e_path.to_lower():
+						tire_fmod_event = FmodServer.create_event_instance_from_description(e)
+						if tire_fmod_event: tire_fmod_event.start()
 		
 		# We must set a listener position, otherwise we might not hear the 3D event
 		if FmodServer.has_method("set_listener_transform3d"):
@@ -854,9 +861,23 @@ func _physics_process(delta: float) -> void:
 			
 		if fmod_event:
 			fmod_event.set_parameter_by_name("RPM", engine_rpm)
-			fmod_event.set_parameter_by_name("Load", clamp(motor_input, 0.0, 1.0))
+			# fmod_event.set_parameter_by_name("Load", clamp(motor_input, 0.0, 1.0))
 			if fmod_event.has_method("set_3d_attributes"):
 				fmod_event.set_3d_attributes(global_transform)
+				
+		if tire_fmod_event:
+			var rear_slip = (slip_RL + slip_RR) / 2.0
+			var current_slip = clampf(rear_slip, 0.0, 1.0)
+			
+			if in_standing_burnout:
+				current_slip = 1.0
+				
+			tire_fmod_event.set_parameter_by_name("Tire_Slip", current_slip)
+			tire_fmod_event.set_parameter_by_name("Tire_Speed", forward_speed)
+			tire_fmod_event.set_parameter_by_name("Burnout", 1.0 if in_standing_burnout else 0.0)
+			
+			if tire_fmod_event.has_method("set_3d_attributes"):
+				tire_fmod_event.set_3d_attributes(global_transform)
 
 func reset_position(new_transform: Transform3D):
 	global_transform = new_transform
