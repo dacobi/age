@@ -534,8 +534,14 @@ func _physics_process(delta: float) -> void:
 				for w in wheels:
 					w.is_braking = false
 		else:
-			# Forward Gears 1..6: Throttle drives forward. Brake ONLY brakes (NEVER goes into reverse).
-			if final_brake > 0.05 and (final_brake >= final_accel or forward_speed >= (25.0 / 3.6)):
+			# Forward Gears 1..6: Throttle drives forward. Brake ONLY brakes (NEVER goes into reverse, EXCEPT auto-drop from 1st gear).
+			if manual_gear_input == 1 and final_brake > 0.05 and final_accel <= 0.05 and forward_speed < 1.0:
+				# Auto-drop to Neutral to allow reversing!
+				manual_gear_input = 0
+				motor_input = -final_brake
+				for w in wheels:
+					w.is_braking = false
+			elif final_brake > 0.05 and (final_brake >= final_accel or forward_speed >= (25.0 / 3.6)):
 				motor_input = 0.0
 				for w in wheels:
 					w.is_braking = true
