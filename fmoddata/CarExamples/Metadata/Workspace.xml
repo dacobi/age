@@ -4,6 +4,9 @@
 		<property name="isSourceControlForBuiltBanksEnabled">
 			<value>false</value>
 		</property>
+		<property name="builtBanksOutputDirectory">
+			<value>../../Audio</value>
+		</property>
 		<relationship name="masterEventFolder">
 			<destination>{10626052-c98b-4665-b391-646f2512cecd}</destination>
 		</relationship>
