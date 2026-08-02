@@ -1,3 +1,5 @@
+#include <godot_cpp/classes/rich_text_label.hpp>
+#include <godot_cpp/classes/h_box_container.hpp>
 #include <godot_cpp/classes/panel_container.hpp>
 #include <godot_cpp/classes/style_box_flat.hpp>
 #include <godot_cpp/classes/grid_container.hpp>
@@ -69,7 +71,9 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
 String LuaManager::_evaluate_bouncer_text(const String& syntax) {
     String s = syntax;
     String text = "";
+    bool has_hover = syntax.find("[hover:") != -1;
     int current_idx = 0;
+    
     while (current_idx < s.length()) {
         int start = s.find("[", current_idx);
         if (start == -1) {
@@ -92,6 +96,16 @@ String LuaManager::_evaluate_bouncer_text(const String& syntax) {
                     text += String::num(lua_engine->getGlobalFloat(gname.utf8().get_data()));
                 }
             }
+        } else if (tag.begins_with("color:") || tag.begins_with("rgb:")) {
+            if (!has_hover) {
+                PackedStringArray rgb = tag.substr(tag.begins_with("color:") ? 6 : 4).split(",");
+                if (rgb.size() >= 3) {
+                    Color c = Color(rgb[0].to_float() / 255.0f, rgb[1].to_float() / 255.0f, rgb[2].to_float() / 255.0f);
+                    text += "[color=#" + c.to_html(false) + "]";
+                }
+            }
+        } else if (tag == "lf") {
+            text += "\n";
         }
         current_idx = end + 1;
     }
@@ -162,6 +176,10 @@ void LuaManager::_on_addhscore_submitted(String text, int score, int level, uint
         if (node) node->queue_free();
     }
     
+    if (lua_engine) {
+        lua_engine->runScript("setGlobalVar('hs_entered', 1)");
+    }
+    
     this->call_deferred("_clear_and_run_deferred", "loozer.lua");
 }
 
@@ -201,6 +219,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     String s = syntax;
     Vector2 pos(0, 0);
     String image_path = "";
+    bool is_stencil = false;
     String scene_path = "";
     String text = "";
     Color color(1, 1, 1, 1);
@@ -218,7 +237,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     int addhscore_score = 0;
     int addhscore_level = 0;
     
-    bool has_hover = false;
+    bool has_hover = syntax.find("[hover:") != -1;
     Color hover_color;
     String clicked_script = "";
 
@@ -257,6 +276,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         } else if (tag.begins_with("image:") || tag.begins_with("stencil:")) {
             int colon = tag.find(":");
             image_path = tag.substr(colon + 1).strip_edges();
+            if (tag.begins_with("stencil:")) is_stencil = true;
         } else if (tag.begins_with("ttscn:")) {
             scene_path = tag.substr(6).strip_edges();
         } else if (tag.begins_with("rect:")) {
@@ -266,7 +286,15 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             font_size = tag.substr(9).to_float();
         } else if (tag.begins_with("color:") || tag.begins_with("rgb:")) {
             PackedStringArray rgb = tag.substr(tag.begins_with("color:") ? 6 : 4).split(",");
-            if (rgb.size() >= 3) color = Color(rgb[0].to_float() / 255.0f, rgb[1].to_float() / 255.0f, rgb[2].to_float() / 255.0f);
+            if (rgb.size() >= 3) {
+                Color c = Color(rgb[0].to_float() / 255.0f, rgb[1].to_float() / 255.0f, rgb[2].to_float() / 255.0f);
+                if (!has_hover) {
+                    text += "[color=#" + c.to_html(false) + "]";
+                    color = Color(1, 1, 1, 1);
+                } else {
+                    color = c;
+                }
+            }
         } else if (tag.begins_with("layer:")) {
             layer_idx = tag.substr(6).to_int();
         } else if (tag.begins_with("hscore:")) {
@@ -284,7 +312,6 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             PackedStringArray rgb = tag.substr(6).split(",");
             if (rgb.size() >= 3) {
                 hover_color = Color(rgb[0].to_float() / 255.0f, rgb[1].to_float() / 255.0f, rgb[2].to_float() / 255.0f);
-                has_hover = true;
             }
         } else if (tag.begins_with("clicked:")) {
             clicked_script = tag.substr(8);
@@ -309,6 +336,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         } else if (tag.begins_with("ttl:")) {
             has_ttl = true;
             ttl_val = tag.substr(4).to_float() / 1000.0f;
+        } else if (tag == "lf") {
+            text += "\n";
         }
         
         current_idx = end + 1;
@@ -346,6 +375,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             if (Object::cast_to<Node3D>(inst)) {
                 SubViewportContainer* svc = memnew(SubViewportContainer);
                 SubViewport* vp = memnew(SubViewport);
+                vp->set_use_own_world_3d(true);
                 vp->set_transparent_background(true);
                 if (rect.x > 0 && rect.y > 0) {
                     vp->set_size(rect);
@@ -365,19 +395,59 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     
     CanvasItem* visual_item = nullptr;
     
+    TextureRect* tex_rect = nullptr;
     if (!image_path.is_empty()) {
         if (!image_path.begins_with("res://") && !image_path.begins_with("user://")) image_path = "res://" + image_path;
-        TextureRect* tex_rect = memnew(TextureRect);
+        tex_rect = memnew(TextureRect);
         Ref<Texture2D> tex = ResourceLoader::get_singleton()->load(image_path);
         if (tex.is_valid()) {
             tex_rect->set_texture(tex);
             if (rect.x > 0 && rect.y > 0) {
-                Vector2 tex_size = tex->get_size();
-                if (tex_size.x > 0 && tex_size.y > 0) {
-                    tex_rect->set_scale(Vector2(rect.x / tex_size.x, rect.y / tex_size.y));
+                if (is_stencil) {
+                    Vector2 tex_size = tex->get_size();
+                    if (tex_size.x > 0 && tex_size.y > 0) {
+                        tex_rect->set_scale(Vector2(rect.x / tex_size.x, rect.y / tex_size.y));
+                    }
+                } else {
+                    tex_rect->set_custom_minimum_size(rect);
+                    tex_rect->set_size(rect);
+                    tex_rect->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
+                    tex_rect->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
                 }
             }
         }
+    }
+    
+    RichTextLabel* label = nullptr;
+    if (!text.is_empty() && !is_hscore && !is_addhscore) {
+        label = memnew(RichTextLabel);
+        label->set_use_bbcode(true);
+        label->set_text(text);
+        label->add_theme_font_size_override("normal_font_size", MAX(1, (int)(64.0 * font_size)));
+        label->set_autowrap_mode(TextServer::AUTOWRAP_OFF);
+        label->set_fit_content(true);
+        
+        if (syntax.find("[global:") != -1) {
+            DynamicLabel dl;
+            dl.label_id = label->get_instance_id();
+            dl.syntax = syntax;
+            dynamic_labels.push_back(dl);
+        }
+    }
+    
+    if (label && tex_rect) {
+        HBoxContainer* hbox = memnew(HBoxContainer);
+        hbox->set_alignment(BoxContainer::ALIGNMENT_CENTER);
+        hbox->add_child(label);
+        hbox->add_child(tex_rect);
+        container->add_child(hbox);
+        interactive_control = hbox;
+        visual_item = hbox;
+    } else if (label) {
+        container->add_child(label);
+        interactive_control = label;
+        visual_item = label;
+    } else if (tex_rect) {
         container->add_child(tex_rect);
         interactive_control = tex_rect;
         visual_item = tex_rect;
@@ -428,20 +498,6 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         container->add_child(pc);
         interactive_control = pc;
         visual_item = pc;
-    } else if (!text.is_empty()) {
-        Label* label = memnew(Label);
-        label->set_text(text);
-        label->add_theme_font_size_override("font_size", MAX(1, (int)(64.0 * font_size)));
-        container->add_child(label);
-        interactive_control = label;
-        visual_item = label;
-        
-        if (syntax.find("[global:") != -1) {
-            DynamicLabel dl;
-            dl.label_id = label->get_instance_id();
-            dl.syntax = syntax;
-            dynamic_labels.push_back(dl);
-        }
     } else if (is_addhscore) {
         VBoxContainer* vbox = memnew(VBoxContainer);
         if (rect.x > 0 && rect.y > 0) {
@@ -1220,6 +1276,11 @@ void LuaManager::_process(double delta) {
             Label* label = Object::cast_to<Label>(obj);
             if (label) {
                 label->set_text(_evaluate_bouncer_text(it->syntax));
+            } else {
+                RichTextLabel* rtl = Object::cast_to<RichTextLabel>(obj);
+                if (rtl) {
+                    rtl->set_text(_evaluate_bouncer_text(it->syntax));
+                }
             }
             ++it;
         }
