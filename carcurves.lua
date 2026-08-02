@@ -1,4 +1,4 @@
-setBG("[tscn:lemans_scene.tscn]")
+setBG("[tscn:lemans_track.tscn]")
 selectGodot(-1)
 delay(200) -- give it a moment to load
 
