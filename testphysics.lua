@@ -1,4 +1,4 @@
-godotLoadScene("lemans_scene.tscn")
+godotLoadScene("lemans_area.tscn")
 delay(200) -- give it a moment to load
 
 print("\n=== MegaRacer Synthwave Driving Demo Loaded ===")

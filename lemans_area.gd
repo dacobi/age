@@ -77,11 +77,7 @@ var height_offset = 56.0
 var t_car = 0.15
 
 func _ready():
-	is_square = false
-	for arg in OS.get_cmdline_args():
-		if "show_car.lua" in arg or "testphysics.lua" in arg:
-			is_square = true
-			break
+	is_square = true
 
 	if is_square:
 		countdown_value = -1
@@ -300,11 +296,11 @@ func _ready():
 				add_child(powerup)
 		
 		# --- SPAWN MODELS ---
-		var barrier_scn = load("res://assets/models/extra_objects/traffic_barrier.glb")
-		var cone_scn = load("res://assets/models/extra_objects/traffic_cone.glb")
-		var tree_scn = load("res://assets/models/environment/pine_tree_1.glb")
-		var tree2_scn = load("res://assets/models/environment/pine_tree_2.glb")
-		var bush_scn = load("res://assets/models/environment/bush.glb")
+		var barrier_scn = load("res://assets/models/extra_objects/traffic_barrier.glb") if ResourceLoader.exists("res://assets/models/extra_objects/traffic_barrier.glb") else null
+		var cone_scn = load("res://assets/models/extra_objects/traffic_cone.glb") if ResourceLoader.exists("res://assets/models/extra_objects/traffic_cone.glb") else null
+		var tree_scn = load("res://assets/models/environment/pine_tree_1.glb") if ResourceLoader.exists("res://assets/models/environment/pine_tree_1.glb") else null
+		var tree2_scn = load("res://assets/models/environment/pine_tree_2.glb") if ResourceLoader.exists("res://assets/models/environment/pine_tree_2.glb") else null
+		var bush_scn = load("res://assets/models/environment/bush.glb") if ResourceLoader.exists("res://assets/models/environment/bush.glb") else null
 		
 		var spawn = func(scn, pos: Vector3, rot_y: float = 0.0, s: float = 1.0, is_rigid: bool = false, mass_val: float = 1.0):
 			if scn:
@@ -1397,7 +1393,8 @@ func setup_ui():
 
 	victory_jingle_player = AudioStreamPlayer.new()
 	victory_jingle_player.name = "VictoryJinglePlayer"
-	var jingle_res = load("res://victory_jingle.wav")
-	if jingle_res:
-		victory_jingle_player.stream = jingle_res
+	if ResourceLoader.exists("res://victory_jingle.wav"):
+		var jingle_res = load("res://victory_jingle.wav")
+		if jingle_res:
+			victory_jingle_player.stream = jingle_res
 	add_child(victory_jingle_player)
