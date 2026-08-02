@@ -288,6 +288,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     // ImGui bindings
     reg("imguiBegin", lua_imguiBegin);
     reg("imguiEnd", lua_imguiEnd);
+    reg("imguiRemoveWindow", lua_imguiRemoveWindow);
     reg("imguiText", lua_imguiText);
     reg("imguiSeparator", lua_imguiSeparator);
     reg("imguiCheckbox", lua_imguiCheckbox);
@@ -1026,6 +1027,7 @@ static godot::Key string_to_key(const std::string& str) {
     if (str == "Right" || str == "SDLK_RIGHT") return godot::KEY_RIGHT;
     if (str == "Space" || str == "SDLK_SPACE") return godot::KEY_SPACE;
     if (str == "Escape" || str == "SDLK_ESCAPE") return godot::KEY_ESCAPE;
+    if (str == "F1" || str == "SDLK_F1") return godot::KEY_F1;
     return godot::KEY_NONE;
 }
 
@@ -1906,6 +1908,21 @@ int LuaScripting::lua_imguiBegin(lua_State* L) {
             self->lua_imgui_windows.push_back(w);
         }
         self->active_window_title = title;
+    }
+    return 0;
+}
+
+int LuaScripting::lua_imguiRemoveWindow(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (lua_isstring(L, 1) && self) {
+        std::string title = lua_tostring(L, 1);
+        std::lock_guard<std::mutex> lock(self->imgui_mutex);
+        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
+            return w.title == title;
+        });
+        if (it != self->lua_imgui_windows.end()) {
+            self->lua_imgui_windows.erase(it);
+        }
     }
     return 0;
 }

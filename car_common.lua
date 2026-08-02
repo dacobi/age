@@ -48,13 +48,29 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("aero_drag_coeff", 0.3)
 	setGlobalFloat("steer_speed_limit_max_speed", 80.0)
 	setGlobalFloat("steer_speed_limit_min_mult", 0.2)
+	setGlobalFloat("show_car_physics_ui", 0.0)
 
 	-- Load saved car settings on startup if present
 	godotLoadCarSettings()
 end
 
 function renderCarPhysicsUI()
-	if getGlobalFloat("show_car_physics_ui") > 0.5 then
+	if ioKBClicked("F1") then
+		local current = getGlobalFloat("show_car_physics_ui")
+		if current > 0.5 then
+			setGlobalFloat("show_car_physics_ui", 0.0)
+			if imguiRemoveWindow then imguiRemoveWindow("Car Physics Settings") end
+			print(current)
+		else
+			setGlobalFloat("show_car_physics_ui", 1.0)
+			print(current)
+		end
+	end
+
+	local show_ui = getGlobalFloat("show_car_physics_ui")
+	print(show_ui)
+	if show_ui > 0.5 then
+		
 		imguiBegin("Car Physics Settings")
 		
 		imguiSliderFloat("Engine Force", "engine_force_value", 1000.0, 100000.0)
