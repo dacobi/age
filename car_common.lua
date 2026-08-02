@@ -49,6 +49,7 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("steer_speed_limit_max_speed", 80.0)
 	setGlobalFloat("steer_speed_limit_min_mult", 0.2)
 	setGlobalFloat("show_car_physics_ui", 0.0)
+	setGlobalFloat("show_fps_hud", 0.0)
 
 	-- Load saved car settings on startup if present
 	godotLoadCarSettings()
@@ -60,15 +61,15 @@ function renderCarPhysicsUI()
 		if current > 0.5 then
 			setGlobalFloat("show_car_physics_ui", 0.0)
 			if imguiRemoveWindow then imguiRemoveWindow("Car Physics Settings") end
-			print(current)
+			--print(current)
 		else
 			setGlobalFloat("show_car_physics_ui", 1.0)
-			print(current)
+			--print(current)
 		end
 	end
 
 	local show_ui = getGlobalFloat("show_car_physics_ui")
-	print(show_ui)
+	--print(show_ui)
 	if show_ui > 0.5 then
 		
 		imguiBegin("Car Physics Settings")
@@ -93,6 +94,7 @@ function renderCarPhysicsUI()
 		imguiSliderFloat("Radius Rear", "radius_rear", 0.1, 2.0)
 		imguiCheckbox("Use Shapecast", "use_shapecast")
 		imguiCheckbox("Show Collision Mesh", "show_collision_debug")
+		imguiCheckbox("Show FPS", "show_fps_hud")
 		imguiSliderFloat("Steer Speed", "tire_turn_speed", 1.0, 30.0)
 		
 		imguiSeparator()

@@ -313,32 +313,55 @@ func _ready():
 						child.free() 
 				
 				if is_rigid:
-					var parent_node = RigidBody3D.new()
-					parent_node.mass = mass_val
-					parent_node.position = pos
-					parent_node.rotation_degrees.y = rot_y
-					parent_node.collision_layer = 4 # Props layer
-					parent_node.collision_mask = 15 # Hits World, Car, Props, and Bumper
+					var rb = inst if inst is RigidBody3D else null
+					if not rb:
+						for c in inst.find_children("*", "RigidBody3D", true, false):
+							rb = c
+							break
 					
-					# Shift center of mass up to stop bottom-heavy weeble-wobble effect
-					parent_node.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
+					if rb:
+						if rb != inst:
+							rb.get_parent().remove_child(rb)
+							inst.free()
+							inst = rb
+							
+					if not inst is RigidBody3D:
+						var new_rb = RigidBody3D.new()
+						new_rb.add_child(inst)
+						inst = new_rb
+						
+					inst.mass = mass_val
+					inst.position = pos
+					inst.rotation_degrees.y = rot_y
+					inst.collision_layer = 4
+					inst.collision_mask = 13
+					
+					inst.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 					if scn == barrier_scn:
-						parent_node.center_of_mass = Vector3(0, 0.6, 0)
+						inst.center_of_mass = Vector3(0, 0.6, 0)
 					else:
-						parent_node.center_of_mass = Vector3(0, 0.4, 0)
+						inst.center_of_mass = Vector3(0, 0.4, 0)
 					
-					inst.scale *= s
-					parent_node.add_child(inst)
-					add_child(parent_node)
+					for child in inst.get_children():
+						if child is Node3D:
+							child.position *= s
+							child.scale *= s
 					
-					for child in inst.find_children("*", "MeshInstance3D", true, false):
-						var shape = CollisionShape3D.new()
-						shape.shape = child.mesh.create_convex_shape(true, true)
-						# Important: apply the root instance's GLTF conversion scale to the collision shape!
-						shape.position = child.position * inst.scale
-						shape.rotation = child.rotation
-						shape.scale = child.scale * inst.scale
-						parent_node.add_child(shape)
+					add_child(inst)
+					
+					var has_col = false
+					for c in inst.find_children("*", "CollisionShape3D", true, false):
+						has_col = true
+						break
+					
+					if not has_col:
+						for child in inst.find_children("*", "MeshInstance3D", true, false):
+							var shape = CollisionShape3D.new()
+							shape.shape = child.mesh.create_convex_shape(true, true)
+							shape.position = child.position
+							shape.rotation = child.rotation
+							shape.scale = child.scale
+							inst.add_child(shape)
 				else:
 					inst.position = pos
 					inst.rotation_degrees.y = rot_y
