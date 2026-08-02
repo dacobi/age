@@ -945,16 +945,20 @@ func _process(delta):
 		reset_car = false
 		if supercar:
 			if is_square:
-				supercar.global_position = Vector3(0.0, 0.5, 0.0)
-				supercar.global_transform.basis = Basis.IDENTITY
+				var new_t = Transform3D(Basis.IDENTITY, Vector3(0.0, 0.5, 0.0))
+				if supercar.has_method("reset_position"):
+					supercar.reset_position(new_t)
+				else:
+					supercar.global_transform = new_t
 			else:
 				var closest_prog = path_node.curve.get_closest_offset(supercar.global_position)
 				var t_respawn = path_node.global_transform * path_node.curve.sample_baked_with_rotation(closest_prog, true, true)
 				if t_respawn:
-					supercar.global_transform = t_respawn
-					supercar.global_position += t_respawn.basis.y * 1.5
-			supercar.linear_velocity = Vector3.ZERO
-			supercar.angular_velocity = Vector3.ZERO
+					t_respawn.origin += t_respawn.basis.y * 1.5
+					if supercar.has_method("reset_position"):
+						supercar.reset_position(t_respawn)
+					else:
+						supercar.global_transform = t_respawn
 
 	var camera_node = get_node_or_null("Camera3D")
 	if camera_node and supercar:
