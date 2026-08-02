@@ -135,3 +135,8 @@ func _draw() -> void:
 			nitro_str = "NITRO: " + str(int(ceil(nitro_sec))) + "s"
 	var text_col = Color(1.0, 0.6, 0.1) if nitro_active else Color(0.8, 0.3, 1.0)
 	draw_string(font, center_speed + Vector2(-35, 65), nitro_str, HORIZONTAL_ALIGNMENT_CENTER, -1, 15, text_col)
+
+	# --- FPS COUNTER ---
+	if get_node("/root/LuaManager").get_global_float("show_fps_hud") > 0.5:
+		var fps = Engine.get_frames_per_second()
+		draw_string(font, Vector2(vp_size.x - 120, 30), "FPS: " + str(fps), HORIZONTAL_ALIGNMENT_RIGHT, -1, 24, cyan)

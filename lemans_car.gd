@@ -91,7 +91,7 @@ var start_transform: Transform3D
 func _ready():
 	# Configure Main Hull layer and mask
 	collision_layer = 2 # Car layer
-	collision_mask = 5  # Hits World (1) and Props (4)
+	collision_mask = 1  # Hits World (1) ONLY
 
 	# Resize collision box to act as the main hull, shrunk and lifted slightly
 	var body_col = get_node_or_null("BodyCol")
@@ -181,11 +181,13 @@ func _ready():
 			child.add_child(mi)
 			
 	# --- PROP-ONLY ANGLED BUMPER ---
-	# We use a RigidBody3D attached via a joint so it properly shares the physics space and collides at high speeds!
+	# We use a frozen Kinematic RigidBody so it follows the car's transform perfectly without joints
 	var bumper = RigidBody3D.new()
 	bumper.name = "AngledBumper"
 	bumper.mass = 1.0
 	bumper.gravity_scale = 0.0
+	bumper.freeze = true
+	bumper.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 	bumper.collision_layer = 8 # Bumper layer
 	bumper.collision_mask = 4  # ONLY collides with Props (Cones/Barriers)
 	bumper.contact_monitor = true
@@ -216,20 +218,13 @@ func _ready():
 	bumper.add_child(bumper_col)
 	add_child(bumper)
 	
-	var joint = Generic6DOFJoint3D.new()
-	joint.name = "BumperJoint"
-	add_child(joint)
-	# Position the joint exactly where the bumper is for maximum stability
-	joint.position = bumper_col.position
-	joint.node_a = joint.get_path_to(self)
-	joint.node_b = joint.get_path_to(bumper)
-	# A new Generic6DOFJoint3D has all axes locked by default, making it perfectly rigid!
-	
 	# --- PROP-ONLY REAR BUMPER ---
 	var rear_bumper = RigidBody3D.new()
 	rear_bumper.name = "RearBumper"
 	rear_bumper.mass = 1.0
 	rear_bumper.gravity_scale = 0.0
+	rear_bumper.freeze = true
+	rear_bumper.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 	rear_bumper.collision_layer = 8 # Bumper layer
 	rear_bumper.collision_mask = 4  # ONLY collides with Props (Cones/Barriers)
 	rear_bumper.contact_monitor = true
@@ -256,13 +251,6 @@ func _ready():
 	rear_bumper_col.add_child(rear_bumper_mi)
 	rear_bumper.add_child(rear_bumper_col)
 	add_child(rear_bumper)
-	
-	var rear_joint = Generic6DOFJoint3D.new()
-	rear_joint.name = "RearBumperJoint"
-	add_child(rear_joint)
-	rear_joint.position = rear_bumper_col.position
-	rear_joint.node_a = rear_joint.get_path_to(self)
-	rear_joint.node_b = rear_joint.get_path_to(rear_bumper)
 			
 	# Dynamically build wheels at startup
 	var use_shapecast = true
