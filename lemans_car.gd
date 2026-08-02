@@ -39,6 +39,7 @@ var steer_speed_limit_min_mult = 0.7
 var motor_input := 0.0
 var hand_break := false
 var in_standing_burnout := false
+var neutral_drop_timer := 0.0
 var is_slipping := false
 var total_wheels := 4
 var acceleration := 600.0
@@ -536,16 +537,24 @@ func _physics_process(delta: float) -> void:
 		else:
 			# Forward Gears 1..6: Throttle drives forward. Brake ONLY brakes (NEVER goes into reverse, EXCEPT auto-drop from 1st gear).
 			if manual_gear_input == 1 and final_brake > 0.05 and final_accel <= 0.05 and forward_speed < 1.0:
-				# Auto-drop to Neutral to allow reversing!
-				manual_gear_input = 0
-				motor_input = -final_brake
-				for w in wheels:
-					w.is_braking = false
+				neutral_drop_timer += delta
+				if neutral_drop_timer > 0.2:
+					# Auto-drop to Neutral to allow reversing!
+					manual_gear_input = 0
+					motor_input = -final_brake
+					for w in wheels:
+						w.is_braking = false
+				else:
+					motor_input = 0.0
+					for w in wheels:
+						w.is_braking = true
 			elif final_brake > 0.05 and (final_brake >= final_accel or forward_speed >= (25.0 / 3.6)):
+				neutral_drop_timer = 0.0
 				motor_input = 0.0
 				for w in wheels:
 					w.is_braking = true
 			elif final_accel > 0.05:
+				neutral_drop_timer = 0.0
 				var gear_idx = clamp(manual_gear_input - 1, 0, gear_max_speeds.size() - 1)
 				var gear_max = gear_max_speeds[gear_idx]
 				if forward_speed > gear_max:
@@ -560,6 +569,7 @@ func _physics_process(delta: float) -> void:
 				for w in wheels:
 					w.is_braking = false
 			else:
+				neutral_drop_timer = 0.0
 				motor_input = 0.0
 				for w in wheels:
 					w.is_braking = false
