@@ -9,6 +9,7 @@
 #include "luascripting.h"
 #include <vector>
 #include <map>
+#include <godot_cpp/classes/audio_effect_capture.hpp>
 
 namespace godot {
 
@@ -45,6 +46,7 @@ private:
     std::vector<HighScoreEntry> highscores;
     
     uint64_t audio_player_id = 0;
+    godot::Ref<godot::AudioEffectCapture> audio_capture;
 
     struct DynamicLabel {
         uint64_t label_id = 0;

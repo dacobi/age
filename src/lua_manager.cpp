@@ -11,6 +11,8 @@
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/sub_viewport.hpp>
 #include <godot_cpp/classes/sub_viewport_container.hpp>
+#include <godot_cpp/classes/viewport_texture.hpp>
+#include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/display_server.hpp>
 #include "lua_manager.h"
@@ -26,6 +28,7 @@
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
+#include <godot_cpp/classes/audio_server.hpp>
 #include <imgui.h>
 
 using namespace godot;
@@ -920,6 +923,11 @@ void LuaManager::_maximize_window_deferred() {
 void LuaManager::_ready() {
     UtilityFunctions::print("LuaManager is ready!");
     
+    godot::AudioServer* as = godot::AudioServer::get_singleton();
+    int master_idx = as->get_bus_index("Master");
+    audio_capture.instantiate();
+    as->add_bus_effect(master_idx, audio_capture);
+    
     // Sync ImGui context from imgui-godot GDExtension
     godot::Object* imgui_gd = godot::Engine::get_singleton()->get_singleton("ImGuiGD");
     if (imgui_gd) {
@@ -1278,6 +1286,18 @@ void LuaManager::_process(double delta) {
     
     if (lua_engine) {
         lua_engine->renderLuaImGui();
+        
+        if (lua_engine->recorder.isRecording()) {
+            if (lua_engine->recorder.canAcceptVideoFrame()) {
+                godot::Ref<godot::Image> img = get_viewport()->get_texture()->get_image();
+                if (img.is_valid()) {
+                    if (img->get_format() != godot::Image::FORMAT_RGBA8) {
+                        img->convert(godot::Image::FORMAT_RGBA8);
+                    }
+                    lua_engine->recorder.pushVideoFrame(img->get_data().ptr(), img->get_width() * 4);
+                }
+            }
+        } // Audio is handled by pulse_thread in Recorder
     }
 
     for (auto it = dynamic_labels.begin(); it != dynamic_labels.end(); ) {

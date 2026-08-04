@@ -5,8 +5,9 @@
 #include <string>
 #include <functional>
 #include <thread>
-#include <atomic>
+#include <vector>
 #include <mutex>
+#include "recorder.h"
 #include <queue>
 #include <condition_variable>
 #include <memory>
@@ -321,6 +322,12 @@ private:
     };
 
     std::vector<ImGuiWindowDef> lua_imgui_windows;
+
+public:
+    Recorder recorder;
+    bool show_recorder = false;
+    char record_path_buf[1024] = "output.ogv";
+private:
     std::string active_window_title;
     std::mutex imgui_mutex;
 

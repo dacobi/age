@@ -1,0 +1,9 @@
+[configuration]
+
+entry_symbol = "aga_library_init"
+compatibility_minimum = 4.3
+
+[libraries]
+
+linux.debug.x86_64 = "res://bin/libaga.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "res://bin/libaga.linux.template_release.x86_64.so"
