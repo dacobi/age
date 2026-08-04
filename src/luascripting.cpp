@@ -7,6 +7,9 @@
 #include <filesystem>
 #include <cmath>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/display_server.hpp>
+#include <godot_cpp/classes/audio_server.hpp>
+#include <godot_cpp/classes/input.hpp>
 
 static std::mutex global_lua_mutex;
 
@@ -1003,7 +1006,6 @@ int LuaScripting::lua_ioMouseRelease(lua_State* L) {
     return 0;
 }
 
-#include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/global_constants.hpp>
 
 void LuaScripting::setMouseMotion(float dx, float dy) {
@@ -1890,6 +1892,35 @@ void LuaScripting::renderLuaImGui() {
         ImGui::End();
     }
     
+    static bool f2_was_pressed = false;
+    bool f2_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F2);
+    if (f2_is_pressed && !f2_was_pressed) {
+        show_recorder = !show_recorder;
+    }
+    f2_was_pressed = f2_is_pressed;
+
+    if (show_recorder) {
+        ImGui::Begin("Record", &show_recorder);
+        ImGui::InputText("File", record_path_buf, sizeof(record_path_buf));
+        if (recorder.isRecording()) {
+            int mins = recorder.getFrameCount() / (60 * 60);
+            int secs = (recorder.getFrameCount() / 60) % 60;
+            ImGui::Text("REC  %02d:%02d  (%d frames)", mins, secs, recorder.getFrameCount());
+            if (ImGui::Button("Stop Recording")) {
+                recorder.stop();
+            }
+        } else {
+            if (ImGui::Button("Start Recording")) {
+                int w = godot::DisplayServer::get_singleton()->window_get_size().x;
+                int h = godot::DisplayServer::get_singleton()->window_get_size().y;
+                int audio_rate = godot::AudioServer::get_singleton()->get_mix_rate();
+                recorder.start(w, h, 60, audio_rate, 2, record_path_buf);
+            }
+        }
+        ImGui::End();
+    }
+    
+
     static bool show_gamepad_diagnostic = false;
     static bool f3_was_pressed = false;
     bool f3_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F3);

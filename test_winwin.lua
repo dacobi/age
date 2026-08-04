@@ -1,0 +1,1 @@
+luaClearAndRun("winwin.lua")
