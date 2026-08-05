@@ -650,7 +650,7 @@ func _physics_process(delta: float) -> void:
 				skid_marks[i].look_at(skid_marks[i].global_position + global_transform.basis.z)
 				
 				var is_skidding = false
-				if hand_break or w.grip_factor > 0.4:
+				if (hand_break or w.grip_factor > 0.4) and forward_speed > 2.0:
 					is_skidding = true
 				if w.is_braking and forward_speed > 10.0:
 					is_skidding = true
@@ -781,15 +781,15 @@ func _physics_process(delta: float) -> void:
 	var target_rpm = 1000.0
 	if in_countdown:
 		# Auto-clutch disengaged during countdown: rev freely up to 9000 RPM!
-		target_rpm = 1000.0 + accel_input * 8000.0
+		target_rpm = 1000.0 + final_accel * 8000.0
 		engine_rpm = lerp(engine_rpm, target_rpm, 15.0 * delta)
 	elif in_standing_burnout:
 		# Standing burnout: rev freely up to 9000 RPM while tires smoke!
-		target_rpm = 1000.0 + accel_input * 8000.0
+		target_rpm = 1000.0 + final_accel * 8000.0
 		engine_rpm = lerp(engine_rpm, target_rpm, 15.0 * delta)
-	elif manual_transmission and current_gear_sim == -2 and accel_input > 0.05:
+	elif manual_transmission and current_gear_sim == -2 and final_accel > 0.05:
 		# Rev freely in Neutral!
-		target_rpm = 1000.0 + accel_input * 8000.0
+		target_rpm = 1000.0 + final_accel * 8000.0
 		engine_rpm = lerp(engine_rpm, target_rpm, 15.0 * delta)
 	elif brake_timer > 0.5 and not manual_transmission:
 		# Clutch out and drop to idle immediately while braking in auto mode
@@ -869,6 +869,9 @@ func _physics_process(delta: float) -> void:
 			var rear_slip = (slip_RL + slip_RR) / 2.0
 			var current_slip = clampf(rear_slip, 0.0, 1.0)
 			
+			if forward_speed < 2.0:
+				current_slip = 0.0
+				
 			if in_standing_burnout:
 				current_slip = 1.0
 				
