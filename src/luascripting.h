@@ -327,7 +327,9 @@ public:
     Recorder recorder;
     bool show_recorder = false;
     char record_path_buf[1024] = "output.ogv";
-    int record_max_frames = 0;
+    int record_max_seconds = 0;
+    bool record_use_max = false;
+    bool record_hide_window = false;
 private:
     std::string active_window_title;
     std::mutex imgui_mutex;

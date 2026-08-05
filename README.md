@@ -124,7 +124,7 @@ The following functions are exposed from `src/luascripting.cpp` and available gl
 - `setAudioVolume(vol)`: Sets the volume (0 to 100).
 - `startRecord(path)`: Starts video recording to `path`.
 - `stopRecord([wait_frames])`: Stops video recording.
-- `setRecordMax(max_frames)`: Sets the maximum number of frames to record.
+- `setRecordMax(max_seconds)`: Sets the maximum number of seconds to record.
 
 ### ImGui Integration
 - `imguiBegin(title)`: Begins a new ImGui window with `title`.
