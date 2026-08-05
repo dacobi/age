@@ -7,6 +7,8 @@ print("          Left/Right arrow keys to Steer.")
 print("Press ESC to exit.\n")
 
 setAudioVolume(50)
+--setRecordMax(30)
+--startRecord("area.ogv")
 
 -- Get the supercar node pointer
 godotSelectRoot()

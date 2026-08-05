@@ -943,26 +943,29 @@ func _process(delta):
 			) * orbit_dist
 			camera_node.global_position = supercar.global_position + offset
 			camera_node.look_at(supercar.global_position, Vector3.UP)
-		else:
-			current_cam_yaw = lerp(current_cam_yaw, -cam_rx * 2.0, 5.0 * delta)
-			current_cam_pitch = lerp(current_cam_pitch, cam_ry * 1.0, 5.0 * delta)
-			
-			var forward = supercar.global_transform.basis.z.normalized()
-			var up = Vector3.UP
-			
-			var rotated_forward = forward.rotated(up, current_cam_yaw)
-			var offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
-			var target_pos = supercar.global_position + offset
-			
-			camera_node.global_position = camera_node.global_position.lerp(target_pos, 10.0 * delta)
-			var look_target = supercar.global_position + Vector3(0, 1.5, 0) + supercar.linear_velocity * 0.1
-			var target_transform = camera_node.global_transform.looking_at(look_target, Vector3.UP)
-			camera_node.global_transform = camera_node.global_transform.interpolate_with(target_transform, 15.0 * delta)
-			
-			# Dynamic FOV warp effect based on physical speed
-			var speed = supercar.linear_velocity.length()
-			var target_fov = lerp(75.0, 120.0, clamp(speed / 100.0, 0.0, 1.0))
-			camera_node.fov = lerp(camera_node.fov, target_fov, 4.0 * delta)
+
+func _physics_process(delta):
+	var camera_node = get_node_or_null("Camera3D")
+	if camera_node and supercar and not in_edit_mode and not is_paused:
+		current_cam_yaw = lerp(current_cam_yaw, -cam_rx * 2.0, 5.0 * delta)
+		current_cam_pitch = lerp(current_cam_pitch, cam_ry * 1.0, 5.0 * delta)
+		
+		var forward = supercar.global_transform.basis.z.normalized()
+		var up = Vector3.UP
+		
+		var rotated_forward = forward.rotated(up, current_cam_yaw)
+		var offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
+		var target_pos = supercar.global_position + offset
+		
+		camera_node.global_position = camera_node.global_position.lerp(target_pos, 10.0 * delta)
+		var look_target = supercar.global_position + Vector3(0, 1.5, 0) + supercar.linear_velocity * 0.1
+		var target_transform = camera_node.global_transform.looking_at(look_target, Vector3.UP)
+		camera_node.global_transform = camera_node.global_transform.interpolate_with(target_transform, 15.0 * delta)
+		
+		# Dynamic FOV warp effect based on physical speed
+		var speed = supercar.linear_velocity.length()
+		var target_fov = lerp(75.0, 120.0, clamp(speed / 100.0, 0.0, 1.0))
+		camera_node.fov = lerp(camera_node.fov, target_fov, 4.0 * delta)
 
 func update_active_ramp():
 	if not active_ramp: return
