@@ -771,9 +771,12 @@ int LuaScripting::lua_setAudioVolume(lua_State* L) {
 
 int LuaScripting::lua_startRecord(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1)) {
+    if (self && lua_isstring(L, 1)) {
         std::string path = lua_tostring(L, 1);
-        if (self && self->recordFunc) self->recordFunc(0, path, 0);
+        int w = godot::DisplayServer::get_singleton()->window_get_size().x;
+        int h = godot::DisplayServer::get_singleton()->window_get_size().y;
+        int audio_rate = godot::AudioServer::get_singleton()->get_mix_rate();
+        self->recorder.start(w, h, 60, audio_rate, 2, path);
     }
     return 0;
 }
@@ -782,7 +785,17 @@ int LuaScripting::lua_stopRecord(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     int wait = 0;
     if (lua_isinteger(L, 1)) wait = (int)lua_tointeger(L, 1);
-    if (self && self->recordFunc) self->recordFunc(1, "", wait);
+    if (self) {
+        if (wait > 0 && self->recorder.isRecording()) {
+            int target_frame = self->recorder.getFrameCount() + wait;
+            while (self->recorder.getFrameCount() < target_frame && self->recorder.isRecording() && self->systemRunning) {
+                lua_Debug ar;
+                lua_hook(L, &ar);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        }
+        self->recorder.stop();
+    }
     return 0;
 }
 
@@ -790,7 +803,9 @@ int LuaScripting::lua_setRecordMax(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (lua_isinteger(L, 1)) {
         int max = (int)lua_tointeger(L, 1);
-        if (self && self->recordFunc) self->recordFunc(2, "", max);
+        if (self) {
+            self->record_max_frames = max;
+        }
     }
     return 0;
 }
@@ -1898,6 +1913,11 @@ void LuaScripting::renderLuaImGui() {
         show_recorder = !show_recorder;
     }
     f2_was_pressed = f2_is_pressed;
+    
+    if (recorder.isRecording() && record_max_frames > 0 && recorder.getFrameCount() >= record_max_frames) {
+        recorder.stop();
+        record_max_frames = 0;
+    }
 
     if (show_recorder) {
         ImGui::Begin("Record", &show_recorder);
