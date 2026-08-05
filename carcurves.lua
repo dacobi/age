@@ -8,8 +8,8 @@ print("          Left/Right arrow keys to Steer.")
 print("Press ESC to exit.\n")
 
 setAudioVolume(50)
-setRecordMax(30)
-startRecord("track.ogv")
+-- setRecordMax(30)
+-- startRecord("track.ogv")
 
 
 -- Get the supercar node pointer
@@ -142,7 +142,7 @@ while true do
 		godotSetProperty("arrow_left_right", arrow_left_right, track)
 	end
 
-	delay(10) -- 100 FPS input update loop
+	delay(1) -- High-frequency input update loop
 end
 
 appQuit()

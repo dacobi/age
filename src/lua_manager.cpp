@@ -29,6 +29,9 @@
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
 #include <godot_cpp/classes/audio_server.hpp>
+#include <godot_cpp/classes/video_stream_player.hpp>
+#include <godot_cpp/classes/video_stream.hpp>
+#include <godot_cpp/classes/script.hpp>
 #include <imgui.h>
 
 using namespace godot;
@@ -40,6 +43,11 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
             if (container) {
                 container->set_modulate(idata.hover_color);
+                for (int i = 0; i < container->get_child_count(); ++i) {
+                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
+                        vp->set_paused(false);
+                    }
+                }
             }
         }
     }
@@ -52,6 +60,11 @@ void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
             if (container) {
                 container->set_modulate(idata.normal_color);
+                for (int i = 0; i < container->get_child_count(); ++i) {
+                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
+                        vp->set_paused(true);
+                    }
+                }
             }
         }
     }
@@ -63,9 +76,7 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
         Ref<InputEventMouseButton> mb = event;
         if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == MouseButton::MOUSE_BUTTON_LEFT) {
             if (!idata.clicked_script.is_empty()) {
-                if (lua_engine) {
-                    lua_engine->runScript(idata.clicked_script.utf8().get_data());
-                }
+                call_deferred("_clear_and_run_deferred", idata.clicked_script);
             }
         }
     }
@@ -222,6 +233,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     String s = syntax;
     Vector2 pos(0, 0);
     String image_path = "";
+    String video_path = "";
     bool is_stencil = false;
     String scene_path = "";
     String text = "";
@@ -286,6 +298,9 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             int colon = tag.find(":");
             image_path = tag.substr(colon + 1).strip_edges();
             if (tag.begins_with("stencil:")) is_stencil = true;
+        } else if (tag.begins_with("video:")) {
+            int colon = tag.find(":");
+            video_path = tag.substr(colon + 1).strip_edges();
         } else if (tag.begins_with("ttscn:")) {
             scene_path = tag.substr(6).strip_edges();
         } else if (tag.begins_with("rect:")) {
@@ -347,6 +362,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             ttl_val = tag.substr(4).to_float() / 1000.0f;
         } else if (tag == "lf") {
             text += "\n";
+        } else {
+            text += "[" + tag + "]";
         }
         
         current_idx = end + 1;
@@ -427,6 +444,26 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         }
     }
     
+    VideoStreamPlayer* video_player = nullptr;
+    if (!video_path.is_empty()) {
+        if (!video_path.begins_with("res://") && !video_path.begins_with("user://")) video_path = "res://" + video_path;
+        video_player = memnew(VideoStreamPlayer);
+        Ref<VideoStream> vstream = ResourceLoader::get_singleton()->load(video_path);
+        if (vstream.is_valid()) {
+            video_player->set_stream(vstream);
+            video_player->set_expand(true);
+            video_player->set_autoplay(true);
+            if (has_hover) {
+                Ref<Script> pre_scr = ResourceLoader::get_singleton()->load("res://preload_video.gd");
+                if (pre_scr.is_valid()) video_player->set_script(pre_scr);
+            }
+            if (rect.x > 0 && rect.y > 0) {
+                video_player->set_custom_minimum_size(rect);
+                video_player->set_size(rect);
+            }
+        }
+    }
+    
     RichTextLabel* label = nullptr;
     if (!text.is_empty() && !is_hscore && !is_addhscore) {
         label = memnew(RichTextLabel);
@@ -460,6 +497,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         container->add_child(tex_rect);
         interactive_control = tex_rect;
         visual_item = tex_rect;
+    } else if (video_player) {
+        container->add_child(video_player);
+        interactive_control = video_player;
+        visual_item = video_player;
     } else if (is_hscore) {
         PanelContainer* pc = memnew(PanelContainer);
         Ref<StyleBoxFlat> sb = memnew(StyleBoxFlat);
@@ -787,7 +828,14 @@ void LuaManager::_clear_and_run_deferred(const String& filename) {
         Object* obj = ObjectDB::get_instance(layer_id);
         if (obj) {
             Node* node = Object::cast_to<Node>(obj);
-            if (node) node->queue_free();
+            if (node) {
+                TypedArray<Node> vps = node->find_children("*", "VideoStreamPlayer");
+                for (int i = 0; i < vps.size(); ++i) {
+                    VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(vps[i]);
+                    if (vp) vp->stop();
+                }
+                node->queue_free();
+            }
         }
     }
     bouncer_layers.clear();
