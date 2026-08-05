@@ -802,9 +802,10 @@ int LuaScripting::lua_stopRecord(lua_State* L) {
 int LuaScripting::lua_setRecordMax(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (lua_isinteger(L, 1)) {
-        int max = (int)lua_tointeger(L, 1);
+        int max_sec = (int)lua_tointeger(L, 1);
         if (self) {
-            self->record_max_frames = max;
+            self->record_max_seconds = max_sec;
+            self->record_use_max = (max_sec > 0);
         }
     }
     return 0;
@@ -1914,14 +1915,30 @@ void LuaScripting::renderLuaImGui() {
     }
     f2_was_pressed = f2_is_pressed;
     
-    if (recorder.isRecording() && record_max_frames > 0 && recorder.getFrameCount() >= record_max_frames) {
-        recorder.stop();
-        record_max_frames = 0;
+    static bool was_recording_last_frame = false;
+
+    if (recorder.isRecording() && record_use_max && record_max_seconds > 0) {
+        if (recorder.getFrameCount() >= record_max_seconds * 60) {
+            recorder.stop();
+        }
+    }
+
+    bool current_is_recording = recorder.isRecording();
+    
+    if (was_recording_last_frame && !current_is_recording) {
+        show_recorder = true;
     }
 
     if (show_recorder) {
         ImGui::Begin("Record", &show_recorder);
         ImGui::InputText("File", record_path_buf, sizeof(record_path_buf));
+        
+        ImGui::Checkbox("Use Max Record Time", &record_use_max);
+        if (record_use_max) {
+            ImGui::SliderInt("Max (Seconds)", &record_max_seconds, 1, 600);
+        }
+        ImGui::Checkbox("Hide Window When Recording", &record_hide_window);
+
         if (recorder.isRecording()) {
             int mins = recorder.getFrameCount() / (60 * 60);
             int secs = (recorder.getFrameCount() / 60) % 60;
@@ -1935,10 +1952,15 @@ void LuaScripting::renderLuaImGui() {
                 int h = godot::DisplayServer::get_singleton()->window_get_size().y;
                 int audio_rate = godot::AudioServer::get_singleton()->get_mix_rate();
                 recorder.start(w, h, 60, audio_rate, 2, record_path_buf);
+                if (record_hide_window) {
+                    show_recorder = false;
+                }
             }
         }
         ImGui::End();
     }
+    
+    was_recording_last_frame = recorder.isRecording();
     
 
     static bool show_gamepad_diagnostic = false;

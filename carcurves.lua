@@ -1,5 +1,5 @@
-setBG("[tscn:lemans_track.tscn]")
-selectGodot(-1)
+godotLoadScene("lemans_track.tscn")
+
 delay(200) -- give it a moment to load
 
 print("\n=== MegaRacer Synthwave Driving Demo Loaded ===")
@@ -8,6 +8,9 @@ print("          Left/Right arrow keys to Steer.")
 print("Press ESC to exit.\n")
 
 setAudioVolume(50)
+setRecordMax(30)
+startRecord("track.ogv")
+
 
 -- Get the supercar node pointer
 godotSelectRoot()
