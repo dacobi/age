@@ -32,8 +32,8 @@ local orbit_dist = 12.0
 
 local frame_count = 0
 
-setRecordMax(30)
-startRecord("track.ogv")
+--setRecordMax(30)
+--startRecord("track.ogv")
 
 
 while true do
