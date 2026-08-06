@@ -46,6 +46,7 @@ var acceleration := 600.0
 var max_speed := 58.33
 var slider_max_speed_kmh := 210.0
 var nitro_input := 0.0
+var prev_nitro_input := 0.0
 var nitro_seconds := 0.0
 var max_nitro_seconds := 100.0
 var nitro_active := false
@@ -458,6 +459,32 @@ func _physics_process(delta: float) -> void:
 	# Apply a counter-torque strictly along the car's local Up vector
 	var counter_torque = -global_transform.basis.y * (local_yaw_rate * mass * yaw_damping)
 	apply_torque(counter_torque)
+	
+	# Arcade Nitro Traction Feature (Slide Recovery)
+	if nitro_input > 0.5 and prev_nitro_input <= 0.5:
+		if nitro_seconds >= 50.0:
+			var forward_dir = -global_transform.basis.z.normalized()
+			var vel = linear_velocity
+			var horiz_vel = Vector3(vel.x, 0, vel.z)
+			var horiz_forward = Vector3(forward_dir.x, 0, forward_dir.z).normalized()
+			
+			if horiz_vel.length() > 5.0:
+				var angle_rad = horiz_forward.angle_to(horiz_vel.normalized())
+				var angle_deg = rad_to_deg(angle_rad)
+				
+				if angle_deg > 2.0:
+					var cost = angle_deg / 4.0
+					nitro_seconds -= cost
+					
+					var new_vel = horiz_forward * horiz_vel.length()
+					new_vel.y = vel.y
+					linear_velocity = new_vel
+					
+					var local_angular = global_transform.basis.inverse() * angular_velocity
+					local_angular.y = 0.0 
+					angular_velocity = global_transform.basis * local_angular
+
+	prev_nitro_input = nitro_input
 	
 	# Handle nitrous system
 	if nitro_input > 0.5 and nitro_seconds > 0.01:
