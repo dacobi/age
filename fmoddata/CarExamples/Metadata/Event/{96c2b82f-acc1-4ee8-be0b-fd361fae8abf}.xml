@@ -155,10 +155,10 @@
 	</object>
 	<object class="SingleSound" id="{84cc30bb-c376-4498-9828-427b944740ae}">
 		<property name="length">
-			<value>3.6000000000000005</value>
+			<value>2.5799999999999996</value>
 		</property>
 		<property name="timelockedOffset">
-			<value>2.2000000000000002</value>
+			<value>3.120000000000001</value>
 		</property>
 		<property name="looping">
 			<value>true</value>
@@ -204,7 +204,10 @@
 	</object>
 	<object class="SingleSound" id="{33ca71ab-36e7-44d7-854c-27172f355f52}">
 		<property name="length">
-			<value>4.3624489795918366</value>
+			<value>3.0800000000000001</value>
+		</property>
+		<property name="timelockedOffset">
+			<value>0.78000000000000003</value>
 		</property>
 		<property name="looping">
 			<value>true</value>
