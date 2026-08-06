@@ -28,6 +28,8 @@ private:
         uint64_t object_id;
         std::shared_ptr<LuaSyncData> sd;
     };
+    String pending_scene_load;
+    std::shared_ptr<LuaSyncData> pending_scene_sd;
     
     std::mutex cmd_mutex;
     std::vector<GodotCommand> cmd_queue;
@@ -82,6 +84,7 @@ private:
     void _set_bouncer_param_deferred(int index, String name, double value);
     void _set_bg_deferred(const String& syntax);
     void _clear_and_run_deferred(const String& filename);
+    void _do_clear_and_run(const String& filename);
     bool _play_audio_deferred(const String& filename);
     void _play_audio_dynamic_deferred(const String& filename);
     void _set_audio_volume_deferred(int vol);
@@ -96,6 +99,12 @@ private:
     void _on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id);
     void _on_addhscore_submitted(String text, int score, int level, uint64_t bouncer_id);
 
+    bool is_preloading() const { return !videos_to_preload.empty(); }
+    bool is_loading_engine() const { return !videos_to_preload.empty() || !cmd_queue.empty() || !pending_scene_load.is_empty(); }
+    
+    float get_loading_progress();
+    void finish_gdscript_load();
+    
 protected:
     static void _bind_methods();
 
