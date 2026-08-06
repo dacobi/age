@@ -47,6 +47,7 @@ var max_speed := 58.33
 var slider_max_speed_kmh := 210.0
 var nitro_input := 0.0
 var prev_nitro_input := 0.0
+var steer_dampening_timer := 0.0
 var nitro_seconds := 0.0
 var max_nitro_seconds := 100.0
 var nitro_active := false
@@ -483,8 +484,14 @@ func _physics_process(delta: float) -> void:
 					var local_angular = global_transform.basis.inverse() * angular_velocity
 					local_angular.y = 0.0 
 					angular_velocity = global_transform.basis * local_angular
+					
+					# Start steering dampening to prevent immediate snap-oversteer
+					steer_dampening_timer = 1.0
 
 	prev_nitro_input = nitro_input
+	
+	if steer_dampening_timer > 0.0:
+		steer_dampening_timer = maxf(0.0, steer_dampening_timer - delta)
 	
 	# Handle nitrous system
 	if nitro_input > 0.5 and nitro_seconds > 0.01:
@@ -666,6 +673,10 @@ func _physics_process(delta: float) -> void:
 			var dynamic_max_steer = maxf(racing_steer, drift_steer)
 			
 			var target_steer = -float(steer_input) * dynamic_max_steer
+			
+			if steer_dampening_timer > 0.0:
+				target_steer *= lerpf(1.0, 0.1, steer_dampening_timer)
+				
 			w.rotation.y = move_toward(w.rotation.y, target_steer, tire_turn_speed * delta)
 		
 		if w.is_colliding():
