@@ -138,6 +138,26 @@ void LuaManager::_quit_deferred() {
     get_tree()->quit();
 }
 
+float LuaManager::get_loading_progress() {
+    if (!pending_scene_load.is_empty()) {
+        Array progress;
+        ResourceLoader::ThreadLoadStatus status = ResourceLoader::get_singleton()->load_threaded_get_status(pending_scene_load, progress);
+        if ((status == ResourceLoader::THREAD_LOAD_IN_PROGRESS || status == ResourceLoader::THREAD_LOAD_LOADED) && progress.size() > 0) {
+            return (float)progress[0];
+        }
+    }
+    return 0.0f;
+}
+
+void LuaManager::finish_gdscript_load() {
+    if (pending_scene_sd) {
+        std::unique_lock<std::mutex> lock(pending_scene_sd->mtx);
+        pending_scene_sd->done = true;
+        pending_scene_sd->cv.notify_one();
+        pending_scene_sd = nullptr;
+    }
+}
+
 void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_entered", "control_id"), &LuaManager::_on_bouncer_mouse_entered);
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
@@ -148,6 +168,7 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_set_bouncer_param_deferred", "index", "name", "value"), &LuaManager::_set_bouncer_param_deferred);
     ClassDB::bind_method(D_METHOD("_set_bg_deferred", "syntax"), &LuaManager::_set_bg_deferred);
     ClassDB::bind_method(D_METHOD("_clear_and_run_deferred", "filename"), &LuaManager::_clear_and_run_deferred);
+    ClassDB::bind_method(D_METHOD("_do_clear_and_run", "filename"), &LuaManager::_do_clear_and_run);
     ClassDB::bind_method(D_METHOD("_play_audio_deferred", "filename"), &LuaManager::_play_audio_deferred);
     ClassDB::bind_method(D_METHOD("_play_audio_dynamic_deferred", "filename"), &LuaManager::_play_audio_dynamic_deferred);
     ClassDB::bind_method(D_METHOD("_set_audio_volume_deferred", "vol"), &LuaManager::_set_audio_volume_deferred);
@@ -157,8 +178,13 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_maximize_window_deferred"), &LuaManager::_maximize_window_deferred);
     ClassDB::bind_method(D_METHOD("_quit_deferred"), &LuaManager::_quit_deferred);
     ClassDB::bind_method(D_METHOD("_on_dynamic_signal", "func_name"), &LuaManager::_on_dynamic_signal);
-    ClassDB::bind_method(D_METHOD("run_script", "filename"), &LuaManager::run_script);
-    ClassDB::bind_method(D_METHOD("set_global_int", "name", "val"), &LuaManager::set_global_int);
+    
+    ClassDB::bind_method(D_METHOD("run_script", "script_name"), &LuaManager::run_script);
+    ClassDB::bind_method(D_METHOD("is_preloading"), &LuaManager::is_preloading);
+    ClassDB::bind_method(D_METHOD("is_loading_engine"), &LuaManager::is_loading_engine);
+    ClassDB::bind_method(D_METHOD("get_loading_progress"), &LuaManager::get_loading_progress);
+    ClassDB::bind_method(D_METHOD("finish_gdscript_load"), &LuaManager::finish_gdscript_load);
+
     ClassDB::bind_method(D_METHOD("get_global_int", "name"), &LuaManager::get_global_int);
     ClassDB::bind_method(D_METHOD("set_global_float", "name", "val"), &LuaManager::set_global_float);
     ClassDB::bind_method(D_METHOD("get_global_float", "name"), &LuaManager::get_global_float);
@@ -808,6 +834,15 @@ void LuaManager::_set_bg_deferred(const String& syntax) {
 }
 
 void LuaManager::_clear_and_run_deferred(const String& filename) {
+    Node* loading_screen = get_tree()->get_root()->get_node_or_null("LoadingScreen");
+    if (loading_screen) {
+        loading_screen->call("start_loading", filename);
+    } else {
+        _do_clear_and_run(filename);
+    }
+}
+
+void LuaManager::_do_clear_and_run(const String& filename) {
     for (uint64_t id : bouncers) {
         Object* obj = ObjectDB::get_instance(id);
         if (obj) {
@@ -1197,26 +1232,68 @@ void LuaManager::_process(double delta) {
         ++it;
     }
 
-    // Process Godot Command Queue
-    std::vector<GodotCommand> current_queue;
-    {
-        std::lock_guard<std::mutex> lock(cmd_mutex);
-        current_queue = cmd_queue;
-        cmd_queue.clear();
+    if (!pending_scene_load.is_empty()) {
+        ResourceLoader::ThreadLoadStatus status = ResourceLoader::get_singleton()->load_threaded_get_status(pending_scene_load);
+        if (status == ResourceLoader::THREAD_LOAD_IN_PROGRESS) {
+            // Still loading, keep waiting
+        } else if (status == ResourceLoader::THREAD_LOAD_LOADED) {
+            Ref<PackedScene> scn = ResourceLoader::get_singleton()->load_threaded_get(pending_scene_load);
+            if (scn.is_valid()) {
+                Error err = get_tree()->change_scene_to_packed(scn);
+                if (err != OK) {
+                    UtilityFunctions::printerr("LuaManager failed to change scene asynchronously. Error code: ", err);
+                }
+            }
+            pending_scene_load = "";
+            if (pending_scene_sd) {
+                std::unique_lock<std::mutex> lock(pending_scene_sd->mtx);
+                pending_scene_sd->done = true;
+                pending_scene_sd->cv.notify_one();
+                pending_scene_sd = nullptr;
+            }
+        } else {
+            UtilityFunctions::printerr("LuaManager failed to load scene asynchronously: ", pending_scene_load);
+            pending_scene_load = "";
+            if (pending_scene_sd) {
+                std::unique_lock<std::mutex> lock(pending_scene_sd->mtx);
+                pending_scene_sd->done = true;
+                pending_scene_sd->cv.notify_one();
+                pending_scene_sd = nullptr;
+            }
+        }
     }
     
-    for (const auto& cmd : current_queue) {
+    if (!pending_scene_load.is_empty()) {
+        return; // Pause command execution until the scene finishes loading!
+    }
+
+    // Process Godot Command Queue one at a time so we can pause mid-execution
+    while (true) {
+        GodotCommand cmd;
+        {
+            std::lock_guard<std::mutex> lock(cmd_mutex);
+            if (cmd_queue.empty()) break;
+            cmd = cmd_queue.front();
+            cmd_queue.erase(cmd_queue.begin());
+        }
+        
         if (!cmd.sd) continue;
         
         switch (cmd.cmd) {
             case LuaScripting::GCMD_LOAD_SCENE: {
                 String full_path = "res://" + cmd.name;
-                UtilityFunctions::print("LuaManager loading scene natively: ", full_path);
-                Error err = get_tree()->change_scene_to_file(full_path);
-                if (err != OK) {
-                    UtilityFunctions::printerr("LuaManager failed to load scene: ", full_path, " Error code: ", err);
+                UtilityFunctions::print("LuaManager delegating scene load to GDScript (Gemini Web approach): ", full_path);
+                
+                Node* ls = get_tree()->get_root()->get_node_or_null("LoadingScreen");
+                if (ls) {
+                    ls->call("switch_to_level", full_path);
+                } else {
+                    UtilityFunctions::printerr("LoadingScreen autoload not found!");
                 }
-                break;
+                
+                // Still need to unblock Lua thread, but we will let GDScript do it when it's done!
+                pending_scene_sd = cmd.sd;
+                return; // Stop processing further commands until this finishes!
             }
             case LuaScripting::GCMD_SELECT_ROOT: {
                 cmd.sd->object_id_res = get_tree()->get_root()->get_instance_id();
