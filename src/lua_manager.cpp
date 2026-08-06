@@ -45,7 +45,8 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
                 container->set_modulate(idata.hover_color);
                 for (int i = 0; i < container->get_child_count(); ++i) {
                     if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                        vp->set_paused(false);
+                        vp->set_process_mode(Node::PROCESS_MODE_INHERIT);
+                        vp->set_volume_db(0.0f);
                     }
                 }
             }
@@ -62,7 +63,8 @@ void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
                 container->set_modulate(idata.normal_color);
                 for (int i = 0; i < container->get_child_count(); ++i) {
                     if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                        vp->set_paused(true);
+                        vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
+                        vp->set_volume_db(-80.0f);
                     }
                 }
             }
@@ -454,8 +456,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             video_player->set_expand(true);
             video_player->set_autoplay(true);
             if (has_hover) {
-                Ref<Script> pre_scr = ResourceLoader::get_singleton()->load("res://preload_video.gd");
-                if (pre_scr.is_valid()) video_player->set_script(pre_scr);
+                video_player->set_volume_db(-80.0f);
+                videos_to_preload.push_back(video_player->get_instance_id());
             }
             if (rect.x > 0 && rect.y > 0) {
                 video_player->set_custom_minimum_size(rect);
@@ -840,6 +842,7 @@ void LuaManager::_clear_and_run_deferred(const String& filename) {
     }
     bouncer_layers.clear();
     interactive_bouncers.clear();
+    videos_to_preload.clear();
     
     if (bg_layer_id != 0) {
         Object* obj = ObjectDB::get_instance(bg_layer_id);
@@ -970,6 +973,7 @@ void LuaManager::_maximize_window_deferred() {
 
 void LuaManager::_ready() {
     UtilityFunctions::print("LuaManager is ready!");
+    set_process(true);
     
     godot::AudioServer* as = godot::AudioServer::get_singleton();
     int master_idx = as->get_bus_index("Master");
@@ -1172,6 +1176,27 @@ void LuaManager::run_script(const String& filename) {
 }
 
 void LuaManager::_process(double delta) {
+    for (auto it = videos_to_preload.begin(); it != videos_to_preload.end(); ) {
+        Object* obj = ObjectDB::get_instance(*it);
+        if (obj) {
+            VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(obj);
+            if (vp && vp->is_playing() && vp->get_process_mode() != Node::PROCESS_MODE_DISABLED) {
+                if (vp->get_stream_position() > 0.05) {
+                    vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
+                    it = videos_to_preload.erase(it);
+                    continue;
+                }
+            } else if (!vp) {
+                it = videos_to_preload.erase(it);
+                continue;
+            }
+        } else {
+            it = videos_to_preload.erase(it);
+            continue;
+        }
+        ++it;
+    }
+
     // Process Godot Command Queue
     std::vector<GodotCommand> current_queue;
     {

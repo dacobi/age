@@ -35,6 +35,10 @@ local last_mouse_wheel = 0.0
 
 local frame_count = 0
 
+--setRecordMax(30)
+--startRecord("area.ogv")
+
+
 while true do
 	-- Draw Car Physics dialog if show_car_physics_ui is enabled
 	renderCarPhysicsUI()

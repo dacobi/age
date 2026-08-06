@@ -32,6 +32,10 @@ local orbit_dist = 12.0
 
 local frame_count = 0
 
+setRecordMax(30)
+startRecord("track.ogv")
+
+
 while true do
 	-- Draw Car Physics dialog if show_car_physics_ui is enabled
 	renderCarPhysicsUI()
