@@ -113,8 +113,8 @@ func _draw() -> void:
 	var nitro_ratio = clampf(nitro_sec / max_nitro, 0.0, 1.0)
 	if nitro_ratio > 0.0001:
 		var nitro_end_angle = lerp(PI*0.75, PI*2.25, nitro_ratio)
-		var nitro_col = Color(1.0, 0.5, 0.0) if nitro_active else Color(0.6, 0.1, 0.9)
-		var glow_col = Color(1.0, 0.2, 0.0) if nitro_active else Color(0.8, 0.2, 1.0)
+		var nitro_col = Color(1.0, 0.5, 0.0) if nitro_active else Color(0.4, 0.05, 0.95)
+		var glow_col = Color(1.0, 0.2, 0.0) if nitro_active else Color(0.5, 0.1, 1.0)
 		
 		for w in range(1, 4):
 			draw_arc(center_speed, 105, PI*0.75, nitro_end_angle, 64, Color(glow_col.r, glow_col.g, glow_col.b, 0.3 / w), 10.0 + (w * 3), true)
@@ -133,7 +133,7 @@ func _draw() -> void:
 			nitro_str = "NITRO: " + str(snapped(nitro_sec, 0.1)) + "s"
 		else:
 			nitro_str = "NITRO: " + str(int(ceil(nitro_sec))) + "s"
-	var text_col = Color(1.0, 0.6, 0.1) if nitro_active else Color(0.8, 0.3, 1.0)
+	var text_col = Color(1.0, 0.6, 0.1) if nitro_active else Color(0.5, 0.2, 1.0)
 	draw_string(font, center_speed + Vector2(-35, 65), nitro_str, HORIZONTAL_ALIGNMENT_CENTER, -1, 15, text_col)
 
 	# --- FPS COUNTER ---

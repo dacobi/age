@@ -38,15 +38,15 @@ func _ready() -> void:
 	# 8-faced glass diamond (50% larger octahedron constructed from 4-sided cones)
 	var mat = StandardMaterial3D.new()
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = Color(0.08, 0.0, 0.25, 0.9) # Dark royal purple glass
+	mat.albedo_color = Color(0.05, 0.0, 0.2, 0.9) # Darker royal purple glass
 	mat.roughness = 0.2
 	mat.roughness_texture = ntex
 	mat.normal_enabled = true
 	mat.normal_scale = 0.6
 	mat.normal_texture = ntex
 	mat.emission_enabled = true
-	mat.emission = Color(0.35, 0.02, 0.7) # Deep darker ultraviolet glow
-	mat.emission_energy_multiplier = 6.0 # 3x emission glow (was 2.0)
+	mat.emission = Color(0.1, 0.0, 0.85) # Shifted from magenta (red-heavy) to deep violet/purple
+	mat.emission_energy_multiplier = 4.0 # Slightly lower energy to prevent color blowout
 	
 	var top_cone = CSGCylinder3D.new()
 	top_cone.radius = 1.2 # 50% larger (was 0.8)
@@ -85,9 +85,9 @@ func _ready() -> void:
 	sparkle_mat.scale_max = 0.6
 	
 	var grad = Gradient.new()
-	grad.add_point(0.0, Color(0.45, 0.05, 0.85, 1.0))
-	grad.add_point(0.5, Color(0.2, 0.0, 0.5, 0.9))
-	grad.add_point(1.0, Color(0.05, 0.0, 0.2, 0.0))
+	grad.add_point(0.0, Color(0.2, 0.05, 0.95, 1.0))
+	grad.add_point(0.5, Color(0.1, 0.0, 0.7, 0.9))
+	grad.add_point(1.0, Color(0.05, 0.0, 0.3, 0.0))
 	var gtex = GradientTexture1D.new()
 	gtex.gradient = grad
 	sparkle_mat.color_ramp = gtex

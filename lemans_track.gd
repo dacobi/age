@@ -901,7 +901,7 @@ func _process(delta):
 				beep_player.stream = beep_low_stream
 				beep_player.play()
 		if supercar:
-			supercar.set("nitro_seconds", 100.0)
+			supercar.set("nitro_seconds", 0.0)
 			if is_square:
 				supercar.global_position = Vector3(0.0, 0.5, 0.0)
 				supercar.global_transform.basis = Basis.IDENTITY
