@@ -5,7 +5,7 @@
 			<value>ping</value>
 		</property>
 		<property name="outputFormat">
-			<value>1</value>
+			<value>2</value>
 		</property>
 		<relationship name="folder">
 			<destination>{53fb91f9-f800-4355-b1b0-5a0d20e6cf91}</destination>
@@ -238,8 +238,10 @@
 	<object class="MixerBusEffectChain" id="{cfc03077-182b-4f2a-9873-30c7c10e88ad}">
 		<relationship name="effects">
 			<destination>{c2ea3407-d468-4d54-a640-2bb1e1075664}</destination>
+			<destination>{e8b4e4e4-1234-4321-9876-000000000000}</destination>
 		</relationship>
 	</object>
+	<object class="SpatialiserEffect" id="{e8b4e4e4-1234-4321-9876-000000000000}" />
 	<object class="MixerBusPanner" id="{3b13ba12-5b15-4706-a3a1-27559cf049d6}" />
 	<object class="MixerBusFader" id="{196f7658-b481-42a6-b3df-58281552e569}" />
 	<object class="FadeCurve" id="{92c2b76b-04ac-471b-8ff1-8d1e0d04c3ed}">
