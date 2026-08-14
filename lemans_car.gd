@@ -191,8 +191,8 @@ func _ready():
 	var bumper = AnimatableBody3D.new()
 	bumper.name = "AngledBumper"
 	bumper.sync_to_physics = false
-	bumper.collision_layer = 0 # Disabled for training
-	bumper.collision_mask = 0  
+	bumper.collision_layer = 2 # Car layer
+	bumper.collision_mask = 4  # Prop layer
 	
 	var bumper_area = Area3D.new()
 	bumper_area.collision_layer = 0
@@ -232,8 +232,8 @@ func _ready():
 	var rear_bumper = AnimatableBody3D.new()
 	rear_bumper.name = "RearBumper"
 	rear_bumper.sync_to_physics = false
-	rear_bumper.collision_layer = 0 # Disabled for training
-	rear_bumper.collision_mask = 0  
+	rear_bumper.collision_layer = 2 # Car layer
+	rear_bumper.collision_mask = 4  # Prop layer
 	
 	var rear_bumper_area = Area3D.new()
 	rear_bumper_area.collision_layer = 0
@@ -466,7 +466,7 @@ func _physics_process(delta: float) -> void:
 	
 	# Arcade Nitro Traction Feature (Slide Recovery)
 	if nitro_input > 0.5 and prev_nitro_input <= 0.5:
-		if nitro_seconds >= 50.0:
+		if nitro_seconds >= 40.0:
 			var forward_dir = -global_transform.basis.z.normalized()
 			var vel = linear_velocity
 			var horiz_vel = Vector3(vel.x, 0, vel.z)
@@ -477,8 +477,7 @@ func _physics_process(delta: float) -> void:
 				var angle_deg = rad_to_deg(angle_rad)
 				
 				if angle_deg > 2.0:
-					var cost = angle_deg / 4.0
-					nitro_seconds -= cost
+					nitro_seconds -= 20.0
 					
 					var new_vel = horiz_forward * horiz_vel.length()
 					new_vel.y = vel.y
@@ -517,7 +516,7 @@ func _physics_process(delta: float) -> void:
 		max_speed = slider_max_speed_kmh / 3.6
 		hand_break = true
 	else:
-		acceleration = engine_force_value * 1.5
+		acceleration = engine_force_value * 0.15
 		if nitro_active:
 			acceleration *= 2.0
 			max_speed = 300.0 / 3.6

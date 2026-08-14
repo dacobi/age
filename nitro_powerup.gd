@@ -152,19 +152,19 @@ func on_nitro_collected(car: Node) -> void:
 	var timer = get_tree().create_timer(1.0)
 	timer.timeout.connect(burst.queue_free)
 
-	# Audio feedback (COMMENTED OUT TO PREVENT CRASH)
-	# if ClassDB.class_exists("FmodServer"):
-	# 	if FmodServer.has_method("create_event_instance"):
-	# 		var ev = FmodServer.create_event_instance("event:/Interactables/ping")
-	# 		if ev:
-	# 			# if ev.has_method("set_parameter_by_name"):
-	# 			# 	ev.set_parameter_by_name("speed", 50.0)
-	# 			if ev.has_method("set_3d_attributes"):
-	# 				ev.set_3d_attributes(global_transform)
-	# 			if ev.has_method("start"):
-	# 				ev.start()
-	# 			if ev.has_method("release"):
-	# 				ev.release()
+	# Audio feedback
+	if ClassDB.class_exists("FmodServer"):
+		if FmodServer.has_method("create_event_instance"):
+			var ev = FmodServer.create_event_instance("event:/Interactables/ping")
+			if ev:
+				# if ev.has_method("set_parameter_by_name"):
+				# 	ev.set_parameter_by_name("speed", 50.0)
+				if ev.has_method("set_3d_attributes"):
+					ev.set_3d_attributes(global_transform)
+				if ev.has_method("start"):
+					ev.start()
+				if ev.has_method("release"):
+					ev.release()
 					
 	visible = false
 	collision_layer = 0

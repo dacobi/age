@@ -334,7 +334,7 @@ func _ready():
 					inst.position = pos
 					inst.rotation_degrees.y = rot_y
 					inst.collision_layer = 4
-					inst.collision_mask = 13
+					inst.collision_mask = 15
 					
 					inst.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 					if scn == barrier_scn:
