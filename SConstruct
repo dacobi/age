@@ -22,7 +22,7 @@ else:
 
 if env['platform'] == 'linux':
     env.Append(LIBS=['pthread'])
-    env.ParseConfig('pkg-config --cflags --libs lua5.4')
+    env.ParseConfig('pkg-config --cflags --libs lua5.4 eigen3')
     env.ParseConfig('pkg-config --cflags --libs libavformat libavcodec libavutil libswscale libswresample libpulse libpulse-simple')
 
 # Find sources

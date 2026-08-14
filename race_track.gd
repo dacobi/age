@@ -190,24 +190,6 @@ func _ready():
 		curve.add_point(Vector3(-size + r, 0, -size))
 		path_node.curve = curve
 
-		# Create a 4m tall neon cyan fence along the entire outer edge of the arena
-		var outer_fence = CSGPolygon3D.new()
-		outer_fence.name = "OuterFence"
-		outer_fence.mode = CSGPolygon3D.MODE_PATH
-		outer_fence.path_interval = 0.5
-		outer_fence.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
-		outer_fence.path_local = true
-		outer_fence.use_collision = true
-		outer_fence.material = border_l.material # neon cyan material
-		outer_fence.polygon = PackedVector2Array([
-			Vector2(-0.25, 0.0),
-			Vector2(0.25, 0.0),
-			Vector2(0.25, 4.0),
-			Vector2(-0.25, 4.0)
-		])
-		add_child(outer_fence)
-		outer_fence.path_node = outer_fence.get_path_to(path_node)
-
 		# Position supercar at the center of the arena facing North
 		if supercar:
 			supercar.global_position = Vector3(0.0, 0.5, 0.0)
@@ -687,38 +669,13 @@ func spawn_barriers():
 		
 	dummy.queue_free()
 	
-	# --- SPAWN 3 AI CARS ---
-	var ai_car_scene = preload("res://lemans_car.tscn")
-	var ai_driver_script = preload("res://ai_driver.gd")
-	for ai_index in range(3):
-		var ai_car = ai_car_scene.instantiate()
-		ai_car.name = "AI_Car_" + str(ai_index + 1)
-		add_child(ai_car)
-		
-		# Offset them slightly behind and to the side of the player
-		var offset_x = (ai_index + 1) * 3.0
-		if ai_index % 2 == 1: offset_x = -offset_x
-		
-		var spawn_pos = Vector3(offset_x, 0.5, 4.0 + (ai_index * 4.0))
-		if supercar:
-			# If the track has a specific start point for the player, offset relative to it
-			spawn_pos = supercar.global_position + Vector3(offset_x, 0.0, 4.0 + (ai_index * 4.0))
-			
-		ai_car.global_position = spawn_pos
-		ai_car.global_transform.basis = Basis.IDENTITY
-		if supercar:
-			ai_car.global_transform.basis = supercar.global_transform.basis
-		
-		if "start_transform" in ai_car:
-			ai_car.start_transform = ai_car.global_transform
-			
-		var ai_comp = Node.new()
-		ai_comp.set_script(ai_driver_script)
-		ai_car.add_child(ai_comp)
-		
-		ai_comp.car = ai_car
-		ai_comp.track_path = path_node
 
+	# Add Race Manager
+	var gen_mgr = Node.new()
+	gen_mgr.set_script(preload("res://race_manager.gd"))
+	gen_mgr.name = "GeneticManager"
+	gen_mgr.track_path = path_node
+	add_child(gen_mgr)
 func _input(event):
 	if event.is_action_pressed("ui_cancel"):
 		is_paused = not is_paused
@@ -979,6 +936,7 @@ func _process(delta):
 			camera_node.look_at(supercar.global_position, Vector3.UP)
 
 func _physics_process(delta):
+	# print("PHYSICS RUNNING")
 	var camera_node = get_node_or_null("Camera3D")
 	if camera_node and supercar and not in_edit_mode and not is_paused:
 		current_cam_yaw = lerp(current_cam_yaw, -cam_rx * 2.0, 5.0 * delta)
@@ -1066,9 +1024,9 @@ func setup_polygons():
 	road_bed.use_collision = true
 	road_bed.polygon = PackedVector2Array([
 		Vector2(-52.0, 0.0),
-		Vector2(52.0, 0.0),
-		Vector2(52.0, -0.32),
-		Vector2(-52.0, -0.32)
+		Vector2(-52.0, -10.0),
+		Vector2(52.0, -10.0),
+		Vector2(52.0, 0.0)
 	])
 	
 	border_l.mode = CSGPolygon3D.MODE_PATH
@@ -1078,12 +1036,12 @@ func setup_polygons():
 	border_l.path_local = true
 	border_l.path_continuous_u = true
 	border_l.path_u_distance = 16.0
-	border_l.use_collision = false
+	border_l.use_collision = true
 	border_l.polygon = PackedVector2Array([
-		Vector2(-50.4, 0.2),
-		Vector2(-48.0, 0.2),
-		Vector2(-48.0, -0.08),
-		Vector2(-50.4, -0.08)
+		Vector2(-50.0, 10.0),
+		Vector2(-50.0, -10.0),
+		Vector2(-48.0, -10.0),
+		Vector2(-48.0, 10.0)
 	])
 	
 	border_r.mode = CSGPolygon3D.MODE_PATH
@@ -1093,12 +1051,12 @@ func setup_polygons():
 	border_r.path_local = true
 	border_r.path_continuous_u = true
 	border_r.path_u_distance = 16.0
-	border_r.use_collision = false
+	border_r.use_collision = true
 	border_r.polygon = PackedVector2Array([
-		Vector2(48.0, 0.2),
-		Vector2(50.4, 0.2),
-		Vector2(50.4, -0.08),
-		Vector2(48.0, -0.08)
+		Vector2(48.0, 10.0),
+		Vector2(48.0, -10.0),
+		Vector2(50.0, -10.0),
+		Vector2(50.0, 10.0)
 	])
 	
 	center_line.mode = CSGPolygon3D.MODE_PATH
@@ -1145,6 +1103,7 @@ func build_gate():
 	gate_node.add_child(build_pillar.call(-61.0))
 	gate_node.add_child(build_pillar.call(61.0))
 	
+
 	# Top beam connecting pillar tops (y = 33.0)
 	var beam_top = CSGBox3D.new()
 	beam_top.size = Vector3(130.0, 6.0, 8.0)
