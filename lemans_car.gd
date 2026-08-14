@@ -6,6 +6,7 @@ var brake_input: float = 0.0
 var steer_input: float = 0.0
 var handbrake_input: float = 0.0
 var air_time: float = 0.0
+var is_grounded_state: bool = false
 
 var mount_FL = Vector3(-1.0, -0.025, -1.7)
 var mount_FR = Vector3(1.0, -0.025, -1.7)
@@ -73,6 +74,7 @@ var fmod_banks = []
 var fmod_banks_loaded = false
 var engine_audio: AudioStreamPlayer = null
 var show_collision_debug = 0.0
+var is_ai_controlled: bool = false
 
 var shift_timer: float = 0.0
 var current_gear_sim: int = -2
@@ -135,7 +137,7 @@ func _ready():
 	
 	# Programmatic construction of curves from the tutorial values
 	accel_curve = Curve.new()
-	accel_curve.add_point(Vector2(0, 1.0)) # Massive torque off the line!
+	accel_curve.add_point(Vector2(0, 0.7)) # Increased torque to prevent stalling
 	accel_curve.add_point(Vector2(0.3, 0.9))
 	accel_curve.add_point(Vector2(0.6, 0.8))
 	accel_curve.add_point(Vector2(1, 0.1))
@@ -189,8 +191,8 @@ func _ready():
 	var bumper = AnimatableBody3D.new()
 	bumper.name = "AngledBumper"
 	bumper.sync_to_physics = false
-	bumper.collision_layer = 8 # Bumper layer
-	bumper.collision_mask = 4  # ONLY collides with Props (Cones/Barriers)
+	bumper.collision_layer = 0 # Disabled for training
+	bumper.collision_mask = 0  
 	
 	var bumper_area = Area3D.new()
 	bumper_area.collision_layer = 0
@@ -230,8 +232,8 @@ func _ready():
 	var rear_bumper = AnimatableBody3D.new()
 	rear_bumper.name = "RearBumper"
 	rear_bumper.sync_to_physics = false
-	rear_bumper.collision_layer = 8 # Bumper layer
-	rear_bumper.collision_mask = 4  # ONLY collides with Props (Cones/Barriers)
+	rear_bumper.collision_layer = 0 # Disabled for training
+	rear_bumper.collision_mask = 0  
 	
 	var rear_bumper_area = Area3D.new()
 	rear_bumper_area.collision_layer = 0
@@ -345,27 +347,28 @@ func _ready():
 	
 	# --- FMOD INIT ---
 	# --- FMOD INIT ---
-	if ClassDB.class_exists("FmodServer"):
+	if ClassDB.class_exists("FmodServer") and not is_ai_controlled:
 		fmod_banks.append(FmodServer.load_bank("res://Audio/Master.strings.bank", 0))
 		fmod_banks.append(FmodServer.load_bank("res://Audio/Master.bank", 0))
 		fmod_banks.append(FmodServer.load_bank("res://Audio/Vehicles.bank", 0))
 		fmod_banks.append(FmodServer.load_bank("res://Audio/SFX.bank", 0))
 		
 	# --- HUD INIT ---
-	var canvas = CanvasLayer.new()
-	add_child(canvas)
-	var hud = Control.new()
-	var hud_script = load("res://hud.gd")
-	if hud_script:
-		hud.set_script(hud_script)
-		hud.set("car", self)
-		hud.set_anchors_preset(Control.PRESET_FULL_RECT)
-		canvas.add_child(hud)
+	if not is_ai_controlled:
+		var canvas = CanvasLayer.new()
+		add_child(canvas)
+		var hud = Control.new()
+		var hud_script = load("res://hud.gd")
+		if hud_script:
+			hud.set_script(hud_script)
+			hud.set("car", self)
+			hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+			canvas.add_child(hud)
 		
 	var cp_area = Area3D.new()
 	cp_area.name = "CheckpointSphere"
-	cp_area.collision_layer = 16
-	cp_area.collision_mask = 16
+	cp_area.collision_layer = 0
+	cp_area.collision_mask = 0
 	var cp_col = CollisionShape3D.new()
 	var cp_shape = SphereShape3D.new()
 	cp_shape.radius = 2.0 # Sphere in center of car
@@ -514,7 +517,7 @@ func _physics_process(delta: float) -> void:
 		max_speed = slider_max_speed_kmh / 3.6
 		hand_break = true
 	else:
-		acceleration = engine_force_value * 0.15
+		acceleration = engine_force_value * 1.5
 		if nitro_active:
 			acceleration *= 2.0
 			max_speed = 300.0 / 3.6
@@ -711,6 +714,7 @@ func _physics_process(delta: float) -> void:
 	slip_RR = wheels[3].grip_factor
 
 	# --- AIR STABILIZATION ---
+	is_grounded_state = grounded
 	if not grounded:
 		air_time += delta
 		if air_time > 0.2:
@@ -875,7 +879,7 @@ func _physics_process(delta: float) -> void:
 		engine_rpm = lerp(engine_rpm, target_rpm, 15.0 * delta)
 	
 	# --- FMOD ENGINE UPDATE ---
-	if ClassDB.class_exists("FmodServer"):
+	if ClassDB.class_exists("FmodServer") and not is_ai_controlled:
 		FmodServer.update()
 		if (fmod_event == null or tire_fmod_event == null) and not fmod_banks_loaded:
 			# FMOD bank loading takes a few frames to populate the event descriptions
@@ -1003,3 +1007,6 @@ func _setup_nitro_flames() -> void:
 		parts.emitting = false
 		add_child(parts)
 		nitro_flames.append(parts)
+
+func is_grounded() -> bool:
+	return is_grounded_state

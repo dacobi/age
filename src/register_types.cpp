@@ -6,6 +6,7 @@
 
 #include "lua_manager.h"
 #include <imgui.h>
+#include "car_brain.hpp"
 
 using namespace godot;
 
@@ -15,6 +16,7 @@ void initialize_aga_module(ModuleInitializationLevel p_level) {
     }
 
     ClassDB::register_class<LuaManager>();
+    ClassDB::register_class<CarBrain>();
 }
 
 void uninitialize_aga_module(ModuleInitializationLevel p_level) {
