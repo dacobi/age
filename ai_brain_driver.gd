@@ -7,17 +7,22 @@ var brain: CarBrain
 var raycasts: Array[RayCast3D] = []
 var max_ray_dist := 50.0
 
+var in_countdown := false
+var time_since_last_checkpoint := 0.0
+var checkpoints_passed := 0
+
+var generation: int = 1
+
 var crashed := false
 var fitness: float = 0.0
-var checkpoints_passed: int = 0
 var stall_timer := 0.0
 var not_grounded_timer := 0.0
 var fall_timer: float = 0.0
-var time_since_last_checkpoint: float = 0.0
 var wrong_way_timer: float = 0.0
 
 var last_progress: float = -1.0
 var accumulated_progress: float = 0.0
+var time_alive: float = 0.0
 var debug_mesh: MeshInstance3D
 
 func _ready() -> void:
@@ -37,9 +42,10 @@ func _ready() -> void:
 	var angles = [75.0, 30.0, 0.0, -30.0, -75.0]
 	for angle in angles:
 		var rc = RayCast3D.new()
-		var dir = Vector3(0, -0.01, -1.0).normalized() * 100.0
+		var dir = Vector3(0, -0.01, -1.0).normalized() * 200.0
 		rc.target_position = dir.rotated(Vector3.UP, deg_to_rad(angle))
-		rc.collision_mask = 1 # Match standard static environment layer
+		# Mask 128 = Layer 8 (AI Vision Walls only, ignoring the floor so uphills don't trick it)
+		rc.collision_mask = 128
 		rc.enabled = true
 		car.add_child(rc)
 		raycasts.append(rc)
@@ -49,9 +55,9 @@ func _ready() -> void:
 	for angle in car_angles:
 		var rc = RayCast3D.new()
 		rc.target_position = Vector3(0, 0, -50.0).rotated(Vector3.UP, deg_to_rad(angle))
-		# Set position slightly higher so it hits the taller car body
 		rc.position = Vector3(0, 0.5, 0)
-		rc.collision_mask = 2 # ONLY hit cars (layer 2)
+		rc.collision_mask = 128 # AI Vision Layer
+		rc.collide_with_areas = true # Must hit the AIVisionArea of cars and nitro!
 		rc.enabled = true
 		car.add_child(rc)
 		raycasts.append(rc)
@@ -99,10 +105,20 @@ func _physics_process(delta: float) -> void:
 		# Do nothing while counting down
 		pass
 	else:
-		# Checkpoint Timer (Kills cars that drive in circles or get stuck)
+		# Checkpoint Timer
 		time_since_last_checkpoint += delta
-		if time_since_last_checkpoint > 30.0:
-			print("Car ", car.name, " stalled! (30s without a checkpoint)")
+		
+		# Shrink the timeout down to a challenging but physically possible 6.0 seconds minimum.
+		var cp_timeout = maxf(6.0, 15.0 - (float(generation) * 0.2))
+		
+		# Give the car a grace period to accelerate from a standing start or when stuck
+		var current_timeout = cp_timeout
+		var current_speed = car.linear_velocity.length()
+		if current_speed < 10.0:
+			current_timeout += 5.0
+			
+		if time_since_last_checkpoint > current_timeout:
+			print("Car ", car.name, " stalled! (", current_timeout, "s without a checkpoint)")
 			crashed = true
 			car.accel_input = 0.0
 			car.brake_input = 1.0
@@ -123,13 +139,16 @@ func _physics_process(delta: float) -> void:
 	elif delta_progress > 2000.0: # Wrapped backward
 		delta_progress -= track_length
 		
+	time_alive += delta
 	accumulated_progress += delta_progress
 	last_progress = current_progress
 	
 	# Calculate total fitness combining distance and checkpoints
-	var current_fitness = accumulated_progress + (checkpoints_passed * 500.0)
+	# Subtract time_alive * 25.0 as a tiebreaker so faster cars get a higher peak fitness!
+	var current_fitness = accumulated_progress + (checkpoints_passed * 500.0) - (time_alive * 25.0)
 	
-	# Prevent fitness from dropping if the car rolls backwards slightly
+	# Prevent fitness from dropping if the car rolls backwards slightly (or as time increases)
+	# This locks in their "highest score", effectively grading them on how fast they reached their furthest point.
 	if current_fitness > fitness:
 		fitness = current_fitness
 		
@@ -138,9 +157,18 @@ func _physics_process(delta: float) -> void:
 	if curve and track_path:
 		var track_transform = track_path.global_transform * curve.sample_baked_with_rotation(current_progress, true, true)
 		track_y = track_transform.origin.y
+	# 1.5 Penalize for colliding with other cars
+	var area = car.get_node_or_null("AIVisionArea")
+	if area:
+		var overlapping_areas = area.get_overlapping_areas()
+		for other_area in overlapping_areas:
+			if other_area != area and other_area.name == "AIVisionArea":
+				# Hit another AI car
+				fitness -= 5.0 * delta
+				
 	# 2. Check for Stall / Crash / Falling
-	if car.global_position.y < track_y - 3.0:
-		print("Car fell off track! (Y-level drop detected)")
+	if car.global_position.y < (track_y - 10.0):
+		print("Car ", car.name, " fell off track! (Y-level drop detected)")
 		crashed = true
 		car.accel_input = 0.0
 		car.brake_input = 1.0
@@ -154,8 +182,9 @@ func _physics_process(delta: float) -> void:
 	var speed = car.linear_velocity.length()
 	if speed < 0.55: # ~2 km/h
 		stall_timer += delta
-		if stall_timer > 10.0:
-			print("Car stalled! Speed:", speed)
+		var st_timeout = maxf(4.0, 10.0 - (float(generation) * 0.3))
+		if stall_timer > st_timeout:
+			print("Car stalled! Speed:", speed, " Timeout:", st_timeout)
 			crashed = true
 			car.accel_input = 0.0
 			car.brake_input = 1.0
@@ -179,7 +208,7 @@ func _physics_process(delta: float) -> void:
 	if not is_grounded:
 		not_grounded_timer += delta
 		if not_grounded_timer > 1.0: # Falling for more than 1 second (jumping track)
-			print("Car fell off track! (Not grounded for 1s)")
+			print("Car ", car.name, " fell off track! (Not grounded for 1s)")
 			crashed = true
 			car.accel_input = 0.0
 			car.brake_input = 0.0
@@ -194,7 +223,7 @@ func _physics_process(delta: float) -> void:
 		
 	# 3. Gather Sensor Data
 	var inputs = PackedFloat32Array()
-	inputs.resize(14)
+	inputs.resize(17)
 	
 	# Draw debug lines
 	var im = ImmediateMesh.new()
@@ -204,16 +233,49 @@ func _physics_process(delta: float) -> void:
 	for i in range(5):
 		var rc = raycasts[i]
 		rc.force_raycast_update()
-		var hit_dist = 100.0
+		var hit_dist = 200.0
 		var global_start = rc.global_position
 		var global_end = rc.to_global(rc.target_position)
 		if rc.is_colliding():
 			global_end = rc.get_collision_point()
 			hit_dist = (global_end - global_start).length()
 		
-		inputs[i] = 1.0 - clampf(hit_dist / 100.0, 0.0, 1.0)
+		inputs[i] = 1.0 - clampf(hit_dist / 200.0, 0.0, 1.0)
 		
 		var color = Color.GREEN if rc.is_colliding() else Color.RED
+		im.surface_set_color(color)
+		im.surface_add_vertex(debug_mesh.to_local(global_start))
+		im.surface_set_color(color)
+		im.surface_add_vertex(debug_mesh.to_local(global_end))
+		
+	# Inputs 14-16: Car/Powerup Detection Raycasts (AI Vision)
+	for i in range(3):
+		var rc = raycasts[5 + i]
+		rc.force_raycast_update()
+		var hit_dist = 50.0
+		var global_start = rc.global_position
+		var global_end = rc.to_global(rc.target_position)
+		var hit_type = 0 # 0 = track wall, 1 = car, -1 = nitro
+		
+		if rc.is_colliding():
+			global_end = rc.get_collision_point()
+			hit_dist = (global_end - global_start).length()
+			var col = rc.get_collider()
+			if col:
+				if col.name.begins_with("NitroVisionArea"):
+					hit_type = -1
+				elif col.name.begins_with("AIVisionArea"):
+					hit_type = 1
+			
+		var norm_dist = 1.0 - clampf(hit_dist / 50.0, 0.0, 1.0)
+		if hit_type == -1:
+			inputs[14 + i] = -norm_dist # Negative input for Nitro so the NN can learn to aim for it
+		elif hit_type == 1:
+			inputs[14 + i] = norm_dist # Positive input for cars (obstacles)
+		else:
+			inputs[14 + i] = norm_dist * 0.5 # Track wall (Layer 128), treat as mild obstacle
+		
+		var color = Color.YELLOW if rc.is_colliding() else Color.BLUE
 		im.surface_set_color(color)
 		im.surface_add_vertex(debug_mesh.to_local(global_start))
 		im.surface_set_color(color)
@@ -269,7 +331,7 @@ func _physics_process(delta: float) -> void:
 	if abs(angle_diff) > PI / 2.0:
 		wrong_way_timer += delta
 		if wrong_way_timer > 5.0:
-			print("Car drove wrong way!")
+			print("Car ", car.name, " drove wrong way!")
 			crashed = true
 			car.accel_input = 0.0
 			car.brake_input = 0.0
@@ -294,22 +356,25 @@ func _physics_process(delta: float) -> void:
 		
 	# 4. Neural Network Think
 	var outputs = brain.think(inputs)
-	if outputs.size() == 2:
+	if outputs.size() >= 5:
 		var out_steer = outputs[0]
 		var out_throttle = outputs[1]
+		var out_brake = outputs[2]
+		var out_nitro = outputs[3]
+		var out_handbrake = outputs[4]
 		
-		car.steer_input = clampf(out_steer, -1.0, 1.0)
+		car.steer_input = out_steer
 		
-		if out_throttle > 0.0:
-			car.accel_input = clampf(out_throttle, 0.0, 1.0)
-			car.brake_input = 0.0
-		else:
+		# Prevent the AI from lightly pressing the brake while on the gas,
+		# which triggers the car's brake-override system and caps speed at 25 km/h.
+		# Also, map the tanh output (-1 to 1) to (0 to 1) so it defaults to 50% throttle!
+		var mapped_throttle = (out_throttle + 1.0) / 2.0
+		if out_brake > 0.1 and out_brake > mapped_throttle:
+			car.brake_input = out_brake
 			car.accel_input = 0.0
-			# Only apply brake if moving forward (speed > 1.0). 
-			# This completely removes the AI's ability to drive in reverse!
-			var local_z = car.global_transform.basis.z
-			var forward_vel = -car.linear_velocity.dot(local_z)
-			if forward_vel > 1.0:
-				car.brake_input = clampf(-out_throttle, 0.0, 1.0)
-			else:
-				car.brake_input = 0.0
+		else:
+			car.brake_input = 0.0
+			car.accel_input = mapped_throttle
+			
+		car.nitro_input = 1.0 if out_nitro > 0.5 else 0.0
+		car.handbrake_input = 1.0 if out_handbrake > 0.5 else 0.0

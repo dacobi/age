@@ -1036,8 +1036,27 @@ func setup_polygons():
 	border_l.path_local = true
 	border_l.path_continuous_u = true
 	border_l.path_u_distance = 16.0
-	border_l.use_collision = true
+	border_l.use_collision = false
 	border_l.polygon = PackedVector2Array([
+		Vector2(-50.4, 0.2),
+		Vector2(-48.0, 0.2),
+		Vector2(-48.0, -0.08),
+		Vector2(-50.4, -0.08)
+	])
+	
+	var ai_wall_l = CSGPolygon3D.new()
+	ai_wall_l.name = "AIVisionWallL"
+	add_child(ai_wall_l)
+	ai_wall_l.mode = CSGPolygon3D.MODE_PATH
+	ai_wall_l.path_node = ai_wall_l.get_path_to(path_node)
+	ai_wall_l.path_interval = 2.0
+	ai_wall_l.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+	ai_wall_l.path_local = true
+	ai_wall_l.use_collision = true
+	ai_wall_l.collision_layer = 128
+	ai_wall_l.collision_mask = 0
+	ai_wall_l.visible = false
+	ai_wall_l.polygon = PackedVector2Array([
 		Vector2(-50.0, 10.0),
 		Vector2(-50.0, -10.0),
 		Vector2(-48.0, -10.0),
@@ -1051,8 +1070,27 @@ func setup_polygons():
 	border_r.path_local = true
 	border_r.path_continuous_u = true
 	border_r.path_u_distance = 16.0
-	border_r.use_collision = true
+	border_r.use_collision = false
 	border_r.polygon = PackedVector2Array([
+		Vector2(48.0, 0.2),
+		Vector2(50.4, 0.2),
+		Vector2(50.4, -0.08),
+		Vector2(48.0, -0.08)
+	])
+	
+	var ai_wall_r = CSGPolygon3D.new()
+	ai_wall_r.name = "AIVisionWallR"
+	add_child(ai_wall_r)
+	ai_wall_r.mode = CSGPolygon3D.MODE_PATH
+	ai_wall_r.path_node = ai_wall_r.get_path_to(path_node)
+	ai_wall_r.path_interval = 2.0
+	ai_wall_r.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+	ai_wall_r.path_local = true
+	ai_wall_r.use_collision = true
+	ai_wall_r.collision_layer = 128
+	ai_wall_r.collision_mask = 0
+	ai_wall_r.visible = false
+	ai_wall_r.polygon = PackedVector2Array([
 		Vector2(48.0, 10.0),
 		Vector2(48.0, -10.0),
 		Vector2(50.0, -10.0),

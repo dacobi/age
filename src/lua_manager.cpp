@@ -1435,7 +1435,9 @@ void LuaManager::_process(double delta) {
     if (!ImGui::GetCurrentContext()) return;
     
     if (lua_engine) {
-        lua_engine->renderLuaImGui();
+        if (godot::DisplayServer::get_singleton()->get_name() != "headless") {
+            lua_engine->renderLuaImGui();
+        }
         
         if (lua_engine->recorder.isRecording()) {
             if (lua_engine->recorder.canAcceptVideoFrame()) {

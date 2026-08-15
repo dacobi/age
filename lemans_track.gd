@@ -464,6 +464,12 @@ func _ready():
 				supercar.global_position += grid_transform.basis.x * 13.0 + grid_transform.basis.y * 0.5
 				if "start_transform" in supercar:
 					supercar.start_transform = supercar.global_transform
+		
+		# Add AI Race Manager
+		var rm = Node.new()
+		rm.name = "RaceManager"
+		rm.set_script(preload("res://race_manager.gd"))
+		add_child(rm)
 			
 	# Raise the sun by 45 degrees
 	var sun = get_node_or_null("DirectionalLight3D")
@@ -687,37 +693,7 @@ func spawn_barriers():
 		
 	dummy.queue_free()
 	
-	# --- SPAWN 3 AI CARS ---
-	var ai_car_scene = preload("res://lemans_car.tscn")
-	var ai_driver_script = preload("res://ai_driver.gd")
-	for ai_index in range(3):
-		var ai_car = ai_car_scene.instantiate()
-		ai_car.name = "AI_Car_" + str(ai_index + 1)
-		add_child(ai_car)
-		
-		# Offset them slightly behind and to the side of the player
-		var offset_x = (ai_index + 1) * 3.0
-		if ai_index % 2 == 1: offset_x = -offset_x
-		
-		var spawn_pos = Vector3(offset_x, 0.5, 4.0 + (ai_index * 4.0))
-		if supercar:
-			# If the track has a specific start point for the player, offset relative to it
-			spawn_pos = supercar.global_position + Vector3(offset_x, 0.0, 4.0 + (ai_index * 4.0))
-			
-		ai_car.global_position = spawn_pos
-		ai_car.global_transform.basis = Basis.IDENTITY
-		if supercar:
-			ai_car.global_transform.basis = supercar.global_transform.basis
-		
-		if "start_transform" in ai_car:
-			ai_car.start_transform = ai_car.global_transform
-			
-		var ai_comp = Node.new()
-		ai_comp.set_script(ai_driver_script)
-		ai_car.add_child(ai_comp)
-		
-		ai_comp.car = ai_car
-		ai_comp.track_path = path_node
+	# Old AI removed
 
 func _input(event):
 	if event.is_action_pressed("ui_cancel"):
@@ -1099,6 +1075,44 @@ func setup_polygons():
 		Vector2(50.4, 0.2),
 		Vector2(50.4, -0.08),
 		Vector2(48.0, -0.08)
+	])
+	
+	var ai_wall_l = CSGPolygon3D.new()
+	ai_wall_l.name = "AIVisionWallL"
+	add_child(ai_wall_l)
+	ai_wall_l.mode = CSGPolygon3D.MODE_PATH
+	ai_wall_l.path_node = ai_wall_l.get_path_to(path_node)
+	ai_wall_l.path_interval = 2.0
+	ai_wall_l.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+	ai_wall_l.path_local = true
+	ai_wall_l.use_collision = true
+	ai_wall_l.collision_layer = 128
+	ai_wall_l.collision_mask = 0
+	ai_wall_l.visible = false
+	ai_wall_l.polygon = PackedVector2Array([
+		Vector2(-50.0, 10.0),
+		Vector2(-50.0, -10.0),
+		Vector2(-48.0, -10.0),
+		Vector2(-48.0, 10.0)
+	])
+	
+	var ai_wall_r = CSGPolygon3D.new()
+	ai_wall_r.name = "AIVisionWallR"
+	add_child(ai_wall_r)
+	ai_wall_r.mode = CSGPolygon3D.MODE_PATH
+	ai_wall_r.path_node = ai_wall_r.get_path_to(path_node)
+	ai_wall_r.path_interval = 2.0
+	ai_wall_r.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+	ai_wall_r.path_local = true
+	ai_wall_r.use_collision = true
+	ai_wall_r.collision_layer = 128
+	ai_wall_r.collision_mask = 0
+	ai_wall_r.visible = false
+	ai_wall_r.polygon = PackedVector2Array([
+		Vector2(48.0, 10.0),
+		Vector2(48.0, -10.0),
+		Vector2(50.0, -10.0),
+		Vector2(50.0, 10.0)
 	])
 	
 	center_line.mode = CSGPolygon3D.MODE_PATH

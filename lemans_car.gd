@@ -98,6 +98,19 @@ func _ready():
 	# Configure Main Hull layer and mask
 	collision_layer = 2 # Car layer
 	collision_mask = 1  # Hits World (1) ONLY
+	
+	# AI Vision Hitbox
+	var ai_vision = Area3D.new()
+	ai_vision.name = "AIVisionArea"
+	ai_vision.collision_layer = 128
+	ai_vision.collision_mask = 128
+	var ai_vision_col = CollisionShape3D.new()
+	var ai_vision_box = BoxShape3D.new()
+	ai_vision_box.size = Vector3(2.5, 2.0, 5.0)
+	ai_vision_col.shape = ai_vision_box
+	ai_vision_col.position = Vector3(0.0, 0.5, 0.0)
+	ai_vision.add_child(ai_vision_col)
+	add_child(ai_vision)
 
 	# Resize collision box to act as the main hull, shrunk and lifted slightly
 	var body_col = get_node_or_null("BodyCol")
@@ -347,7 +360,7 @@ func _ready():
 	
 	# --- FMOD INIT ---
 	# --- FMOD INIT ---
-	if ClassDB.class_exists("FmodServer") and not is_ai_controlled:
+	if ClassDB.class_exists("FmodServer") and not is_ai_controlled and DisplayServer.get_name() != "headless":
 		fmod_banks.append(FmodServer.load_bank("res://Audio/Master.strings.bank", 0))
 		fmod_banks.append(FmodServer.load_bank("res://Audio/Master.bank", 0))
 		fmod_banks.append(FmodServer.load_bank("res://Audio/Vehicles.bank", 0))
@@ -621,7 +634,15 @@ func _physics_process(delta: float) -> void:
 				for w in wheels:
 					w.is_braking = false
 		elif final_accel > 0.05:
-			motor_input = final_accel
+			var gear_idx = max(0, current_gear_sim)
+			var torque_mult = gear_torque_ratios[gear_idx]
+			if gear_idx >= 1:
+				var gear_max = gear_max_speeds[gear_idx]
+				var sim_rpm = 1000.0 + 8000.0 * clampf(maxf(forward_speed, 0.0) / gear_max, 0.0, 1.0)
+				var bog_factor = clampf((sim_rpm - 1000.0) / 3000.0, 0.08, 1.0)
+				torque_mult *= bog_factor
+			
+			motor_input = final_accel * torque_mult
 			for w in wheels:
 				w.is_braking = false
 		else:
@@ -878,7 +899,7 @@ func _physics_process(delta: float) -> void:
 		engine_rpm = lerp(engine_rpm, target_rpm, 15.0 * delta)
 	
 	# --- FMOD ENGINE UPDATE ---
-	if ClassDB.class_exists("FmodServer") and not is_ai_controlled:
+	if ClassDB.class_exists("FmodServer") and not is_ai_controlled and DisplayServer.get_name() != "headless":
 		FmodServer.update()
 		if (fmod_event == null or tire_fmod_event == null) and not fmod_banks_loaded:
 			# FMOD bank loading takes a few frames to populate the event descriptions
@@ -936,7 +957,7 @@ func _on_prop_collided(body: Node):
 	if body.has_method("on_nitro_collected"):
 		body.on_nitro_collected(self)
 	elif body is PhysicsBody3D and body.collision_layer == 4:
-		if ClassDB.class_exists("FmodServer"):
+		if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
 			if FmodServer.has_method("create_event_instance"):
 				var ev = FmodServer.create_event_instance("event:/Interactables/Wooden Collision")
 				if ev:
