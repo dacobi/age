@@ -380,8 +380,8 @@ func _ready():
 		
 	var cp_area = Area3D.new()
 	cp_area.name = "CheckpointSphere"
-	cp_area.collision_layer = 0
-	cp_area.collision_mask = 0
+	cp_area.collision_layer = 16
+	cp_area.collision_mask = 16
 	var cp_col = CollisionShape3D.new()
 	var cp_shape = SphereShape3D.new()
 	cp_shape.radius = 2.0 # Sphere in center of car

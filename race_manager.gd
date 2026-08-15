@@ -55,7 +55,7 @@ func spawn_checkpoints():
 		var cp = Area3D.new()
 		cp.name = "Checkpoint_" + str(i)
 		var offset = track_length * (float(i+1) / float(num_checkpoints))
-		var t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(offset, false, false)
+		var t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(offset, false, true)
 		cp.global_transform = t
 		
 		var col = CollisionShape3D.new()
@@ -66,14 +66,14 @@ func spawn_checkpoints():
 		
 		# Holographic Hovering Beam Visual
 		var beam = CSGBox3D.new()
-		beam.size = Vector3(100.0, 0.1, 0.1)
-		beam.position = Vector3(0, 8.0, 0) # Hover 8 meters above the track
+		beam.size = Vector3(100.0, 4.0, 4.0)
+		beam.position = Vector3(0, 60.0, 0) # Hover 60 meters above the track
 		
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(0.0, 1.0, 1.0, 0.5) # Neon Cyan, more transparent
+		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.4) # Magenta, highly transparent
 		mat.emission_enabled = true
-		mat.emission = Color(0.0, 1.0, 1.0)
-		mat.emission_energy_multiplier = 1.5
+		mat.emission = Color(1.0, 0.0, 1.0) # Magenta
+		mat.emission_energy_multiplier = 0.8
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		beam.material = mat
 		
