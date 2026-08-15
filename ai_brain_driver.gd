@@ -22,6 +22,7 @@ var wrong_way_timer: float = 0.0
 
 var last_progress: float = -1.0
 var accumulated_progress: float = 0.0
+var accumulated_speed_score: float = 0.0
 var time_alive: float = 0.0
 var debug_mesh: MeshInstance3D
 
@@ -139,13 +140,18 @@ func _physics_process(delta: float) -> void:
 	elif delta_progress > 2000.0: # Wrapped backward
 		delta_progress -= track_length
 		
+	var current_speed = car.linear_velocity.length()
+	# Reward the square of the speed to disproportionately favor fast cars!
+	# E.g., driving 100m/s for 1 second yields 10,000 * 0.05 = +500 points
+	# Driving 50m/s for 2 seconds yields (2500 * 0.05) * 2 = +250 points
+	accumulated_speed_score += (current_speed * current_speed) * delta * 0.05
+	
 	time_alive += delta
 	accumulated_progress += delta_progress
 	last_progress = current_progress
 	
-	# Calculate total fitness combining distance and checkpoints
-	# Subtract time_alive * 25.0 as a tiebreaker so faster cars get a higher peak fitness!
-	var current_fitness = accumulated_progress + (checkpoints_passed * 500.0) - (time_alive * 25.0)
+	# Calculate total fitness combining distance, checkpoints, and exponential speed reward
+	var current_fitness = accumulated_progress + (checkpoints_passed * 500.0) + accumulated_speed_score
 	
 	# Prevent fitness from dropping if the car rolls backwards slightly (or as time increases)
 	# This locks in their "highest score", effectively grading them on how fast they reached their furthest point.
