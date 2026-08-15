@@ -16,13 +16,19 @@ var checkpoints_spawned := false
 @onready var camera = $Camera3D if has_node("Camera3D") else Camera3D.new()
 
 func _ready() -> void:
+	randomize()
 	get_tree().set_auto_accept_quit(false)
 	
 	if DisplayServer.get_name() == "headless":
 		print("HEADLESS MODE DETECTED! Engaging Turbo Training...")
 		Engine.time_scale = 10.0 
 		Engine.physics_ticks_per_second = 600 # Scale ticks by 10x to maintain accurate 60hz physics at 10x speed!
-		Engine.max_fps = 0
+		Engine.max_fps = 1000
+		
+		# Delete ImGui entirely in headless mode to prevent DeltaTime=0 crashes
+		var imgui = get_node_or_null("/root/ImGuiRoot")
+		if imgui:
+			imgui.queue_free()
 	
 	if not has_node("Camera3D"):
 		add_child(camera)
@@ -65,14 +71,14 @@ func spawn_checkpoints():
 		
 		# Holographic Hovering Beam Visual
 		var beam = CSGBox3D.new()
-		beam.size = Vector3(100.0, 0.5, 0.5)
-		beam.position = Vector3(0, 5.0, 0) # Hover 5 meters above the track
+		beam.size = Vector3(100.0, 0.1, 0.1)
+		beam.position = Vector3(0, 8.0, 0) # Hover 8 meters above the track
 		
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(0.0, 1.0, 1.0, 0.8) # Neon Cyan, slightly transparent
+		mat.albedo_color = Color(0.0, 1.0, 1.0, 0.5) # Neon Cyan, more transparent
 		mat.emission_enabled = true
 		mat.emission = Color(0.0, 1.0, 1.0)
-		mat.emission_energy_multiplier = 4.0
+		mat.emission_energy_multiplier = 1.5
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		beam.material = mat
 		
@@ -107,12 +113,15 @@ func _physics_process(delta: float) -> void:
 		return
 	
 	var all_crashed = true
+	var generation_finished = false
 	var best_driver = null
 	var highest_fitness = -999999.0
 	
 	for driver in active_drivers:
 		if not driver.crashed:
 			all_crashed = false
+			if driver.checkpoints_passed >= 100:
+				generation_finished = true
 			if driver.fitness > highest_fitness:
 				highest_fitness = driver.fitness
 				best_driver = driver
@@ -122,7 +131,9 @@ func _physics_process(delta: float) -> void:
 		camera.global_position = camera.global_position.lerp(target_pos, 5.0 * delta)
 		camera.look_at(best_driver.car.global_position, Vector3.UP)
 		
-	if all_crashed:
+	if all_crashed or generation_finished:
+		if generation_finished:
+			print("A car finished the lap! Ending generation early to reward speed.")
 		var true_best = -999999.0
 		for driver in active_drivers:
 			if driver.fitness > true_best:
@@ -137,10 +148,13 @@ func _hide_meshes_recursive(node: Node) -> void:
 		_hide_meshes_recursive(child)
 
 func start_first_generation() -> void:
-	get_tree().debug_collisions_hint = true
+	# get_tree().debug_collisions_hint = true
 	spawn_checkpoints()
 	
-	var loaded_weights = load_brain_from_file("user://best_brain.json")
+	var loaded_weights = load_brain_from_file("res://assets/brain/best_brain.json")
+	if loaded_weights and loaded_weights.size() != 189:
+		print("Found outdated brain weights (size mismatch). Discarding and starting from scratch.")
+		loaded_weights = null
 	if loaded_weights != null:
 		print("Found saved brain! Resuming training...")
 		spawn_car(loaded_weights, 0)
@@ -191,17 +205,9 @@ func spawn_car(brain_weights, index: int) -> void:
 	if track_path:
 		var track_len = track_path.curve.get_baked_length()
 		
-		# Curriculum Learning: Spawn closer to where the Elite car is struggling
-		# Fitness was calculated as: progress + (progress / cp_dist) * 500
+		# Always spawn at the starting grid to ensure they learn the full track with high-speed momentum!
 		var best_offset = 15.0
-		if all_time_best_fitness > 0:
-			var cp_dist = track_len / 100.0
-			var fitness_per_meter = 1.0 + (500.0 / cp_dist)
-			best_offset = all_time_best_fitness / fitness_per_meter
-			if best_offset < 15.0: best_offset = 15.0
-			
-		# Spawn 50 meters behind their best, so they have a small run-up to the difficult part
-		spawn_offset = max(15.0, best_offset - 50.0)
+		spawn_offset = 15.0
 
 		
 		var spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(fmod(spawn_offset, track_len), false, false)
@@ -231,6 +237,7 @@ func spawn_car(brain_weights, index: int) -> void:
 	driver.car = car
 	driver.brain = brain
 	driver.track_path = track_path
+	driver.generation = generation
 	
 	if track_path:
 		var track_len = track_path.curve.get_baked_length()
@@ -258,7 +265,7 @@ func advance_generation() -> void:
 	if best_this_gen["fitness"] > all_time_best_fitness:
 		all_time_best_fitness = best_this_gen["fitness"]
 		print("New ALL-TIME HIGH SCORE: ", all_time_best_fitness)
-		save_brain_to_file(best_this_gen["weights"], "user://best_brain.json")
+		save_brain_to_file(best_this_gen["weights"], "res://assets/brain/best_brain.json")
 		
 	var next_generation_pool = []
 	var elite_count = max(1, int(population_size * 0.2))

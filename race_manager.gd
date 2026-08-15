@@ -21,7 +21,12 @@ func _ready() -> void:
 		print("HEADLESS MODE DETECTED! Engaging Turbo Training...")
 		Engine.time_scale = 10.0 
 		Engine.physics_ticks_per_second = 600 # Scale ticks by 10x to maintain accurate 60hz physics at 10x speed!
-		Engine.max_fps = 0
+		Engine.max_fps = 1000
+		
+		# Delete ImGui entirely in headless mode to prevent DeltaTime=0 crashes
+		var imgui = get_node_or_null("/root/ImGuiRoot")
+		if imgui:
+			imgui.queue_free()
 	
 
 	if not car_scene:
@@ -61,14 +66,14 @@ func spawn_checkpoints():
 		
 		# Holographic Hovering Beam Visual
 		var beam = CSGBox3D.new()
-		beam.size = Vector3(100.0, 0.5, 0.5)
-		beam.position = Vector3(0, 5.0, 0) # Hover 5 meters above the track
+		beam.size = Vector3(100.0, 0.1, 0.1)
+		beam.position = Vector3(0, 8.0, 0) # Hover 8 meters above the track
 		
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(0.0, 1.0, 1.0, 0.8) # Neon Cyan, slightly transparent
+		mat.albedo_color = Color(0.0, 1.0, 1.0, 0.5) # Neon Cyan, more transparent
 		mat.emission_enabled = true
 		mat.emission = Color(0.0, 1.0, 1.0)
-		mat.emission_energy_multiplier = 4.0
+		mat.emission_energy_multiplier = 1.5
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		beam.material = mat
 		
@@ -109,11 +114,7 @@ func _physics_process(delta: float) -> void:
 			all_crashed = false
 			
 	if all_crashed:
-		var true_best = -999999.0
-		for driver in active_drivers:
-			if driver.fitness > true_best:
-				true_best = driver.fitness
-		print("Generation ", generation, " finished. Best fitness: ", true_best)
+		print("AI crashed or stalled! Respawning AI for the race...")
 		advance_generation()
 
 func _hide_meshes_recursive(node: Node) -> void:
@@ -123,21 +124,19 @@ func _hide_meshes_recursive(node: Node) -> void:
 		_hide_meshes_recursive(child)
 
 func start_first_generation() -> void:
-	get_tree().debug_collisions_hint = true
+	# get_tree().debug_collisions_hint = true
 	spawn_checkpoints()
 	
-	var loaded_weights = load_brain_from_file("user://best_brain.json")
+	var loaded_weights = load_brain_from_file("res://assets/brain/best_brain.json")
+	if loaded_weights and loaded_weights.size() != 189:
+		print("Found outdated brain weights (size mismatch).")
+		loaded_weights = null
 	if loaded_weights != null:
-		print("Found saved brain! Resuming training...")
+		print("Found saved brain! Preparing AI for Race...")
 		spawn_car(loaded_weights, 0)
-		for i in range(1, population_size):
-			var clone = loaded_weights.duplicate()
-			clone = mutate(clone)
-			spawn_car(clone, i)
 	else:
-		print("No saved brain found. Starting from scratch.")
-		for i in range(population_size):
-			spawn_car(null, i)
+		print("No saved brain found. Spawning untrained AI.")
+		spawn_car(null, 0)
 
 func spawn_car(brain_weights, index: int) -> void:
 	var car = car_scene.instantiate()
