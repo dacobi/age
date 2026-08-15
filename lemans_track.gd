@@ -24,11 +24,9 @@ var reset_car = false
 var reset_game = false
 var powerup_nodes: Array = []
 
-var current_lap: int = 0
 var final_laps: int = 3
 var countdown_value: int = 4 # 4 (1s silent warmup on boot), 3, 2, 1, 0 (GO!), -1 (done)
 var countdown_timer: float = 1.0
-var halfway_cleared: bool = false
 
 var hud_layer: CanvasLayer
 var lap_label: Label
@@ -40,9 +38,18 @@ var beep_high_stream: AudioStream
 var victory_jingle_player: AudioStreamPlayer
 
 var race_time: float = 0.0
-var current_lap_time: float = 0.0
-var lap_times: Array = []
 var race_finished: bool = false
+var racer_states: Dictionary = {}
+
+func get_racer_state(car: Node) -> Dictionary:
+	if not racer_states.has(car):
+		racer_states[car] = {
+			"current_lap": 0,
+			"halfway_cleared": false,
+			"current_lap_time": 0.0,
+			"lap_times": []
+		}
+	return racer_states[car]
 var victory_lap_timer: float = 0.0
 var victory_panel: Control = null
 var victory_popup_menu: Control = null
@@ -715,8 +722,9 @@ func _input(event):
 func _process(delta):
 
 	# Update HUD and Countdown
-	if lap_label:
-		var display_lap = max(1, min(current_lap, final_laps))
+	if lap_label and supercar:
+		var p_state = get_racer_state(supercar)
+		var display_lap = max(1, min(p_state["current_lap"], final_laps))
 		lap_label.text = "Lap: %d / %d" % [display_lap, final_laps]
 		
 	if countdown_value >= 0:
@@ -757,12 +765,15 @@ func _process(delta):
 			if countdown_timer <= 0.0:
 				countdown_label.visible = false
 
-	if countdown_value < 0 and not race_finished and current_lap > 0:
+	if countdown_value < 0 and not race_finished:
 		race_time += delta
-		current_lap_time += delta
+		for car in racer_states.keys():
+			if racer_states[car]["current_lap"] > 0:
+				racer_states[car]["current_lap_time"] += delta
 
-	if time_label:
-		time_label.text = "TIME: " + format_time(race_time) + "\nLAP: " + format_time(current_lap_time)
+	if time_label and supercar:
+		var p_state = get_racer_state(supercar)
+		time_label.text = "TIME: " + format_time(race_time) + "\nLAP: " + format_time(p_state["current_lap_time"])
 
 	if race_finished:
 		victory_lap_timer += delta
@@ -895,11 +906,8 @@ func _process(delta):
 	if reset_game:
 		reset_game = false
 		reset_car = false
-		current_lap = 0
-		halfway_cleared = false
+		racer_states.clear()
 		race_time = 0.0
-		current_lap_time = 0.0
-		lap_times.clear()
 		race_finished = false
 		victory_lap_timer = 0.0
 		if victory_panel: victory_panel.visible = false
@@ -1224,8 +1232,12 @@ func setup_checkpoint_system():
 	half_area.area_entered.connect(_on_halfway_area_entered)
 
 func _on_halfway_area_entered(area: Area3D):
+	print("HALFWAY AREA ENTERED BY: ", area.name)
 	if area.name == "CheckpointSphere" or (supercar and area.get_parent() == supercar):
-		halfway_cleared = true
+		var car = area.get_parent()
+		var state = get_racer_state(car)
+		state["halfway_cleared"] = true
+		print("HALFWAY CROSSED BY CAR: ", car.name)
 
 func format_time(t: float) -> String:
 	var mins = int(t) / 60
@@ -1256,18 +1268,23 @@ func spawn_fireworks():
 		particles.color = colors[i % colors.size()]
 
 func _on_gate_area_entered(area: Area3D):
+	print("GATE AREA ENTERED BY: ", area.name)
 	if area.name == "CheckpointSphere" or (supercar and area.get_parent() == supercar):
-		if (halfway_cleared or current_lap == 0) and not race_finished:
-			if current_lap > 0:
-				lap_times.append(current_lap_time)
-				current_lap_time = 0.0
-			current_lap += 1
-			halfway_cleared = false
-			print("LAP COMPLETED! Current Lap: %d / %d" % [current_lap, final_laps])
+		var car = area.get_parent()
+		var state = get_racer_state(car)
+		print("GATE CROSSED BY CAR: ", car.name, " current lap: ", state["current_lap"], " halfway: ", state["halfway_cleared"])
+		
+		if (state["halfway_cleared"] or state["current_lap"] == 0) and not race_finished:
+			if state["current_lap"] > 0:
+				state["lap_times"].append(state["current_lap_time"])
+				state["current_lap_time"] = 0.0
+			state["current_lap"] += 1
+			state["halfway_cleared"] = false
+			print("Car ", car.name, " LAP COMPLETED! Current Lap: %d / %d" % [state["current_lap"], final_laps])
 			
-			if current_lap > final_laps:
+			if state["current_lap"] > final_laps:
 				race_finished = true
-				print("RACE FINISHED! Total Time: ", format_time(race_time))
+				print("RACE FINISHED! Winner: ", car.name, " Total Time: ", format_time(race_time))
 				if victory_jingle_player:
 					victory_jingle_player.play()
 				spawn_fireworks()
@@ -1275,15 +1292,15 @@ func _on_gate_area_entered(area: Area3D):
 					victory_panel.visible = true
 					var vic_label = victory_panel.get_node_or_null("VictoryText")
 					if vic_label:
-						var best_lap = lap_times[0] if lap_times.size() > 0 else 0.0
-						for lt in lap_times:
+						var best_lap = state["lap_times"][0] if state["lap_times"].size() > 0 else 0.0
+						for lt in state["lap_times"]:
 							if lt < best_lap: best_lap = lt
-						var txt = "--- VICTORY! ---\n"
-						txt += "1st PLACE / FINISHED!\n\n"
+						var txt = "--- RACE FINISHED! ---\n"
+						txt += "WINNER: " + car.name + "\n\n"
 						txt += "TOTAL TIME:  " + format_time(race_time) + "\n"
 						txt += "BEST LAP:    " + format_time(best_lap) + "\n\n"
-						for l_idx in range(lap_times.size()):
-							txt += "Lap %d: %s\n" % [l_idx + 1, format_time(lap_times[l_idx])]
+						for l_idx in range(state["lap_times"].size()):
+							txt += "Lap %d: %s\n" % [l_idx + 1, format_time(state["lap_times"][l_idx])]
 						vic_label.text = txt
 
 func spawn_random_powerups():
