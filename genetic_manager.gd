@@ -1,7 +1,7 @@
 extends Node
 
 @export var car_scene: PackedScene
-@export var population_size: int = 4
+@export var population_size: int = 8
 @export var mutation_rate: float = 0.05
 @export var track_path: Path3D
 
@@ -13,10 +13,21 @@ var generation: int = 1
 var all_time_best_fitness: float = 0.0
 var checkpoints_spawned := false
 
+# UI Variables
+var fps_label: Label
+var time_label: Label
+var car_info_labels: Array = []
+var total_run_time: float = 0.0
+var generation_time: float = 0.0
+
 @onready var camera = $Camera3D if has_node("Camera3D") else Camera3D.new()
 var fmod_banks: Array = []
 
 func _ready() -> void:
+	if DisplayServer.get_name() == "headless":
+		print("HEADLESS MODE DETECTED. CRANKING UP THE TRAINING SPEED!")
+		Engine.time_scale = 5.0
+		
 	randomize()
 	get_tree().set_auto_accept_quit(false)
 	
@@ -42,11 +53,55 @@ func _ready() -> void:
 		add_child(camera)
 		camera.make_current()
 		
+		# Ensure FMOD actually has a Listener in the scene to calculate 3D audio distance!
+		if ClassDB.class_exists("FmodListener3D") and DisplayServer.get_name() != "headless":
+			var listener = ClassDB.instantiate("FmodListener3D")
+			camera.add_child(listener)
+			
 	if not car_scene:
 		car_scene = preload("res://lemans_car.tscn")
 		
 	if not track_path:
 		track_path = get_parent().get_node_or_null("Path3D")
+		
+	# Setup Extensive Info Panel
+	var hud_layer = CanvasLayer.new()
+	add_child(hud_layer)
+	
+	var panel = PanelContainer.new()
+	hud_layer.add_child(panel)
+	panel.position = Vector2(20, 20)
+	
+	# Add a semi-transparent dark background
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.7)
+	style.set_content_margin_all(15.0)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	panel.add_theme_stylebox_override("panel", style)
+	
+	var vbox = VBoxContainer.new()
+	panel.add_child(vbox)
+	
+	fps_label = Label.new()
+	fps_label.add_theme_font_size_override("font_size", 20)
+	fps_label.add_theme_color_override("font_color", Color.YELLOW)
+	vbox.add_child(fps_label)
+	
+	time_label = Label.new()
+	time_label.add_theme_font_size_override("font_size", 20)
+	time_label.add_theme_color_override("font_color", Color.CYAN)
+	vbox.add_child(time_label)
+	
+	for i in range(population_size): # Match population_size
+		var l = Label.new()
+		l.add_theme_font_size_override("font_size", 16)
+		# Use monospace font for clean alignment of numbers
+		l.add_theme_font_override("font", ThemeDB.fallback_font)
+		vbox.add_child(l)
+		car_info_labels.append(l)
 		
 	call_deferred("start_first_generation")
 
@@ -203,12 +258,12 @@ func spawn_car(brain_weights, index: int) -> void:
 	if track_path:
 		var track_len = track_path.curve.get_baked_length()
 		
-		# 2x2 Grid spacing
+		# 2x4 Grid spacing (for up to 8 cars)
 		var row = index / 2
 		var col = index % 2
 		
-		# Space them 10m apart per row, starting from 20.0
-		var raw_offset = 20.0 - (row * 10.0)
+		# Space them 20m apart per row, starting from 100.0 (well past the start line)
+		var raw_offset = 100.0 - (row * 20.0)
 		spawn_offset = fmod(raw_offset + (track_len * 10.0), track_len)
 		
 		var spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(spawn_offset, true, true)
@@ -255,6 +310,8 @@ func advance_generation() -> void:
 	active_drivers.clear()
 	saved_car_genes.sort_custom(func(a, b): return a["fitness"] > b["fitness"])
 	
+	generation_time = 0.0
+	
 	var best_this_gen = saved_car_genes[0]
 	if best_this_gen["fitness"] > all_time_best_fitness:
 		all_time_best_fitness = best_this_gen["fitness"]
@@ -287,8 +344,16 @@ func advance_generation() -> void:
 
 func mutate(weights: PackedFloat32Array) -> PackedFloat32Array:
 	for i in range(weights.size()):
-		if randf() < mutation_rate:
-			weights[i] += randf_range(-0.2, 0.2)
+		# TARGETED EVOLUTION JOLT!
+		# W1 is an 8x17 column-major matrix. Indices 88-103 correspond precisely
+		# to the weights connecting Input 11 (Nitro Angle) and Input 12 (Nitro Distance).
+		if i >= 88 and i <= 103:
+			if randf() < 0.30: # 30% chance to mutate (wildly aggressive)
+				weights[i] += randf_range(-1.0, 1.0)
+		else:
+			# Normal, conservative mutation for core driving skills
+			if randf() < mutation_rate:
+				weights[i] += randf_range(-0.2, 0.2)
 	return weights
 
 func save_brain_to_file(weights: PackedFloat32Array, path: String) -> void:
@@ -316,8 +381,40 @@ func load_brain_from_file(path: String):
 			return weights
 	return null
 
+func format_time(t: float) -> String:
+	var m = int(t) / 60
+	var s = int(t) % 60
+	var ms = int((t - int(t)) * 100.0)
+	return "%02d:%02d.%02d" % [m, s, ms]
+
 func _process(delta: float) -> void:
+	total_run_time += delta
+	generation_time += delta
+	
 	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
 		FmodServer.update()
-		if FmodServer.has_method("set_listener_transform3d") and is_instance_valid(camera):
-			FmodServer.set_listener_transform3d(0, camera.global_transform)
+		
+	if is_instance_valid(time_label):
+		time_label.text = "TOTAL TIME: " + format_time(total_run_time) + " | GEN TIME: " + format_time(generation_time)
+		
+	if is_instance_valid(fps_label):
+		fps_label.text = "FPS: " + str(Engine.get_frames_per_second()) + " | Generation: " + str(generation)
+		
+		for i in range(active_drivers.size()):
+			if i >= car_info_labels.size(): break # Safety bound
+			
+			var d = active_drivers[i]
+			var l = car_info_labels[i]
+			
+			if d.crashed:
+				l.text = "Car %d: CRASHED" % (i + 1)
+				l.add_theme_color_override("font_color", Color.RED)
+			else:
+				var speed = d.car.linear_velocity.length() * 3.6 # Convert to km/h
+				var nitro = "ON" if d.car.get("nitro_active") else "OFF"
+				var gas = str(snapped(d.car.accel_input, 0.01)).pad_decimals(2)
+				var brake = str(snapped(d.car.brake_input, 0.01)).pad_decimals(2)
+				
+				var text = "Car %d: %3d km/h | Nitro: %3s | Gas: %s | Brake: %s" % [i+1, speed, nitro, gas, brake]
+				l.text = text
+				l.add_theme_color_override("font_color", Color.WHITE)
