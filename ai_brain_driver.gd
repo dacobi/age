@@ -4,7 +4,7 @@ var car: RigidBody3D
 var track_path: Path3D
 var brain: CarBrain
 
-var raycasts: Array[RayCast3D] = []
+var raycasts: Array = []
 var max_ray_dist := 50.0
 
 var in_countdown := false
@@ -53,14 +53,18 @@ func _ready() -> void:
 		car.add_child(rc)
 		raycasts.append(rc)
 		
-	# Initialize 3 Car-Detecting Raycasts (Horizontal, small spread)
+	# Initialize 3 Car-Detecting ShapeCasts (Thick vision cones)
 	var car_angles = [15.0, 0.0, -15.0]
 	for angle in car_angles:
-		var rc = RayCast3D.new()
+		var rc = ShapeCast3D.new()
+		var shape = SphereShape3D.new()
+		shape.radius = 2.0
+		rc.shape = shape
 		rc.target_position = Vector3(0, 0, -50.0).rotated(Vector3.UP, deg_to_rad(angle))
 		rc.position = Vector3(0, 0.5, 0)
-		rc.collision_mask = 128 # AI Vision Layer
-		rc.collide_with_areas = true # Must hit the AIVisionArea of cars and nitro!
+		rc.collision_mask = 128 | 4 # AI Vision Layer + Prop Layer (Nitros)
+		rc.collide_with_areas = true # Hit Cars AIVisionArea
+		rc.collide_with_bodies = true # Hit Nitro StaticBody3D (Layer 4)
 		rc.enabled = true
 		car.add_child(rc)
 		raycasts.append(rc)
@@ -265,19 +269,27 @@ func _physics_process(delta: float) -> void:
 	# Inputs 14-16: Car/Powerup Detection Raycasts (AI Vision)
 	for i in range(3):
 		var rc = raycasts[5 + i]
-		rc.force_raycast_update()
+		
+		# In Godot 4, ShapeCast3D uses force_shapecast_update
+		if rc is ShapeCast3D:
+			rc.force_shapecast_update()
+		else:
+			rc.force_raycast_update()
+			
 		var hit_dist = 50.0
 		var global_start = rc.global_position
 		var global_end = rc.to_global(rc.target_position)
 		var hit_type = 0 # 0 = track wall, 1 = car, -1 = nitro
 		
 		if rc.is_colliding():
-			global_end = rc.get_collision_point()
+			global_end = rc.get_collision_point(0) if rc is ShapeCast3D else rc.get_collision_point()
 			hit_dist = (global_end - global_start).length()
-			var col = rc.get_collider()
+			var col = rc.get_collider(0) if rc is ShapeCast3D else rc.get_collider()
 			if col:
-				if col.name.begins_with("NitroVisionArea"):
+				if col.name.begins_with("RandomNitroPowerup_") or col.name.begins_with("NitroVisionArea"):
 					hit_type = -1
+					hit_dist = (col.global_position - global_start).length()
+					global_end = col.global_position # Visually snap debug line to the center!
 				elif col.name.begins_with("AIVisionArea"):
 					hit_type = 1
 			
