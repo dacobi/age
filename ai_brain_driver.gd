@@ -15,6 +15,7 @@ var generation: int = 1
 
 var crashed := false
 var fitness: float = 0.0
+var checkpoint_speed_bonus: float = 0.0
 var stall_timer := 0.0
 var not_grounded_timer := 0.0
 var fall_timer: float = 0.0
@@ -24,6 +25,7 @@ var last_progress: float = -1.0
 var accumulated_progress: float = 0.0
 var accumulated_speed_score: float = 0.0
 var time_alive: float = 0.0
+var last_nitro_seconds: float = 0.0
 var debug_mesh: MeshInstance3D
 
 func _ready() -> void:
@@ -140,18 +142,32 @@ func _physics_process(delta: float) -> void:
 	elif delta_progress > 2000.0: # Wrapped backward
 		delta_progress -= track_length
 		
-	var current_speed = car.linear_velocity.length()
-	# Reward the square of the speed to disproportionately favor fast cars!
-	# E.g., driving 100m/s for 1 second yields 10,000 * 0.05 = +500 points
-	# Driving 50m/s for 2 seconds yields (2500 * 0.05) * 2 = +250 points
-	accumulated_speed_score += (current_speed * current_speed) * delta * 0.05
-	
+	# 1.5 Penalize for colliding with other cars
+	var area = car.get_node_or_null("AIVisionArea")
+	if area:
+		var overlapping_areas = area.get_overlapping_areas()
+		for other_area in overlapping_areas:
+			if other_area != area and other_area.name == "AIVisionArea":
+				# Hit another AI car
+				fitness -= 1000.0 * delta
+				
 	time_alive += delta
 	accumulated_progress += delta_progress
 	last_progress = current_progress
 	
-	# Calculate total fitness combining distance, checkpoints, and exponential speed reward
-	var current_fitness = accumulated_progress + (checkpoints_passed * 500.0) + accumulated_speed_score
+	# 1.6 Reward for explicitly collecting nitro (teaches them to aim for it)
+	var current_nitro = car.get("nitro_seconds") if car.get("nitro_seconds") != null else 0.0
+	if current_nitro > last_nitro_seconds:
+		checkpoint_speed_bonus += 1500.0 # Instant massive reward!
+		print("Car ", car.name, " COLLECTED NITRO! +1500 Fitness!")
+	last_nitro_seconds = current_nitro
+	
+	# Calculate total fitness combining distance and exponential speed reward
+	var speed_bonus = get("checkpoint_speed_bonus")
+	if speed_bonus == null:
+		speed_bonus = 0.0
+	
+	var current_fitness = accumulated_progress + speed_bonus
 	
 	# Prevent fitness from dropping if the car rolls backwards slightly (or as time increases)
 	# This locks in their "highest score", effectively grading them on how fast they reached their furthest point.
@@ -163,14 +179,6 @@ func _physics_process(delta: float) -> void:
 	if curve and track_path:
 		var track_transform = track_path.global_transform * curve.sample_baked_with_rotation(current_progress, true, true)
 		track_y = track_transform.origin.y
-	# 1.5 Penalize for colliding with other cars
-	var area = car.get_node_or_null("AIVisionArea")
-	if area:
-		var overlapping_areas = area.get_overlapping_areas()
-		for other_area in overlapping_areas:
-			if other_area != area and other_area.name == "AIVisionArea":
-				# Hit another AI car
-				fitness -= 5.0 * delta
 				
 	# 2. Check for Stall / Crash / Falling
 	if car.global_position.y < (track_y - 10.0):
@@ -276,12 +284,18 @@ func _physics_process(delta: float) -> void:
 		var norm_dist = 1.0 - clampf(hit_dist / 50.0, 0.0, 1.0)
 		if hit_type == -1:
 			inputs[14 + i] = -norm_dist # Negative input for Nitro so the NN can learn to aim for it
+			checkpoint_speed_bonus += 500.0 * norm_dist * delta # Huge Breadcrumb reward!
 		elif hit_type == 1:
 			inputs[14 + i] = norm_dist # Positive input for cars (obstacles)
 		else:
 			inputs[14 + i] = norm_dist * 0.5 # Track wall (Layer 128), treat as mild obstacle
 		
-		var color = Color.YELLOW if rc.is_colliding() else Color.BLUE
+		var color = Color.BLUE
+		if rc.is_colliding():
+			if hit_type == -1: color = Color.GREEN
+			elif hit_type == 1: color = Color.RED
+			else: color = Color.YELLOW
+			
 		im.surface_set_color(color)
 		im.surface_add_vertex(debug_mesh.to_local(global_start))
 		im.surface_set_color(color)

@@ -1062,10 +1062,10 @@ func setup_polygons():
 	border_l.path_local = true
 	border_l.path_continuous_u = true
 	border_l.path_u_distance = 16.0
-	border_l.use_collision = false
+	border_l.use_collision = true
 	border_l.polygon = PackedVector2Array([
-		Vector2(-50.4, 0.2),
-		Vector2(-48.0, 0.2),
+		Vector2(-50.4, 4.0),
+		Vector2(-48.0, 4.0),
 		Vector2(-48.0, -0.08),
 		Vector2(-50.4, -0.08)
 	])
@@ -1077,10 +1077,10 @@ func setup_polygons():
 	border_r.path_local = true
 	border_r.path_continuous_u = true
 	border_r.path_u_distance = 16.0
-	border_r.use_collision = false
+	border_r.use_collision = true
 	border_r.polygon = PackedVector2Array([
-		Vector2(48.0, 0.2),
-		Vector2(50.4, 0.2),
+		Vector2(48.0, 4.0),
+		Vector2(50.4, 4.0),
 		Vector2(50.4, -0.08),
 		Vector2(48.0, -0.08)
 	])
