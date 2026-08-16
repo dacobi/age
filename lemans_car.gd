@@ -16,7 +16,7 @@ var radius_front = 0.5
 var radius_rear = 0.5
 
 # Tuning coefficients set by Lua script
-var engine_force_value = 8000.0
+var engine_force_value = 20000.0
 var brake_force_value = 200.0
 var max_steer = 0.8
 var wheel_friction_slip = 10.5
@@ -282,7 +282,35 @@ func _ready():
 	# Prevent the car from colliding with its own bumpers if car-to-car collision is enabled
 	add_collision_exception_with(bumper)
 	add_collision_exception_with(rear_bumper)
-			
+	
+	# --- NITRO MAGNET AREA ---
+	# A wide Area3D to catch nitros that the car grazes or sideswipes
+	var magnet_area = Area3D.new()
+	magnet_area.name = "NitroMagnetArea"
+	magnet_area.collision_layer = 0
+	magnet_area.collision_mask = 4
+	magnet_area.body_entered.connect(_on_prop_collided)
+	
+	var magnet_col = CollisionShape3D.new()
+	var magnet_shape = BoxShape3D.new()
+	# 6 meters wide! Gives the car a 1.5m buffer on each side to magnetically grab nitros
+	magnet_shape.size = Vector3(6.0, 2.0, 6.0) 
+	magnet_col.shape = magnet_shape
+	magnet_col.position = Vector3(0, 1.0, 0) # Shifted up slightly to perfectly align with nitros
+	
+	var magnet_mi = MeshInstance3D.new()
+	var magnet_mesh = BoxMesh.new()
+	magnet_mesh.size = magnet_shape.size
+	magnet_mi.mesh = magnet_mesh
+	var magnet_mat = StandardMaterial3D.new()
+	magnet_mat.albedo_color = Color(1.0, 0.0, 1.0, 0.2) # Translucent MAGENTA
+	magnet_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	magnet_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	magnet_mi.material_override = magnet_mat
+	magnet_col.add_child(magnet_mi)
+	
+	magnet_area.add_child(magnet_col)
+	add_child(magnet_area)
 	# Dynamically build wheels at startup
 	var use_shapecast = true
 	var w_fl = create_wheel("FL", mount_FL, radius_front, true, false, use_shapecast)

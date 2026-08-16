@@ -7,6 +7,7 @@ var sparkle_mat: ParticleProcessMaterial
 var snapped_to_track: bool = false
 var snap_attempts: int = 0
 var track_up: Vector3 = Vector3.UP
+var track_offset: float = 0.0
 
 func _ready() -> void:
 	collision_layer = 4 # Prop collision layer
@@ -104,8 +105,8 @@ func _physics_process(_delta: float) -> void:
 			query.collision_mask = 1 # Road collision layer
 			var result = space_state.intersect_ray(query)
 			if result:
-				# Place it exactly 1.0m above the physical track (plus 1.5m bottom tip offset) = 2.5m total
-				global_position = result.position + result.normal * 2.5
+				# Place it exactly 0.05m above the physical track at lowest hover tip (1.95m total center height)
+				global_position = result.position + result.normal * 1.95
 				base_y = position.y
 				snapped_to_track = true
 
@@ -156,8 +157,16 @@ func on_nitro_collected(car: Node) -> void:
 
 	# Audio feedback
 	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
-		if FmodServer.has_method("play_one_shot_attached"):
-			FmodServer.play_one_shot_attached("event:/Interactables/ping", self)
+		if FmodServer.has_method("create_event_instance"):
+			var ev = FmodServer.create_event_instance("event:/Interactables/ping")
+			if ev:
+				if ev.has_method("set_3d_attributes"):
+					# Use the exact global_transform of the powerup at the moment it was collected
+					ev.set_3d_attributes(global_transform)
+				if ev.has_method("start"):
+					ev.start()
+				if ev.has_method("release"):
+					ev.release()
 					
 	visible = false
 	collision_layer = 0

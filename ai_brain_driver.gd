@@ -27,8 +27,10 @@ var accumulated_speed_score: float = 0.0
 var time_alive: float = 0.0
 var last_nitro_seconds: float = 0.0
 var debug_mesh: MeshInstance3D
+var is_headless := false
 
 func _ready() -> void:
+	is_headless = DisplayServer.get_name() == "headless"
 	# Guarantee automatic transmission
 	car.set("gear_mode", 0) # 0 = Auto
 	
@@ -53,18 +55,15 @@ func _ready() -> void:
 		car.add_child(rc)
 		raycasts.append(rc)
 		
-	# Initialize 3 Car-Detecting ShapeCasts (Thick vision cones)
+	# Initialize 3 Car-Detecting RayCasts (Thin, highly optimized)
 	var car_angles = [15.0, 0.0, -15.0]
 	for angle in car_angles:
-		var rc = ShapeCast3D.new()
-		var shape = SphereShape3D.new()
-		shape.radius = 2.0
-		rc.shape = shape
+		var rc = RayCast3D.new()
 		rc.target_position = Vector3(0, 0, -50.0).rotated(Vector3.UP, deg_to_rad(angle))
 		rc.position = Vector3(0, 0.5, 0)
-		rc.collision_mask = 128 | 4 # AI Vision Layer + Prop Layer (Nitros)
+		rc.collision_mask = 128 # AI Vision Layer Only (Ignore Nitros entirely)
 		rc.collide_with_areas = true # Hit Cars AIVisionArea
-		rc.collide_with_bodies = true # Hit Nitro StaticBody3D (Layer 4)
+		rc.collide_with_bodies = false
 		rc.enabled = true
 		car.add_child(rc)
 		raycasts.append(rc)
@@ -145,6 +144,10 @@ func _physics_process(delta: float) -> void:
 		delta_progress += track_length
 	elif delta_progress > 2000.0: # Wrapped backward
 		delta_progress -= track_length
+		
+	# Punish backward driving
+	if delta_progress < -10.0:
+		delta_progress *= 2.0
 		
 	# 1.5 Penalize for colliding with other cars
 	var area = car.get_node_or_null("AIVisionArea")
@@ -244,8 +247,10 @@ func _physics_process(delta: float) -> void:
 	inputs.resize(17)
 	
 	# Draw debug lines
-	var im = ImmediateMesh.new()
-	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	var im = null
+	if not is_headless:
+		im = ImmediateMesh.new()
+		im.surface_begin(Mesh.PRIMITIVE_LINES)
 	
 	# Inputs 0-4: Angled Raycasts (Floor detection)
 	for i in range(5):
@@ -260,38 +265,29 @@ func _physics_process(delta: float) -> void:
 		
 		inputs[i] = 1.0 - clampf(hit_dist / 200.0, 0.0, 1.0)
 		
-		var color = Color.GREEN if rc.is_colliding() else Color.RED
-		im.surface_set_color(color)
-		im.surface_add_vertex(debug_mesh.to_local(global_start))
-		im.surface_set_color(color)
-		im.surface_add_vertex(debug_mesh.to_local(global_end))
+		if im != null:
+			var color = Color.GREEN if rc.is_colliding() else Color.RED
+			im.surface_set_color(color)
+			im.surface_add_vertex(debug_mesh.to_local(global_start))
+			im.surface_set_color(color)
+			im.surface_add_vertex(debug_mesh.to_local(global_end))
 		
-	# Inputs 14-16: Car/Powerup Detection Raycasts (AI Vision)
+	# Inputs 14-16: Car Detection Raycasts (Obstacle Avoidance)
 	for i in range(3):
 		var rc = raycasts[5 + i]
-		
-		# In Godot 4, ShapeCast3D uses force_shapecast_update
-		if rc is ShapeCast3D:
-			rc.force_shapecast_update()
-		else:
-			rc.force_raycast_update()
+		rc.force_raycast_update()
 			
 		var hit_dist = 50.0
 		var global_start = rc.global_position
 		var global_end = rc.to_global(rc.target_position)
-		var hit_type = 0 # 0 = track wall, 1 = car, -1 = nitro
+		var hit_type = 0 # 0 = nothing/wall, 1 = car
 		
 		if rc.is_colliding():
-			global_end = rc.get_collision_point(0) if rc is ShapeCast3D else rc.get_collision_point()
+			global_end = rc.get_collision_point()
 			hit_dist = (global_end - global_start).length()
-			var col = rc.get_collider(0) if rc is ShapeCast3D else rc.get_collider()
-			if col:
-				if col.name.begins_with("RandomNitroPowerup_") or col.name.begins_with("NitroVisionArea"):
-					hit_type = -1
-					hit_dist = (col.global_position - global_start).length()
-					global_end = col.global_position # Visually snap debug line to the center!
-				elif col.name.begins_with("AIVisionArea"):
-					hit_type = 1
+			var col = rc.get_collider()
+			if col and col.name.begins_with("AIVisionArea"):
+				hit_type = 1
 			
 		var norm_dist = 1.0 - clampf(hit_dist / 50.0, 0.0, 1.0)
 		if hit_type == -1:
@@ -302,38 +298,89 @@ func _physics_process(delta: float) -> void:
 		else:
 			inputs[14 + i] = norm_dist * 0.5 # Track wall (Layer 128), treat as mild obstacle
 		
-		var color = Color.BLUE
-		if rc.is_colliding():
-			if hit_type == -1: color = Color.GREEN
-			elif hit_type == 1: color = Color.RED
-			else: color = Color.YELLOW
-			
-		im.surface_set_color(color)
-		im.surface_add_vertex(debug_mesh.to_local(global_start))
-		im.surface_set_color(color)
-		im.surface_add_vertex(debug_mesh.to_local(global_end))
+		if im != null:
+			var color = Color.BLUE
+			if rc.is_colliding():
+				if hit_type == -1: color = Color.GREEN
+				elif hit_type == 1: color = Color.RED
+				else: color = Color.YELLOW
+				
+			im.surface_set_color(color)
+			im.surface_add_vertex(debug_mesh.to_local(global_start))
+			im.surface_set_color(color)
+			im.surface_add_vertex(debug_mesh.to_local(global_end))
 		
 	var car_forward = -car.global_transform.basis.z.normalized()
 	
-	# Inputs 10-12: Track Look-Ahead (Anticipate corners)
+	# Input 10: Track Look-Ahead (Anticipate corners, 50m)
+	# Inputs 11-12: Oracle Nitro Radar (Angle, Distance)
 	if curve:
-		for i in range(3):
-			var lookahead_dist = 50.0 * (i + 1) # 50m, 100m, 150m
-			var future_progress = fmod(current_progress + lookahead_dist, track_length)
-			var future_transform = track_path.global_transform * curve.sample_baked_with_rotation(future_progress, false, false)
-			var future_forward = -future_transform.basis.z.normalized()
-			var future_angle_diff = car_forward.signed_angle_to(future_forward, Vector3.UP)
-			inputs[10 + i] = future_angle_diff / PI
+		var future_progress = fmod(current_progress + 50.0, track_length)
+		var future_transform = track_path.global_transform * curve.sample_baked_with_rotation(future_progress, false, false)
+		var future_forward = -future_transform.basis.z.normalized()
+		var future_angle_diff = car_forward.signed_angle_to(future_forward, Vector3.UP)
+		inputs[10] = future_angle_diff / PI
 	else:
-		for i in range(3):
-			inputs[10 + i] = 0.0
+		inputs[10] = 0.0
+		
+	var nearest_nitro = null
+	var min_nitro_dist = 9999.0
+	track_node = car.get_parent().get_parent()
+	var nitro_angle = 0.0
+	var nitro_dist_norm = 0.0
+	
+	if track_node and track_node.get("powerup_nodes"):
+		var powerups = track_node.get("powerup_nodes")
+		for p in powerups:
+			if p and p.visible: # Only active nitros
+				var p_offset = p.get("track_offset")
+				if p_offset != null:
+					# Calculate distance along the track curve
+					var dist_ahead = p_offset - current_progress
+					if dist_ahead < -2000.0:
+						dist_ahead += track_length # Handle lap wrap-around forward
+					elif dist_ahead > 2000.0:
+						dist_ahead -= track_length # Handle lap wrap-around backward
+						
+					# If it's within 200m ahead or 20m behind us on the track!
+					if dist_ahead > -20.0 and dist_ahead < 200.0:
+						# Filter out nitros that are physically completely behind us
+						# (in case the car spun out or overshot)
+						var dir_to_nitro = (p.global_position - car.global_position).normalized()
+						var angle = car_forward.signed_angle_to(dir_to_nitro, Vector3.UP)
+						
+						# Clamp angle to PI/2 so the Neural Network isn't confused by > 90 deg inputs
+						# but still knows it needs to steer hard to grab it!
+						if abs(angle) < (PI / 1.2): # Allow up to 150 degrees to grab ones we slightly missed!
+							# Use absolute dist_ahead so ones slightly behind us are treated as close
+							var abs_dist_ahead = abs(dist_ahead)
+							if abs_dist_ahead < min_nitro_dist:
+								min_nitro_dist = abs_dist_ahead
+								nearest_nitro = p
+								nitro_angle = clampf(angle, -PI/2.0, PI/2.0)
+						
+	if nearest_nitro:
+		nitro_dist_norm = 1.0 - clampf(min_nitro_dist / 200.0, 0.0, 1.0)
+		inputs[11] = nitro_angle / PI
+		inputs[12] = nitro_dist_norm
+		
+		if im != null:
+			# Draw a pink "Oracle Line" directly to the target Nitro!
+			im.surface_set_color(Color.MAGENTA)
+			im.surface_add_vertex(debug_mesh.to_local(car.global_position + Vector3(0, 1.0, 0)))
+			im.surface_set_color(Color.MAGENTA)
+			im.surface_add_vertex(debug_mesh.to_local(nearest_nitro.global_position))
+	else:
+		inputs[11] = 0.0
+		inputs[12] = 0.0
 			
 	# Input 13: Yaw Rate (Angular Velocity Y)
 	# Crucial for dynamic stabilization and stopping wobbles
 	inputs[13] = clampf(car.angular_velocity.y / PI, -1.0, 1.0)
 			
-	im.surface_end()
-	debug_mesh.mesh = im
+	if im != null:
+		im.surface_end()
+		debug_mesh.mesh = im
 	
 	# Calculate track-relative data
 	var track_transform = track_path.global_transform

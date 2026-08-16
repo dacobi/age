@@ -699,9 +699,6 @@ func _input(event):
 func _process(delta):
 
 	# Update HUD and Countdown
-	if lap_label:
-		var display_lap = max(1, current_lap)
-		lap_label.text = "Lap: %d" % display_lap
 		
 	if countdown_value >= 0:
 		countdown_timer -= delta
@@ -743,13 +740,6 @@ func _process(delta):
 
 	if lap_cooldown > 0.0:
 		lap_cooldown -= delta
-
-	if countdown_value < 0 and not race_finished and current_lap > 0:
-		race_time += delta
-		current_lap_time += delta
-
-	if time_label:
-		time_label.text = "TIME: " + format_time(race_time) + "\nLAP: " + format_time(current_lap_time)
 
 	if race_finished:
 		victory_lap_timer += delta
@@ -1282,7 +1272,7 @@ func spawn_random_powerups():
 		if not t:
 			continue
 			
-		var lane_offset = randf_range(-42.0, 42.0)
+		var lane_offset = randf_range(-10.0, 10.0)
 		var world_pos = t.origin + t.basis.x.normalized() * lane_offset + t.basis.y.normalized() * 10.0
 		
 		var powerup = StaticBody3D.new()
@@ -1293,25 +1283,13 @@ func spawn_random_powerups():
 		add_child(powerup)
 		powerup.global_position = world_pos
 		powerup.set("track_up", t.basis.y.normalized())
+		powerup.set("track_offset", progress) # Inject for track-based Oracle tracking!
 		powerup_nodes.append(powerup)
 
 func setup_ui():
 	hud_layer = CanvasLayer.new()
 	hud_layer.name = "GameUI"
 	add_child(hud_layer)
-	
-	# Top-Left Lap Indicator HUD
-	lap_label = Label.new()
-	lap_label.name = "LapLabel"
-	lap_label.position = Vector2(40, 30)
-	var lap_settings = LabelSettings.new()
-	lap_settings.font_size = 42
-	lap_settings.font_color = Color(1.0, 0.9, 0.1) # Neon yellow/gold
-	lap_settings.outline_size = 8
-	lap_settings.outline_color = Color(0.0, 0.0, 0.0, 0.9)
-	lap_label.label_settings = lap_settings
-	lap_label.text = "Lap: 1 / 3"
-	hud_layer.add_child(lap_label)
 	
 	# Center Screen Countdown
 	countdown_label = Label.new()
@@ -1339,21 +1317,6 @@ func setup_ui():
 	beep_player = AudioStreamPlayer.new()
 	beep_player.name = "CountdownBeepPlayer"
 	add_child(beep_player)
-
-	# Top-Right Time Indicator HUD
-	time_label = Label.new()
-	time_label.name = "TimeLabel"
-	time_label.anchor_left = 1.0
-	time_label.anchor_right = 1.0
-	time_label.position = Vector2(-380, 30)
-	var time_settings = LabelSettings.new()
-	time_settings.font_size = 36
-	time_settings.font_color = Color(0.0, 1.0, 1.0) # Neon cyan
-	time_settings.outline_size = 8
-	time_settings.outline_color = Color(0.0, 0.0, 0.0, 0.9)
-	time_label.label_settings = time_settings
-	time_label.text = "TIME: 00:00.00\nLAP: 00:00.00"
-	hud_layer.add_child(time_label)
 
 	# Center Screen Victory Panel
 	victory_panel = Control.new()
