@@ -20,17 +20,7 @@ func _ready() -> void:
 	col.shape = shape
 	add_child(col)
 	
-	# AI Vision Hitbox
-	var ai_vision = Area3D.new()
-	ai_vision.name = "NitroVisionArea"
-	ai_vision.collision_layer = 128
-	ai_vision.collision_mask = 0
-	var ai_vision_col = CollisionShape3D.new()
-	var ai_vision_shape = SphereShape3D.new()
-	ai_vision_shape.radius = 10.0 # Huge radius so AI easily detects powerups
-	ai_vision_col.shape = ai_vision_shape
-	ai_vision.add_child(ai_vision_col)
-	add_child(ai_vision)
+
 	
 	visual_group = Node3D.new()
 	add_child(visual_group)
