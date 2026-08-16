@@ -278,6 +278,10 @@ func _ready():
 	rear_bumper_area.add_child(rear_bumper_area_col)
 	
 	add_child(rear_bumper)
+	
+	# Prevent the car from colliding with its own bumpers if car-to-car collision is enabled
+	add_collision_exception_with(bumper)
+	add_collision_exception_with(rear_bumper)
 			
 	# Dynamically build wheels at startup
 	var use_shapecast = true
@@ -899,8 +903,10 @@ func _physics_process(delta: float) -> void:
 		engine_rpm = lerp(engine_rpm, target_rpm, 15.0 * delta)
 	
 	# --- FMOD ENGINE UPDATE ---
-	if ClassDB.class_exists("FmodServer") and not is_ai_controlled and DisplayServer.get_name() != "headless":
-		FmodServer.update()
+	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
+		if not is_ai_controlled:
+			FmodServer.update()
+			
 		if (fmod_event == null or tire_fmod_event == null) and not fmod_banks_loaded:
 			# FMOD bank loading takes a few frames to populate the event descriptions
 			var events = FmodServer.get_all_event_descriptions()
@@ -918,7 +924,7 @@ func _physics_process(delta: float) -> void:
 						if tire_fmod_event: tire_fmod_event.start()
 		
 		# We must set a listener position, otherwise we might not hear the 3D event
-		if FmodServer.has_method("set_listener_transform3d"):
+		if not is_ai_controlled and FmodServer.has_method("set_listener_transform3d"):
 			FmodServer.set_listener_transform3d(0, global_transform)
 			
 		if fmod_event:
@@ -1030,3 +1036,14 @@ func _setup_nitro_flames() -> void:
 
 func is_grounded() -> bool:
 	return is_grounded_state
+
+func _exit_tree() -> void:
+	if fmod_event != null:
+		if fmod_event.has_method("stop"): fmod_event.stop(0) # 0 = IMMEDIATE
+		if fmod_event.has_method("release"): fmod_event.release()
+		fmod_event = null
+		
+	if tire_fmod_event != null:
+		if tire_fmod_event.has_method("stop"): tire_fmod_event.stop(0)
+		if tire_fmod_event.has_method("release"): tire_fmod_event.release()
+		tire_fmod_event = null

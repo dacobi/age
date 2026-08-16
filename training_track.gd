@@ -25,6 +25,7 @@ var reset_game = false
 var powerup_nodes: Array = []
 
 var current_lap: int = 0
+var lap_cooldown: float = 0.0
 var final_laps: int = 3
 var countdown_value: int = 4 # 4 (1s silent warmup on boot), 3, 2, 1, 0 (GO!), -1 (done)
 var countdown_timer: float = 1.0
@@ -699,8 +700,8 @@ func _process(delta):
 
 	# Update HUD and Countdown
 	if lap_label:
-		var display_lap = max(1, min(current_lap, final_laps))
-		lap_label.text = "Lap: %d / %d" % [display_lap, final_laps]
+		var display_lap = max(1, current_lap)
+		lap_label.text = "Lap: %d" % display_lap
 		
 	if countdown_value >= 0:
 		countdown_timer -= delta
@@ -739,6 +740,9 @@ func _process(delta):
 			countdown_timer -= delta
 			if countdown_timer <= 0.0:
 				countdown_label.visible = false
+
+	if lap_cooldown > 0.0:
+		lap_cooldown -= delta
 
 	if countdown_value < 0 and not race_finished and current_lap > 0:
 		race_time += delta
@@ -1037,10 +1041,10 @@ func setup_polygons():
 	border_l.path_local = true
 	border_l.path_continuous_u = true
 	border_l.path_u_distance = 16.0
-	border_l.use_collision = false
+	border_l.use_collision = true
 	border_l.polygon = PackedVector2Array([
-		Vector2(-50.4, 0.2),
-		Vector2(-48.0, 0.2),
+		Vector2(-50.4, 4.0),
+		Vector2(-48.0, 4.0),
 		Vector2(-48.0, -0.08),
 		Vector2(-50.4, -0.08)
 	])
@@ -1071,10 +1075,10 @@ func setup_polygons():
 	border_r.path_local = true
 	border_r.path_continuous_u = true
 	border_r.path_u_distance = 16.0
-	border_r.use_collision = false
+	border_r.use_collision = true
 	border_r.polygon = PackedVector2Array([
-		Vector2(48.0, 0.2),
-		Vector2(50.4, 0.2),
+		Vector2(48.0, 4.0),
+		Vector2(50.4, 4.0),
 		Vector2(50.4, -0.08),
 		Vector2(48.0, -0.08)
 	])
@@ -1240,35 +1244,23 @@ func spawn_fireworks():
 		particles.color = colors[i % colors.size()]
 
 func _on_gate_area_entered(area: Area3D):
-	if area.name == "CheckpointSphere" or (supercar and area.get_parent() == supercar):
-		if (halfway_cleared or current_lap == 0) and not race_finished:
+	var parent = area.get_parent()
+	
+	if area.name == "CheckpointSphere" or (supercar and parent == supercar):
+		if lap_cooldown <= 0.0 and (halfway_cleared or current_lap == 0):
+			lap_cooldown = 10.0 # Prevent trailing cars from double-counting the lap
 			if current_lap > 0:
 				lap_times.append(current_lap_time)
 				current_lap_time = 0.0
 			current_lap += 1
 			halfway_cleared = false
-			print("LAP COMPLETED! Current Lap: %d / %d" % [current_lap, final_laps])
+			print("LEADING CAR COMPLETED LAP! Current Lap: %d" % current_lap)
 			
-			if current_lap > final_laps:
-				race_finished = true
-				print("RACE FINISHED! Total Time: ", format_time(race_time))
-				if victory_jingle_player:
-					victory_jingle_player.play()
-				spawn_fireworks()
-				if victory_panel:
-					victory_panel.visible = true
-					var vic_label = victory_panel.get_node_or_null("VictoryText")
-					if vic_label:
-						var best_lap = lap_times[0] if lap_times.size() > 0 else 0.0
-						for lt in lap_times:
-							if lt < best_lap: best_lap = lt
-						var txt = "--- VICTORY! ---\n"
-						txt += "1st PLACE / FINISHED!\n\n"
-						txt += "TOTAL TIME:  " + format_time(race_time) + "\n"
-						txt += "BEST LAP:    " + format_time(best_lap) + "\n\n"
-						for l_idx in range(lap_times.size()):
-							txt += "Lap %d: %s\n" % [l_idx + 1, format_time(lap_times[l_idx])]
-						vic_label.text = txt
+			if victory_jingle_player and current_lap > 1:
+				# Play a little ping for completing a lap, but no race-ending logic!
+				pass
+			
+			# No victory screen for training track! Just keep going!
 
 func spawn_random_powerups():
 	var nitro_script = load("res://nitro_powerup.gd")
@@ -1291,7 +1283,7 @@ func spawn_random_powerups():
 			continue
 			
 		var lane_offset = randf_range(-42.0, 42.0)
-		var world_pos = t.origin + t.basis.x * lane_offset + t.basis.y * 20.0
+		var world_pos = t.origin + t.basis.x.normalized() * lane_offset + t.basis.y.normalized() * 10.0
 		
 		var powerup = StaticBody3D.new()
 		powerup.name = "RandomNitroPowerup_" + str(i)
@@ -1300,6 +1292,7 @@ func spawn_random_powerups():
 		# CRITICAL: add_child BEFORE setting spatial position to avoid !is_inside_tree() errors
 		add_child(powerup)
 		powerup.global_position = world_pos
+		powerup.set("track_up", t.basis.y.normalized())
 		powerup_nodes.append(powerup)
 
 func setup_ui():

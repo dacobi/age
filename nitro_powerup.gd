@@ -6,6 +6,7 @@ var visual_group: Node3D
 var sparkle_mat: ParticleProcessMaterial
 var snapped_to_track: bool = false
 var snap_attempts: int = 0
+var track_up: Vector3 = Vector3.UP
 
 func _ready() -> void:
 	collision_layer = 4 # Prop collision layer
@@ -105,17 +106,16 @@ func _ready() -> void:
 	sparkle_mat.color_ramp = gtex
 
 func _physics_process(_delta: float) -> void:
-	if not snapped_to_track and snap_attempts < 10:
+	if not snapped_to_track and snap_attempts < 20:
 		snap_attempts += 1
 		var space_state = get_world_3d().direct_space_state
 		if space_state:
-			var query = PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 50.0, 0), global_position - Vector3(0, 100.0, 0))
+			var query = PhysicsRayQueryParameters3D.create(global_position + track_up * 10.0, global_position - track_up * 200.0)
 			query.collision_mask = 1 # Road collision layer
 			var result = space_state.intersect_ray(query)
 			if result:
-				# Bottom cone tip is 1.5m below center (y = -1.5 in local space).
-				# To sit exactly 1.5m above the track surface: center = result.position + 1.5m (bottom tip offset) + 1.5m (hover gap) = result.position + 3.0m along normal.
-				global_position = result.position + result.normal * 3.0
+				# Place it exactly 1.0m above the physical track (plus 1.5m bottom tip offset) = 2.5m total
+				global_position = result.position + result.normal * 2.5
 				base_y = position.y
 				snapped_to_track = true
 
@@ -166,17 +166,8 @@ func on_nitro_collected(car: Node) -> void:
 
 	# Audio feedback
 	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
-		if FmodServer.has_method("create_event_instance"):
-			var ev = FmodServer.create_event_instance("event:/Interactables/ping")
-			if ev:
-				# if ev.has_method("set_parameter_by_name"):
-				# 	ev.set_parameter_by_name("speed", 50.0)
-				if ev.has_method("set_3d_attributes"):
-					ev.set_3d_attributes(global_transform)
-				if ev.has_method("start"):
-					ev.start()
-				if ev.has_method("release"):
-					ev.release()
+		if FmodServer.has_method("play_one_shot_attached"):
+			FmodServer.play_one_shot_attached("event:/Interactables/ping", self)
 					
 	visible = false
 	collision_layer = 0

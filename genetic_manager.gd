@@ -1,7 +1,7 @@
 extends Node
 
 @export var car_scene: PackedScene
-@export var population_size: int = 30
+@export var population_size: int = 4
 @export var mutation_rate: float = 0.05
 @export var track_path: Path3D
 
@@ -14,6 +14,7 @@ var all_time_best_fitness: float = 0.0
 var checkpoints_spawned := false
 
 @onready var camera = $Camera3D if has_node("Camera3D") else Camera3D.new()
+var fmod_banks: Array = []
 
 func _ready() -> void:
 	randomize()
@@ -29,6 +30,13 @@ func _ready() -> void:
 		var imgui = get_node_or_null("/root/ImGuiRoot")
 		if imgui:
 			imgui.queue_free()
+	else:
+		if ClassDB.class_exists("FmodServer"):
+			print("Loading FMOD Banks for AI Training mode...")
+			fmod_banks.append(FmodServer.load_bank("res://Audio/Master.strings.bank", 0))
+			fmod_banks.append(FmodServer.load_bank("res://Audio/Master.bank", 0))
+			fmod_banks.append(FmodServer.load_bank("res://Audio/Vehicles.bank", 0))
+			fmod_banks.append(FmodServer.load_bank("res://Audio/SFX.bank", 0))
 	
 	if not has_node("Camera3D"):
 		add_child(camera)
@@ -75,10 +83,10 @@ func spawn_checkpoints():
 		beam.position = Vector3(0, 60.0, 0) # Hover 60 meters above the track
 		
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.4) # Magenta, highly transparent
+		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.2) # Magenta, highly transparent
 		mat.emission_enabled = true
 		mat.emission = Color(1.0, 0.0, 1.0) # Magenta
-		mat.emission_energy_multiplier = 0.8
+		mat.emission_energy_multiplier = 0.5 # Less glow
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		beam.material = mat
 		
@@ -96,9 +104,17 @@ func _on_checkpoint_body_entered(body: Node3D, cp_index: int) -> void:
 	for driver in active_drivers:
 		if driver.car == body:
 			if cp_index == (driver.checkpoints_passed % 100):
+				var time_taken = driver.time_since_last_checkpoint
+				var target_time = 0.9 # roughly 180 km/h for 45m distance
+				var speed_multiplier = 1.0
+				if time_taken > 0.0:
+					speed_multiplier = maxf(0.5, target_time / time_taken)
+					
+				driver.checkpoint_speed_bonus += 500.0 * speed_multiplier
+				
 				driver.checkpoints_passed += 1
 				driver.time_since_last_checkpoint = 0.0
-				print("Car ", driver.car.name, " cleared Checkpoint ", cp_index, "! (Total: ", driver.checkpoints_passed, ")")
+				print("Car ", driver.car.name, " cleared Checkpoint ", cp_index, "! (Multiplier: ", snapped(speed_multiplier, 0.01), "x)")
 			elif cp_index > driver.checkpoints_passed % 100:
 				print("Car ", driver.car.name, " skipped checkpoint ", driver.checkpoints_passed % 100, " (hit ", cp_index, ")")
 				driver.crashed = true
@@ -169,62 +185,40 @@ func start_first_generation() -> void:
 
 func spawn_car(brain_weights, index: int) -> void:
 	var car = car_scene.instantiate()
-	car.name = "Genetic_AI_Car_" + str(index + 1)
+	car.name = "Genetic_AI_Car_G" + str(generation) + "_" + str(index + 1)
 	car.set("is_ai_controlled", true)
 	
 	car.continuous_cd = true
 	add_child(car)
 	
-	# Completely disable car-to-car collision so ghost swarm physics are deterministic
-	car.collision_layer = 2 # Only Layer 2
-	car.collision_mask = 1  # Only collide with World (Layer 1)
+	# Enable car-to-car collision for physical racing
+	car.collision_layer = 2 # Car Layer
+	car.collision_mask = 3  # Collide with World (1) and Cars (2)
 	
-	_hide_meshes_recursive(car)
-	
-	var body_col = car.get_node_or_null("BodyCol")
-	if body_col and body_col.shape is BoxShape3D:
-		var new_shape = body_col.shape.duplicate()
-		new_shape.size.y *= 3.0
-		body_col.shape = new_shape
-		
-		var mi = MeshInstance3D.new()
-		var box = BoxMesh.new()
-		box.size = body_col.shape.size
-		mi.mesh = box
-		var mat = StandardMaterial3D.new()
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color(0, 1, 1, 0.3)
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mi.material_override = mat
-		mi.transform = body_col.transform
-		mi.layers = 1
-		car.add_child(mi)
+	# Render the entire car just as in the race track
+	# _hide_meshes_recursive(car) - Removed
 	
 	var spawn_offset = 0.0
 	
 	if track_path:
 		var track_len = track_path.curve.get_baked_length()
 		
-		# Always spawn at the starting grid to ensure they learn the full track with high-speed momentum!
-		var best_offset = 15.0
-		spawn_offset = 15.0
-
+		# 2x2 Grid spacing
+		var row = index / 2
+		var col = index % 2
 		
-		var spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(fmod(spawn_offset, track_len), false, false)
+		# Space them 10m apart per row, starting from 20.0
+		var raw_offset = 20.0 - (row * 10.0)
+		spawn_offset = fmod(raw_offset + (track_len * 10.0), track_len)
 		
-		# Microscopic horizontal offset to prevent Bullet/GodotPhysics broadphase from hanging on 100% identical float coordinates
+		var spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(spawn_offset, true, true)
+		
 		var right_vec = spawn_t.basis.x.normalized()
-		var horiz_offset = (float(index) - (population_size / 2.0)) * 0.05
+		var horiz_offset = -4.0 if col == 0 else 4.0
 		spawn_t.origin += right_vec * horiz_offset
+		spawn_t.origin += spawn_t.basis.y.normalized() * 0.5 # Local UP vector spawn
 		
 		car.global_transform = spawn_t
-		car.global_position.y += 2.0 # Drop from slightly higher
-		
-	# Explicitly add collision exceptions so they CANNOT collide with other cars
-	for d in active_drivers:
-		if is_instance_valid(d.car):
-			car.add_collision_exception_with(d.car)
-			d.car.add_collision_exception_with(car)
 	
 	var brain = CarBrain.new()
 	brain.name = "CarBrain"
@@ -268,23 +262,17 @@ func advance_generation() -> void:
 		save_brain_to_file(best_this_gen["weights"], "res://assets/brain/best_brain.json")
 		
 	var next_generation_pool = []
-	var elite_count = max(1, int(population_size * 0.2))
+	var elite_count = int(population_size * 0.2)
+	if elite_count < 1 and population_size >= 1: elite_count = 1
 	
 	# Keep the elite(s) exactly as they are
 	for i in range(elite_count):
+		if next_generation_pool.size() >= population_size: break
 		next_generation_pool.append(saved_car_genes[i]["weights"].duplicate())
 		
 	# Fill the rest of the population by cloning and mutating the absolute best car
 	var best_weights = saved_car_genes[0]["weights"]
 	
-	# Reserve 25% of slots for "Fresh Blood" (completely random cars) to brute force a better start
-	var fresh_blood_count = max(1, int(population_size * 0.25))
-	for i in range(fresh_blood_count):
-		var random_brain = CarBrain.new()
-		var random_weights = random_brain.get_weights()
-		next_generation_pool.append(random_weights)
-		random_brain.queue_free()
-		
 	while next_generation_pool.size() < population_size:
 		var clone = best_weights.duplicate()
 		clone = mutate(clone)
@@ -327,3 +315,9 @@ func load_brain_from_file(path: String):
 				weights[i] = float(json[i])
 			return weights
 	return null
+
+func _process(delta: float) -> void:
+	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
+		FmodServer.update()
+		if FmodServer.has_method("set_listener_transform3d") and is_instance_valid(camera):
+			FmodServer.set_listener_transform3d(0, camera.global_transform)
