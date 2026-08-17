@@ -151,7 +151,7 @@ func _physics_process(delta: float) -> void:
 	if delta_progress < -10.0:
 		delta_progress *= 2.0
 		
-	# 1.5 Penalize for colliding with other cars
+	# 1.5 Penalize for colliding with other cars and WALLS!
 	var area = car.get_node_or_null("AIVisionArea")
 	if area:
 		var overlapping_areas = area.get_overlapping_areas()
@@ -159,6 +159,14 @@ func _physics_process(delta: float) -> void:
 			if other_area != area and other_area.name == "AIVisionArea":
 				# Hit another AI car
 				fitness -= 1000.0 * delta
+				
+	# Punish hitting walls
+	var colliders = car.get_colliding_bodies()
+	if colliders.size() > 0:
+		for body in colliders:
+			if body and not (body is RigidBody3D or body is Area3D or body.name.begins_with("RandomNitro")):
+				fitness -= 2000.0 * delta
+				break
 				
 	time_alive += delta
 	accumulated_progress += delta_progress

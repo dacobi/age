@@ -16,25 +16,24 @@ var radius_front = 0.5
 var radius_rear = 0.5
 
 # Tuning coefficients set by Lua script
-var engine_force_value = 20000.0
-var brake_force_value = 200.0
-var max_steer = 0.8
-var wheel_friction_slip = 10.5
+var engine_force_value = 90000.0
+var brake_force_value = 400.0
+var max_steer = 1.2
+var wheel_friction_slip = 1.5
 var suspension_travel = 0.25
-var suspension_stiffness = 120.0
-var suspension_max_force = 12000.0
-var damping_compression = 6.0
-var damping_relaxation = 8.0
-var downforce_multiplier = 120.0
-var car_mass = 1200.0
-var center_of_mass_y = -0.2
-var center_of_mass_z = -0.1
-
+var suspension_stiffness = 220.0
+var suspension_max_force = 15000.0
+var damping_compression = 8.0
+var damping_relaxation = 10.0
+var downforce_multiplier = 180.0
+var car_mass = 1000.0
+var center_of_mass_y = -0.35
+var center_of_mass_z = 0.5
 var esp_max_yaw_damping = 1.5
 var drift_assist_damping = 25.0
-var aero_drag_coeff = 0.30
+var aero_drag_coeff = 0.3
 var steer_speed_limit_max_speed = 80.0
-var steer_speed_limit_min_mult = 0.7
+var steer_speed_limit_min_mult = 0.2
 
 # Properties accessed by RaycastWheel
 var motor_input := 0.0
