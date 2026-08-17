@@ -203,11 +203,6 @@ func _physics_process(delta: float) -> void:
 		crashed = true
 		car.accel_input = 0.0
 		car.brake_input = 1.0
-		car.freeze = true
-		car.set_physics_process(false)
-		car.gravity_scale = 0.0
-		car.linear_velocity = Vector3.ZERO
-		car.angular_velocity = Vector3.ZERO
 		return
 		
 	var speed = car.linear_velocity.length()
@@ -219,11 +214,6 @@ func _physics_process(delta: float) -> void:
 			crashed = true
 			car.accel_input = 0.0
 			car.brake_input = 1.0
-			car.freeze = true
-			car.set_physics_process(false)
-			car.gravity_scale = 0.0
-			car.linear_velocity = Vector3.ZERO
-			car.angular_velocity = Vector3.ZERO
 			return
 	else:
 		stall_timer = 0.0
@@ -243,11 +233,6 @@ func _physics_process(delta: float) -> void:
 			crashed = true
 			car.accel_input = 0.0
 			car.brake_input = 0.0
-			car.freeze = true
-			car.set_physics_process(false)
-			car.gravity_scale = 0.0
-			car.linear_velocity = Vector3.ZERO
-			car.angular_velocity = Vector3.ZERO
 			return
 	else:
 		not_grounded_timer = 0.0
