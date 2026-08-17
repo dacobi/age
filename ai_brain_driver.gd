@@ -204,20 +204,8 @@ func _physics_process(delta: float) -> void:
 		car.accel_input = 0.0
 		car.brake_input = 1.0
 		return
-		
 	var speed = car.linear_velocity.length()
-	if speed < 0.55: # ~2 km/h
-		stall_timer += delta
-		var st_timeout = maxf(4.0, 10.0 - (float(generation) * 0.3))
-		if stall_timer > st_timeout:
-			print("Car stalled! Speed:", speed, " Timeout:", st_timeout)
-			crashed = true
-			car.accel_input = 0.0
-			car.brake_input = 1.0
-			return
-	else:
-		stall_timer = 0.0
-		
+	
 	var is_grounded = false
 	var wheels = car.get("wheels")
 	if wheels:
