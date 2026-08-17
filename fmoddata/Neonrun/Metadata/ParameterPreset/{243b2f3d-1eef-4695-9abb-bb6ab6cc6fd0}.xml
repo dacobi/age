@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{243b2f3d-1eef-4695-9abb-bb6ab6cc6fd0}">
+		<property name="name">
+			<value>Tire_Speed</value>
+		</property>
+		<relationship name="folder">
+			<destination>{a418e0de-c7d0-05c9-280a-b529dc02e12e}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{b4891bd4-28fe-4e44-9555-010bc9e89418}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{b4891bd4-28fe-4e44-9555-010bc9e89418}">
+		<property name="maximum">
+			<value>100</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

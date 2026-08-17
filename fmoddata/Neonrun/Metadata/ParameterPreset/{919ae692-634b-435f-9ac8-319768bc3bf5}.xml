@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{919ae692-634b-435f-9ac8-319768bc3bf5}">
+		<property name="name">
+			<value>Burnout</value>
+		</property>
+		<relationship name="folder">
+			<destination>{a418e0de-c7d0-05c9-280a-b529dc02e12e}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{6870e4e1-e7c2-467d-a259-2f67da0b5357}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{6870e4e1-e7c2-467d-a259-2f67da0b5357}">
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>
