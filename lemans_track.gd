@@ -1038,6 +1038,35 @@ func update_active_ramp():
 	dummy.queue_free()
 
 func setup_polygons():
+	var asphalt_noise = FastNoiseLite.new()
+	asphalt_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	asphalt_noise.frequency = 0.05 # Lower frequency = larger structures
+	asphalt_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	asphalt_noise.fractal_octaves = 4
+	
+	var noise_tex = NoiseTexture2D.new()
+	noise_tex.noise = asphalt_noise
+	noise_tex.seamless = true
+	noise_tex.width = 1024
+	noise_tex.height = 1024
+	noise_tex.generate_mipmaps = true
+	
+	var grad = Gradient.new()
+	grad.set_color(0, Color(0.01, 0.01, 0.015)) # Deep dark crevices
+	grad.set_color(1, Color(0.18, 0.18, 0.20)) # Lighter asphalt patches
+	noise_tex.color_ramp = grad
+	
+	var mat = StandardMaterial3D.new()
+	mat.albedo_texture = noise_tex
+	# Track is ~100m wide and ~4500m long.
+	# Scale of X:10, Y:450 means each texture tile covers exactly a 10x10 meter square patch!
+	mat.uv1_scale = Vector3(10.0, 450.0, 10.0) 
+	mat.roughness = 0.95
+	mat.metallic_specular = 0.1
+	
+	if road_bed:
+		road_bed.material = mat
+
 	road_bed.mode = CSGPolygon3D.MODE_PATH
 	road_bed.path_node = road_bed.get_path_to(path_node)
 	road_bed.path_interval = 2.0
