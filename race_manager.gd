@@ -1,7 +1,7 @@
 extends Node
 
 @export var car_scene: PackedScene
-@export var population_size: int = 1
+@export var population_size: int = 3
 @export var mutation_rate: float = 0.05
 @export var track_path: Path3D
 
@@ -37,12 +37,7 @@ func _ready() -> void:
 		
 	call_deferred("start_first_generation")
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		print("Auto-saving before quit...")
-		if not active_drivers.is_empty():
-			advance_generation()
-		get_tree().quit()
+
 
 func spawn_checkpoints():
 	if checkpoints_spawned or not track_path:
@@ -65,8 +60,10 @@ func spawn_checkpoints():
 		cp.add_child(col)
 		
 		# Holographic Hovering Beam Visual
-		var beam = CSGBox3D.new()
-		beam.size = Vector3(100.0, 4.0, 4.0)
+		var beam = MeshInstance3D.new()
+		var beam_mesh = BoxMesh.new()
+		beam_mesh.size = Vector3(100.0, 4.0, 4.0)
+		beam.mesh = beam_mesh
 		beam.position = Vector3(0, 60.0, 0) # Hover 60 meters above the track
 		
 		var mat = StandardMaterial3D.new()
@@ -75,9 +72,11 @@ func spawn_checkpoints():
 		mat.emission = Color(1.0, 0.0, 1.0) # Magenta
 		mat.emission_energy_multiplier = 0.8
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		beam.material = mat
+		beam.material_override = mat
 		
-		cp.add_child(beam)
+		# Only render the beam in training mode!
+		if get_tree().current_scene and get_tree().current_scene.has_node("GeneticManager"):
+			cp.add_child(beam)
 		
 		# Set collision to mask 2 (Car layer) so it detects the cars
 		cp.collision_layer = 0
@@ -132,11 +131,13 @@ func start_first_generation() -> void:
 		print("Found outdated brain weights (size mismatch).")
 		loaded_weights = null
 	if loaded_weights != null:
-		print("Found saved brain! Preparing AI for Race...")
-		spawn_car(loaded_weights, 0)
+		print("Found saved brain! Spawning ", population_size, " AI racers...")
+		for i in range(population_size):
+			spawn_car(loaded_weights, i)
 	else:
 		print("No saved brain found. Spawning untrained AI.")
-		spawn_car(null, 0)
+		for i in range(population_size):
+			spawn_car(null, i)
 
 func spawn_car(brain_weights, index: int) -> void:
 	var car = car_scene.instantiate()
@@ -146,19 +147,10 @@ func spawn_car(brain_weights, index: int) -> void:
 	car.continuous_cd = true
 	add_child(car)
 	
-	# Completely disable car-to-car collision so ghost swarm physics are deterministic
-	car.collision_layer = 2 # Only Layer 2
-	car.collision_mask = 1  # Only collide with World (Layer 1)
+	# Keep AI on Layer 1 (collide with world and player) AND Layer 2 (trigger checkpoints)
+	car.collision_layer = 3 # Binary 11 = Layer 1 and 2
+	car.collision_mask = 3  # Binary 11 = Layer 1 and 2
 	
-
-	
-	var body_col = car.get_node_or_null("BodyCol")
-	if body_col and body_col.shape is BoxShape3D:
-		var new_shape = body_col.shape.duplicate()
-		new_shape.size.y *= 3.0
-		body_col.shape = new_shape
-		
-
 	
 	var spawn_offset = 15.0
 	var track_len = 4500.0
@@ -166,18 +158,28 @@ func spawn_car(brain_weights, index: int) -> void:
 	if track_path:
 		track_len = track_path.curve.get_baked_length()
 		spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(fmod(spawn_offset, track_len), false, false)
+		
+		var track_forward = -spawn_t.basis.z.normalized()
 		var right_vec = spawn_t.basis.x.normalized()
-		var horiz_offset = (float(index) - (population_size / 2.0)) * 0.05
+		
+		# 2x2 Grid Spacing!
+		# The player is implicitly at slot 0 (Front Left).
+		# AIs take slots 1, 2, 3
+		var grid_slot = index + 1
+		var grid_row = grid_slot / 2
+		var grid_col = grid_slot % 2
+		
+		# Move backward by 8 meters per row
+		spawn_t.origin += track_forward * (float(grid_row) * -8.0)
+		
+		# Move left/right by 3 meters from center (6 meters between cars)
+		var horiz_offset = (float(grid_col) - 0.5) * 6.0
 		spawn_t.origin += right_vec * horiz_offset
 		
 		car.global_transform = spawn_t
 		car.global_position.y += 2.0 # Drop from slightly higher
 		
-	# Explicitly add collision exceptions so they CANNOT collide with other cars
-	for d in active_drivers:
-		if is_instance_valid(d.car):
-			car.add_collision_exception_with(d.car)
-			d.car.add_collision_exception_with(car)
+	# Removed collision exceptions so ALL cars can collide with each other!
 	
 	var brain = CarBrain.new()
 	brain.name = "CarBrain"

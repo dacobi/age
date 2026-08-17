@@ -420,10 +420,10 @@ func _ready():
 			road_bed.use_collision = true
 		if border_l: 
 			border_l.visible = true
-			border_l.use_collision = true
+			border_l.use_collision = false
 		if border_r: 
 			border_r.visible = true
-			border_r.use_collision = true
+			border_r.use_collision = false
 		if center_line: 
 			center_line.visible = true
 			center_line.use_collision = false
@@ -700,8 +700,6 @@ func spawn_barriers():
 		
 	dummy.queue_free()
 	
-	# Old AI removed
-
 func _input(event):
 	if event.is_action_pressed("ui_cancel"):
 		is_paused = not is_paused
@@ -1062,7 +1060,7 @@ func setup_polygons():
 	border_l.path_local = true
 	border_l.path_continuous_u = true
 	border_l.path_u_distance = 16.0
-	border_l.use_collision = true
+	border_l.use_collision = false
 	border_l.polygon = PackedVector2Array([
 		Vector2(-50.4, 4.0),
 		Vector2(-48.0, 4.0),
@@ -1077,7 +1075,7 @@ func setup_polygons():
 	border_r.path_local = true
 	border_r.path_continuous_u = true
 	border_r.path_u_distance = 16.0
-	border_r.use_collision = true
+	border_r.use_collision = false
 	border_r.polygon = PackedVector2Array([
 		Vector2(48.0, 4.0),
 		Vector2(50.4, 4.0),
@@ -1318,12 +1316,12 @@ func spawn_random_powerups():
 		# Don't spawn within 30 meters of starting grid / gate (progress 15.0 and 25.0)
 		if abs(progress - 15.0) < 30.0 or abs(progress - 25.0) < 20.0:
 			continue
-			
 		var t = path_node.global_transform * path_node.curve.sample_baked_with_rotation(progress, true, true)
 		if not t:
 			continue
 			
-		var lane_offset = randf_range(-42.0, 42.0)
+		# Use same offset bounds as training track so AI isn't forced into untrained lateral zones
+		var lane_offset = randf_range(-10.0, 10.0)
 		var world_pos = t.origin + t.basis.x * lane_offset + t.basis.y * 20.0
 		
 		var powerup = StaticBody3D.new()
@@ -1333,6 +1331,8 @@ func spawn_random_powerups():
 		# CRITICAL: add_child BEFORE setting spatial position to avoid !is_inside_tree() errors
 		add_child(powerup)
 		powerup.global_position = world_pos
+		powerup.set("track_up", t.basis.y.normalized())
+		powerup.set("track_offset", progress) # Inject for track-based Oracle tracking!
 		powerup_nodes.append(powerup)
 
 func setup_ui():

@@ -31,6 +31,8 @@ var is_headless := false
 
 func _ready() -> void:
 	is_headless = DisplayServer.get_name() == "headless"
+	if get_tree().current_scene and not get_tree().current_scene.has_node("GeneticManager"):
+		is_headless = true # Hide lasers in race mode!
 	# Guarantee automatic transmission
 	car.set("gear_mode", 0) # 0 = Auto
 	
@@ -343,7 +345,7 @@ func _physics_process(delta: float) -> void:
 						dist_ahead -= track_length # Handle lap wrap-around backward
 						
 					# If it's within 200m ahead or 20m behind us on the track!
-					if dist_ahead > -20.0 and dist_ahead < 200.0:
+					if dist_ahead > -20.0 and dist_ahead < 1000.0:
 						# Filter out nitros that are physically completely behind us
 						# (in case the car spun out or overshot)
 						var dir_to_nitro = (p.global_position - car.global_position).normalized()
@@ -360,7 +362,7 @@ func _physics_process(delta: float) -> void:
 								nitro_angle = clampf(angle, -PI/2.0, PI/2.0)
 						
 	if nearest_nitro:
-		nitro_dist_norm = 1.0 - clampf(min_nitro_dist / 200.0, 0.0, 1.0)
+		nitro_dist_norm = 1.0 - clampf(min_nitro_dist / 1000.0, 0.0, 1.0)
 		inputs[11] = nitro_angle / PI
 		inputs[12] = nitro_dist_norm
 		
