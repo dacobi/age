@@ -133,17 +133,19 @@ func spawn_checkpoints():
 		cp.add_child(col)
 		
 		# Holographic Hovering Beam Visual
-		var beam = CSGBox3D.new()
-		beam.size = Vector3(100.0, 4.0, 4.0)
+		var beam = MeshInstance3D.new()
+		var beam_mesh = BoxMesh.new()
+		beam_mesh.size = Vector3(100.0, 4.0, 4.0)
+		beam.mesh = beam_mesh
 		beam.position = Vector3(0, 60.0, 0) # Hover 60 meters above the track
 		
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.2) # Magenta, highly transparent
+		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.4) # Magenta, highly transparent
 		mat.emission_enabled = true
 		mat.emission = Color(1.0, 0.0, 1.0) # Magenta
-		mat.emission_energy_multiplier = 0.5 # Less glow
+		mat.emission_energy_multiplier = 0.8
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		beam.material = mat
+		beam.material_override = mat
 		
 		cp.add_child(beam)
 		

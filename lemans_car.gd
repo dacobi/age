@@ -41,6 +41,7 @@ var motor_input := 0.0
 var hand_break := false
 var in_standing_burnout := false
 var neutral_drop_timer := 0.0
+var is_racing := false
 var is_slipping := false
 var total_wheels := 4
 var acceleration := 600.0
@@ -97,7 +98,7 @@ var start_transform: Transform3D
 func _ready():
 	# Configure Main Hull layer and mask
 	collision_layer = 2 # Car layer
-	collision_mask = 1  # Hits World (1) ONLY
+	collision_mask = 3  # Hits World (1) and Cars (2)
 	
 	# AI Vision Hitbox
 	var ai_vision = Area3D.new()
@@ -307,6 +308,13 @@ func _ready():
 	magnet_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	magnet_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	magnet_mi.material_override = magnet_mat
+	
+	# Only render the pink box when training!
+	if get_tree().current_scene and get_tree().current_scene.has_node("GeneticManager"):
+		magnet_mi.visible = true
+	else:
+		magnet_mi.visible = false
+		
 	magnet_col.add_child(magnet_mi)
 	
 	magnet_area.add_child(magnet_col)

@@ -1289,7 +1289,7 @@ func spawn_random_powerups():
 		if not t:
 			continue
 			
-		var lane_offset = randf_range(-42.0, 42.0)
+		var lane_offset = randf_range(-10.0, 10.0)
 		var world_pos = t.origin + t.basis.x * lane_offset + t.basis.y * 20.0
 		
 		var powerup = StaticBody3D.new()
@@ -1299,6 +1299,8 @@ func spawn_random_powerups():
 		# CRITICAL: add_child BEFORE setting spatial position to avoid !is_inside_tree() errors
 		add_child(powerup)
 		powerup.global_position = world_pos
+		powerup.set("track_up", t.basis.y.normalized())
+		powerup.set("track_offset", progress) # Inject for track-based Oracle tracking!
 		powerup_nodes.append(powerup)
 
 func setup_ui():
