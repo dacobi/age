@@ -74,9 +74,7 @@ func spawn_checkpoints():
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		beam.material_override = mat
 		
-		# Only render the beam in training mode!
-		if get_tree().current_scene and get_tree().current_scene.has_node("GeneticManager"):
-			cp.add_child(beam)
+		cp.add_child(beam)
 		
 		# Set collision to mask 2 (Car layer) so it detects the cars
 		cp.collision_layer = 0
