@@ -128,10 +128,10 @@ func update_checkpoint_visuals() -> void:
 		mat.emission = Color(1.0, 0.0, 1.0)
 		mat.emission_energy_multiplier = 0.8
 		
-	# Highlight the most recent checkpoint for each active driver
+	# Highlight the TARGET checkpoint for each active driver
 	for driver in active_drivers:
-		if driver.checkpoints_passed > 0 and not driver.crashed:
-			var cp_index = (driver.checkpoints_passed - 1) % 100
+		if not driver.crashed:
+			var cp_index = driver.checkpoints_passed % 100
 			if cp_index < checkpoint_materials.size():
 				var mat = checkpoint_materials[cp_index]
 				mat.albedo_color = Color(0.0, 1.0, 1.0, 0.4)
