@@ -12,7 +12,7 @@ var saved_car_genes: Array = []
 var generation: int = 1
 var all_time_best_fitness: float = 0.0
 var checkpoints_spawned := false
-
+var checkpoint_materials: Array = []
 
 func _ready() -> void:
 	get_tree().set_auto_accept_quit(false)
@@ -80,8 +80,10 @@ func spawn_checkpoints():
 		cp.collision_layer = 0
 		cp.collision_mask = 2
 		
+		checkpoint_materials.append(mat)
 		track_path.add_child(cp)
 		
+		# Connect the race logic signals
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(i))
 
 func _on_checkpoint_body_entered(body: Node3D, cp_index: int) -> void:
@@ -113,6 +115,28 @@ func _physics_process(delta: float) -> void:
 	if all_crashed:
 		print("AI crashed or stalled! Respawning AI for the race...")
 		advance_generation()
+	else:
+		update_checkpoint_visuals()
+
+func update_checkpoint_visuals() -> void:
+	if checkpoint_materials.is_empty():
+		return
+		
+	# Reset all to magenta
+	for mat in checkpoint_materials:
+		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.4)
+		mat.emission = Color(1.0, 0.0, 1.0)
+		mat.emission_energy_multiplier = 0.8
+		
+	# Highlight the most recent checkpoint for each active driver
+	for driver in active_drivers:
+		if driver.checkpoints_passed > 0 and not driver.crashed:
+			var cp_index = (driver.checkpoints_passed - 1) % 100
+			if cp_index < checkpoint_materials.size():
+				var mat = checkpoint_materials[cp_index]
+				mat.albedo_color = Color(0.0, 1.0, 1.0, 0.4)
+				mat.emission = Color(0.0, 1.0, 1.0)
+				mat.emission_energy_multiplier = 5.0
 
 func _hide_meshes_recursive(node: Node) -> void:
 	if node is GeometryInstance3D:
