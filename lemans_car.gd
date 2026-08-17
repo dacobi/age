@@ -72,6 +72,8 @@ var fmod_event = null
 var tire_fmod_event = null
 var fmod_banks = []
 var fmod_banks_loaded = false
+var last_tire_slip: float = 0.0
+var last_handbrake: float = 0.0
 var engine_audio: AudioStreamPlayer = null
 var show_collision_debug = 0.0
 var is_ai_controlled: bool = false
@@ -981,6 +983,16 @@ func _physics_process(delta: float) -> void:
 			tire_fmod_event.set_parameter_by_name("Tire_Slip", current_slip)
 			tire_fmod_event.set_parameter_by_name("Tire_Speed", forward_speed)
 			tire_fmod_event.set_parameter_by_name("Burnout", 1.0 if in_standing_burnout else 0.0)
+			
+			# Trigger the new skid sounds based on traction loss type (Hold at 1.0 while condition is met)
+			var trigger_skidl = 1.0 if (handbrake_input > 0.1 and forward_speed > 5.0) else 0.0
+			var trigger_skids = 1.0 if (handbrake_input <= 0.1 and current_slip > 0.5 and forward_speed > 5.0) else 0.0
+			
+			tire_fmod_event.set_parameter_by_name("skids", trigger_skids)
+			tire_fmod_event.set_parameter_by_name("skidl", trigger_skidl)
+			
+			last_handbrake = handbrake_input
+			last_tire_slip = current_slip
 			
 			if tire_fmod_event.has_method("set_3d_attributes"):
 				tire_fmod_event.set_3d_attributes(global_transform)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{9d4aed3d-1dbd-4139-9e3e-2c0f4cfaf4c8}">
+		<property name="name">
+			<value>skidl</value>
+		</property>
+		<relationship name="folder">
+			<destination>{a418e0de-c7d0-05c9-280a-b529dc02e12e}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{5036a57f-e1e2-49c8-a072-dd6e9e10849b}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{5036a57f-e1e2-49c8-a072-dd6e9e10849b}">
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>
