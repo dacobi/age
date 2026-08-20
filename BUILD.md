@@ -19,7 +19,7 @@ sudo apt-get install build-essential scons libfreetype-dev libpng-dev libbz2-dev
 
 ## 2. Clone and Initialize Submodules
 
-When checking out the project for the first time, you need to pull in the git submodules (`godot` and `addons/imgui-godot`):
+When checking out the project for the first time, you need to pull in the git submodules (`addons/imgui-godot`):
 
 ```bash
 git submodule update --init --recursive
