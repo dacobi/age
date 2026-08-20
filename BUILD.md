@@ -34,19 +34,9 @@ rsync -a addons/imgui-godot/addons/imgui-godot/ addons/imgui-godot/
 ### 2.2 Patching ImGui-Godot for Linux
 By default, the `imgui-godot` build script tries to download dependencies via `vcpkg`. If you prefer to use system libraries (as installed in Step 1), you need to patch `addons/imgui-godot/gdext/SConstruct` to use `pkg-config` instead of `vcpkg`. (Note: We have currently patched it locally on this machine).
 
-## 3. Build Godot
+## 3. Build godot-cpp Bindings
 
-First, you must compile the Godot engine library since this project links against it:
-
-```bash
-cd godot
-scons p=linuxbsd target=template_release library_type=shared_library builtin_sdl=no builtin_libpng=no vulkan=yes disable_path_overrides=no -j8
-cd ..
-```
-
-## 4. Build godot-cpp Bindings
-
-Next, compile the C++ bindings that the extensions rely on:
+First, compile the C++ bindings that the extensions rely on:
 
 ```bash
 cd godot-cpp
@@ -54,7 +44,7 @@ scons platform=linux target=template_release -j8
 cd ..
 ```
 
-## 5. Build GDExtensions
+## 4. Build GDExtensions
 
 Now compile both the main game extension (`aga`) and the `imgui-godot` plugin extension:
 
@@ -68,7 +58,7 @@ scons platform=linux target=template_release -j8
 cd ../../../
 ```
 
-## 6. Install FMOD Libraries
+## 5. Install FMOD Libraries
 
 The FMOD audio plugin requires proprietary binaries that are not included in source control. 
 You must obtain the FMOD Engine Linux binaries and place them into the `addons/fmod/libs/linux/` directory.
