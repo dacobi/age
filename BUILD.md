@@ -4,17 +4,17 @@ This document outlines how to initialize the submodules, build the Godot engine,
 
 ## 1. System Dependencies
 
-Before compiling, ensure you have the required build tools and libraries installed.
+Before compiling, ensure you have the required build tools and libraries installed, including the core project dependencies (Lua, Eigen, FFmpeg, PulseAudio) and the ImGui dependencies (Freetype, libpng, bzip2, etc.).
 
 **Arch Linux (Pacman):**
 ```bash
-sudo pacman -S --needed base-devel scons freetype2 libpng bzip2 brotli zlib pkgconf
+sudo pacman -S --needed base-devel scons freetype2 libpng bzip2 brotli zlib pkgconf lua54 eigen ffmpeg libpulse
 ```
 
 **Ubuntu/Debian (APT):**
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential scons libfreetype-dev libpng-dev libbz2-dev libbrotli-dev zlib1g-dev pkg-config
+sudo apt-get install build-essential scons libfreetype-dev libpng-dev libbz2-dev libbrotli-dev zlib1g-dev pkg-config liblua5.4-dev libeigen3-dev libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libswresample-dev libpulse-dev
 ```
 
 ## 2. Clone and Initialize Submodules
