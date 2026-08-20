@@ -463,12 +463,15 @@ func _ready():
 		spawn_random_powerups()
 		setup_ui()
 
-		# Position the supercar on the starting grid (10m before gate, Inner Right lane x = +13.0)
+		# Position the supercar on the starting grid
 		if supercar:
-			var grid_transform = path_node.global_transform * path_node.curve.sample_baked_with_rotation(15.0, true, true)
+			var track_len = path_node.curve.get_baked_length()
+			var spawn_offset = fmod(15.0 - 25.0 + track_len, track_len)
+			var grid_transform = path_node.global_transform * path_node.curve.sample_baked_with_rotation(spawn_offset, true, true)
 			if grid_transform:
 				supercar.global_transform = grid_transform
-				supercar.global_position += grid_transform.basis.x * 13.0 + grid_transform.basis.y * 0.5
+				# Player takes the 4th lane (+37.5)
+				supercar.global_position += grid_transform.basis.x * 37.5 + grid_transform.basis.y * 0.5
 				if "start_transform" in supercar:
 					supercar.start_transform = supercar.global_transform
 		

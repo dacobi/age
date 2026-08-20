@@ -173,33 +173,37 @@ func spawn_car(brain_weights, index: int) -> void:
 	car.collision_layer = 3 # Binary 11 = Layer 1 and 2
 	car.collision_mask = 3  # Binary 11 = Layer 1 and 2
 	
+	var combiner = car.get_node_or_null("LeMansCombiner")
+	if combiner:
+		var main_body = combiner.get_node_or_null("MainBody")
+		if main_body and main_body.material:
+			var orig_mat = main_body.material
+			var new_mat = orig_mat.duplicate()
+			var colors = [Color(0.4, 0.0, 0.0), Color(0.0, 0.4, 0.0), Color(0.0, 0.0, 0.4)]
+			if index < colors.size():
+				new_mat.albedo_color = colors[index]
+			for child in combiner.get_children():
+				if "material" in child and child.material == orig_mat:
+					child.material = new_mat
 	
-	var spawn_offset = 15.0
+	
+	var spawn_offset = 15.0 - 25.0
 	var track_len = 4500.0
 	var spawn_t = Transform3D()
 	if track_path:
 		track_len = track_path.curve.get_baked_length()
-		spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(fmod(spawn_offset, track_len), false, false)
+		var real_offset = fmod(spawn_offset + track_len, track_len)
+		spawn_t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(real_offset, true, true)
 		
-		var track_forward = -spawn_t.basis.z.normalized()
 		var right_vec = spawn_t.basis.x.normalized()
 		
-		# 2x2 Grid Spacing!
-		# The player is implicitly at slot 0 (Front Left).
-		# AIs take slots 1, 2, 3
-		var grid_slot = index + 1
-		var grid_row = grid_slot / 2
-		var grid_col = grid_slot % 2
-		
-		# Move backward by 8 meters per row
-		spawn_t.origin += track_forward * (float(grid_row) * -8.0)
-		
-		# Move left/right by 3 meters from center (6 meters between cars)
-		var horiz_offset = (float(grid_col) - 0.5) * 6.0
+		# Distribute them horizontally in a single line across 4 evenly spaced 25m lanes
+		# AI takes lanes 0, 1, 2 (-37.5, -12.5, +12.5)
+		var horiz_offset = (float(index) - 1.5) * 25.0
 		spawn_t.origin += right_vec * horiz_offset
 		
 		car.global_transform = spawn_t
-		car.global_position.y += 2.0 # Drop from slightly higher
+		car.global_position.y += 0.5 # Drop slightly
 		
 	# Removed collision exceptions so ALL cars can collide with each other!
 	
@@ -217,9 +221,10 @@ func spawn_car(brain_weights, index: int) -> void:
 	
 	if track_path:
 		track_len = track_path.curve.get_baked_length()
-		var next_cp = int(floor((spawn_offset / track_len) * 100.0))
-		driver.checkpoints_passed = next_cp
-		driver.accumulated_progress = spawn_offset
+		# Since we moved the AI cars 25 meters back (from offset 15 to -10),
+		# they now start BEFORE the finish line (Checkpoint 99).
+		driver.checkpoints_passed = 99
+		driver.accumulated_progress = -10.0
 		
 	car.add_child(driver)
 	
