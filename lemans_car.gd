@@ -89,6 +89,8 @@ var gear_torque_ratios: Array = [2.2, 1.6, 1.25, 1.0, 0.85, 0.7]
 var skid_marks: Array[GPUParticles3D] = []
 var smoke_particles: Array[GPUParticles3D] = []
 
+var reset_stuck_timer: float = 0.0
+var reset_fall_timer: float = 0.0
 # Resources
 var accel_curve: Curve
 var grip_curve: Curve
@@ -488,9 +490,74 @@ func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, i
 		
 	add_child(w)
 	return w
+	
+static var next_lane_idx: int = 0
+
+func reset_to_track() -> void:
+	var track = get_parent().get_parent()
+	var path: Path3D = null
+	if track and track.has_node("Path3D"):
+		path = track.get_node("Path3D")
+	elif get_parent() is Path3D:
+		path = get_parent()
+		
+	if path and path.curve:
+		var offset = path.curve.get_closest_offset(global_position)
+		var t = path.global_transform * path.curve.sample_baked_with_rotation(offset, true, true)
+		
+		# Round-robin lane assignment guarantees no two cars ever reset into the same lane
+		var lane = next_lane_idx
+		next_lane_idx = (next_lane_idx + 1) % 5
+		var deterministic_shift = (float(lane) - 2.0) * 3.5 # Spaced by 3.5 meters (-7.0 to +7.0)
+		t.origin += t.basis.x * deterministic_shift
+		t.origin.y += 1.0 # Drop slightly from above
+		
+		global_transform = t
+		linear_velocity = Vector3.ZERO
+		angular_velocity = Vector3.ZERO
+		sleeping = false
+		air_time = 0.0
+		steer_dampening_timer = 0.0
+		reset_stuck_timer = 0.0
+		reset_fall_timer = 0.0
+		print("Car ", name, " was reset to the track!")
 
 
 func _physics_process(delta: float) -> void:
+	# --- AUTO-RESET LOGIC ---
+	var track = get_parent().get_parent()
+	var path: Path3D = null
+	if track and track.has_node("Path3D"):
+		path = track.get_node("Path3D")
+	elif get_parent() is Path3D:
+		path = get_parent()
+		
+	var track_y = global_position.y
+	if path and path.curve:
+		var offset = path.curve.get_closest_offset(global_position)
+		track_y = (path.global_transform * path.curve.sample_baked_with_rotation(offset, false, false)).origin.y
+		
+	# 1. Fall detection (3 seconds)
+	if global_position.y < (track_y - 8.0) or (not is_grounded_state and global_position.y < (track_y - 2.0)):
+		reset_fall_timer += delta
+	else:
+		reset_fall_timer = 0.0
+		
+	if reset_fall_timer >= 3.0:
+		reset_to_track()
+		
+	# 2. Stuck / Stalled / Flipped detection (5 seconds)
+	var auto_reset_speed = linear_velocity.length()
+	var is_flipped = global_transform.basis.y.dot(Vector3.UP) < 0.2
+	
+	if (auto_reset_speed < 2.0 and not in_countdown) or is_flipped:
+		reset_stuck_timer += delta
+	else:
+		reset_stuck_timer = 0.0
+		
+	if reset_stuck_timer >= 5.0:
+		reset_to_track()
+
 	# Update mass and COM from properties set by Lua script
 	mass = car_mass
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM

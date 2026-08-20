@@ -127,10 +127,9 @@ func _physics_process(delta: float) -> void:
 			
 		if time_since_last_checkpoint > current_timeout:
 			print("Car ", car.name, " stalled! (", current_timeout, "s without a checkpoint)")
-			crashed = true
-			car.accel_input = 0.0
-			car.brake_input = 1.0
-			car.steer_input = 0.0
+			if car.has_method("reset_to_track"):
+				car.reset_to_track()
+			time_since_last_checkpoint = 0.0
 			return
 		
 	# 1. Update Fitness (Curve Progress Scoring)
@@ -197,34 +196,9 @@ func _physics_process(delta: float) -> void:
 		var track_transform = track_path.global_transform * curve.sample_baked_with_rotation(current_progress, true, true)
 		track_y = track_transform.origin.y
 				
-	# 2. Check for Stall / Crash / Falling
-	if car.global_position.y < (track_y - 10.0):
-		print("Car ", car.name, " fell off track! (Y-level drop detected)")
-		crashed = true
-		car.accel_input = 0.0
-		car.brake_input = 1.0
-		return
+	# 2. Check for Stall / Crash / Falling (Delegated mostly to lemans_car.gd now)
 	var speed = car.linear_velocity.length()
 	
-	var is_grounded = false
-	var wheels = car.get("wheels")
-	if wheels:
-		for w in wheels:
-			if w.is_colliding():
-				is_grounded = true
-				break
-				
-	if not is_grounded:
-		not_grounded_timer += delta
-		if not_grounded_timer > 1.0: # Falling for more than 1 second (jumping track)
-			print("Car ", car.name, " fell off track! (Not grounded for 1s)")
-			crashed = true
-			car.accel_input = 0.0
-			car.brake_input = 0.0
-			return
-	else:
-		not_grounded_timer = 0.0
-		
 	# 3. Gather Sensor Data
 	var inputs = PackedFloat32Array()
 	inputs.resize(17)
@@ -377,14 +351,6 @@ func _physics_process(delta: float) -> void:
 	var to_car = car.global_position - track_transform.origin
 	var lateral_offset = to_car.dot(track_right)
 	inputs[5] = clampf(lateral_offset / 50.0, -1.0, 1.0)
-	
-	if to_car.length() > 46.0:
-		print("Car ", car.name, " hit the wall! (Out of bounds)")
-		crashed = true
-		car.accel_input = 0.0
-		car.brake_input = 0.0
-		car.steer_input = 0.0
-		return
 		
 	# Input 6: Angle difference to track direction (-1.0 to 1.0)
 	var angle_diff = car_forward.signed_angle_to(track_forward, Vector3.UP)
@@ -394,10 +360,9 @@ func _physics_process(delta: float) -> void:
 		wrong_way_timer += delta
 		if wrong_way_timer > 5.0:
 			print("Car ", car.name, " drove wrong way!")
-			crashed = true
-			car.accel_input = 0.0
-			car.brake_input = 0.0
-			car.steer_input = 0.0
+			if car.has_method("reset_to_track"):
+				car.reset_to_track()
+			wrong_way_timer = 0.0
 			return
 	else:
 		wrong_way_timer = 0.0

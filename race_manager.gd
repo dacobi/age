@@ -89,16 +89,26 @@ func spawn_checkpoints():
 func _on_checkpoint_body_entered(body: Node3D, cp_index: int) -> void:
 	for driver in active_drivers:
 		if driver.car == body:
-			if cp_index == (driver.checkpoints_passed % 100):
+			var target = driver.checkpoints_passed % 100
+			var diff = (cp_index - target + 100) % 100
+			if diff == 0:
 				driver.checkpoints_passed += 1
 				driver.time_since_last_checkpoint = 0.0
 				print("Car ", driver.car.name, " cleared Checkpoint ", cp_index, "! (Total: ", driver.checkpoints_passed, ")")
-			elif cp_index > driver.checkpoints_passed % 100:
-				print("Car ", driver.car.name, " skipped checkpoint ", driver.checkpoints_passed % 100, " (hit ", cp_index, ")")
-				driver.crashed = true
-			elif cp_index < driver.checkpoints_passed % 100:
-				# Just ignore it if we accidentally clip an old checkpoint due to overlap
-				# print("Car ", driver.car.name, " touched old checkpoint ", cp_index)
+			elif diff > 0 and diff < 50:
+				print("Car ", driver.car.name, " skipped checkpoint ", target, " (hit ", cp_index, ") - Teleporting back!")
+				var track_len = track_path.curve.get_baked_length()
+				var offset_target = (float(target) / 100.0) * track_len
+				var safe_offset = fmod(offset_target - 20.0 + track_len, track_len)
+				var t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(safe_offset, true, true)
+				t.origin.y += 1.0
+				driver.car.global_transform = t
+				driver.car.linear_velocity = Vector3.ZERO
+				driver.car.angular_velocity = Vector3.ZERO
+				driver.car.sleeping = false
+				driver.time_since_last_checkpoint = 0.0
+			else:
+				# diff >= 50 means it hit an old checkpoint behind it (e.g. driving backwards). Ignore.
 				pass
 			break
 
@@ -177,14 +187,9 @@ func spawn_car(brain_weights, index: int) -> void:
 	if combiner:
 		var main_body = combiner.get_node_or_null("MainBody")
 		if main_body and main_body.material:
-			var orig_mat = main_body.material
-			var new_mat = orig_mat.duplicate()
-			var colors = [Color(0.4, 0.0, 0.0), Color(0.0, 0.4, 0.0), Color(0.0, 0.0, 0.4)]
+			var colors = [Color(1.0, 0.0, 0.0), Color(0.0, 1.0, 0.0), Color(0.0, 0.0, 1.0)]
 			if index < colors.size():
-				new_mat.albedo_color = colors[index]
-			for child in combiner.get_children():
-				if "material" in child and child.material == orig_mat:
-					child.material = new_mat
+				main_body.material.albedo_color = colors[index]
 	
 	
 	var spawn_offset = 15.0 - 25.0
