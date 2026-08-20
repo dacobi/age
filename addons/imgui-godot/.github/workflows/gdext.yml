@@ -1,0 +1,479 @@
+name: 🦕 C++ GDExtension
+
+on:
+  push:
+    branches: "*"
+    tags: v*
+
+
+env:
+  vcpkg_tag: 6f29f12e82a8293156836ad81cc9bf5af41fe836 # 2025.01.13
+  stable_gdver: 4.2.2-stable
+
+jobs:
+  dump_interface:
+    name: Dump GDExtension API (double)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: gdextension
+          key: gdextension-api-double-${{ env.stable_gdver }}
+          lookup-only: true
+          enableCrossOsArchive: true
+
+      - uses: actions/checkout@v4
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: godotengine/godot
+          ref: ${{ env.stable_gdver }}
+
+      - name: Build
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install "scons<4.8"
+          scons precision=double
+          mkdir gdextension
+          cd gdextension
+          ../bin/godot.* --headless --dump-extension-api --dump-gdextension-interface
+
+
+  build:
+    needs: [dump_interface]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
+        precision: [single, double]
+        include:
+          - os: ubuntu-22.04
+            name: 🐧Linux
+          - os: macos-latest
+            name: 🍎macOS
+          - os: windows-latest
+            name: 🪟Windows
+
+    name: ${{ matrix.name }} (precision=${{ matrix.precision }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Python 3.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install tools
+        shell: bash
+        run: |
+          python -m pip install "scons<4.8"
+          scons --version
+          pip install ply
+
+      - name: Linux tools
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt install clang-format
+
+      - name: macOS tools
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          brew install clang-format ninja
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: ${{ env.vcpkg_tag }}
+
+      - name: Make cache key
+        shell: bash
+        run: |
+          echo "cache_key=godot-cpp-$(git -C gdext/godot-cpp rev-parse --short HEAD)-${{ matrix.precision }}_${{ runner.os }}-$ImageVersion" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        id: cache-godot-cpp
+        if: github.ref_type != 'tag'
+        with:
+          path: |
+            gdext/scons_cache
+          key: ${{ env.cache_key }}
+
+      - uses: actions/cache/restore@v4
+        if: matrix.precision == 'double'
+        with:
+          path: gdextension
+          key: gdextension-api-double-${{ env.stable_gdver }}
+          fail-on-cache-miss: true
+          enableCrossOsArchive: true
+
+      - if: matrix.precision == 'double'
+        shell: bash
+        run: |
+          rm -rf gdext/godot-cpp/gdextension
+          mv gdextension gdext/godot-cpp
+          ls -al gdext/godot-cpp/gdextension
+
+      - name: Build
+        if: github.ref_type != 'tag' || runner.os != 'Windows'
+        run: |
+          cd gdext
+          scons precision=${{ matrix.precision }} godot-cpp
+          scons precision=${{ matrix.precision }}
+          scons precision=${{ matrix.precision }} target=template_release godot-cpp
+          scons precision=${{ matrix.precision }} target=template_release
+
+      - name: Build (with debug symbols)
+        if: github.ref_type == 'tag' && runner.os == 'Windows'
+        run: |
+          cd gdext
+          scons precision=${{ matrix.precision }} debug_symbols=yes godot-cpp
+          scons precision=${{ matrix.precision }} debug_symbols=yes
+          scons precision=${{ matrix.precision }} debug_symbols=yes target=template_release godot-cpp
+          scons precision=${{ matrix.precision }} debug_symbols=yes target=template_release
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdext-${{ matrix.precision }}-${{ runner.os }}
+          path: addons/imgui-godot/bin
+
+  package:
+    name: 📦Package
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        precision: [single, double]
+
+    outputs:
+      pkg_single: ${{ steps.prep.outputs.pkg_single }}
+      pkg_double: ${{ steps.prep.outputs.pkg_double }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: addons/imgui-godot/bin
+          pattern: gdext-${{ matrix.precision }}-*
+
+      - run: ls -R
+        working-directory: addons/imgui-godot/bin
+
+      - name: Extract
+        run: |
+          cd addons/imgui-godot/bin
+          mv gdext-*/* .
+          rmdir gdext-*
+          rm *.exp
+          rm *.lib
+
+      - name: Upload PDBs
+        if: github.ref_type == 'tag' && matrix.precision == 'single'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdbs
+          path: addons/imgui-godot/bin/*.pdb
+
+      - name: Prepare files
+        id: prep
+        run: |
+          set -x
+          ls -R
+          rm -f addons/imgui-godot/bin/*.pdb
+          mkdir addons/imgui-godot/include
+          cp -r gdext/include/*.h addons/imgui-godot/include/
+          touch addons/imgui-godot/include/.gdignore
+          cp gdext/imgui-godot-native.gdextension addons/imgui-godot/
+          ls -al gdext/imgui
+
+          git -C gdext/imgui fetch --tags
+          git -C gdext/imgui describe > addons/imgui-godot/include/imgui-version.txt
+
+          env
+          imgui_ver=$(grep -m 1 "^#define IMGUI_VERSION " < gdext/imgui/imgui.h | awk '{ print $3 }' | sed 's/"//g')
+          plugin_ver=$(grep -m 1 "version=" < addons/imgui-godot/plugin.cfg | sed 's/version=//' | sed 's/"//g')
+          pkgfn=imgui-godot-${plugin_ver}_imgui-${imgui_ver}${{ matrix.precision == 'double' && '_double-precision' || '' }}
+          echo $pkgfn
+          echo "pkgfn=$pkgfn" >> $GITHUB_OUTPUT
+          echo "pkg_${{ matrix.precision }}=$pkgfn" >> $GITHUB_OUTPUT
+          rm -rf gdext
+
+          pkgdir=~/out/imgui-godot-${plugin_ver}
+          mkdir -p $pkgdir
+          mv * $pkgdir
+          echo "pkgdir=$pkgdir" >> $GITHUB_OUTPUT
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prep.outputs.pkgfn }}
+          path: ~/out
+          include-hidden-files: true
+
+      - name: Prep asset
+        if: matrix.precision == 'single'
+        working-directory: ${{ steps.prep.outputs.pkgdir }}
+        run: |
+          rm * || true
+          rm -r data doc src
+
+      - name: Upload asset package
+        if: matrix.precision == 'single'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AssetLib-${{ steps.prep.outputs.pkgfn }}
+          path: ~/out
+          include-hidden-files: true
+
+  package_cs:
+    name: 📦Package (C# only)
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare files
+        id: prep_cs
+        run: |
+          ls -R
+          rm -rf doc/examples
+          rm -rf gdext
+          plugin_ver=$(grep -m 1 "version=" < addons/imgui-godot/plugin.cfg | sed 's/version=//' | sed 's/"//g')
+          pkgfn=imgui-godot-${plugin_ver}-csharp-only
+          echo $pkgfn
+          echo "pkgfn=$pkgfn" >> $GITHUB_OUTPUT
+
+          pkgdir=~/out/imgui-godot-${plugin_ver}
+          mkdir -p $pkgdir
+          mv * $pkgdir
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prep_cs.outputs.pkgfn }}
+          path: ~/out
+          include-hidden-files: true
+
+  gds_game:
+    needs: [package]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        gdver: ["4.2.2", "4.3.0", "4.4.1", "4.5.0-dev.2"]
+        include:
+          - os: ubuntu-latest
+            name: 🐧GdsGameProject
+            exe: GdsGameProject.x86_64
+          - os: macos-latest
+            name: 🍎GdsGameProject
+            exe: GdsGameProject.app/Contents/MacOS/GdsGameProject
+          - os: windows-latest
+            name: 🪟GdsGameProject
+            exe: GdsGameProject.exe
+        exclude:
+          # frequently gets stuck on import despite workaround
+          - os: windows-latest
+            gdver: "4.2.2"
+
+    name: ${{ matrix.name }} (${{ matrix.gdver }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.package.outputs.pkg_single }}
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ matrix.gdver }}
+          use-dotnet: false
+          include-templates: true
+          cache: false
+
+      - name: Import
+        uses: ./.github/actions/import
+        with:
+          path: doc/examples/GdsGameProject
+
+      - name: Export Debug
+        shell: bash
+        run: |
+          cd $GAMEDIR
+          $GODOT --headless --export-debug $RUNNER_OS
+
+      # TODO: check output for unexpected errors
+      # Godot 4.2.2 exits with error code 1 on Mac/Win, this is fixed in 4.3
+      # https://github.com/godotengine/godot/pull/89229
+      - name: Run Debug (workaround)
+        if: runner.os != 'Linux' && matrix.gdver == '4.2.2'
+        shell: bash
+        run: |
+          cd $GAMEDIR/export
+          ./${{ matrix.exe }} --headless --quit-after 10 || true
+          rm -rf *
+
+      - name: Run Debug
+        if: runner.os == 'Linux' || matrix.gdver != '4.2.2'
+        shell: bash
+        run: |
+          cd $GAMEDIR/export
+          ./${{ matrix.exe }} --headless --quit-after 10
+          rm -rf *
+
+      - name: Export Release
+        shell: bash
+        run: |
+          cd $GAMEDIR
+          $GODOT --headless --export-release $RUNNER_OS
+
+      - name: Run Release (workaround)
+        shell: bash
+        run: |
+          cd $GAMEDIR/export
+          ./${{ matrix.exe }} --headless --quit-after 10 || true
+
+  test_gdscript:
+    needs: [package]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        gdver: ["4.2.2", "4.3.0", "4.4.1", "4.5.0-dev.2"]
+        include:
+          - os: ubuntu-latest
+            name: 🐧🧪GDScript
+            exe: test.x86_64
+          - os: macos-latest
+            name: 🍎🧪GDScript
+            exe: test.app/Contents/MacOS/test
+          - os: windows-latest
+            name: 🪟🧪GDScript
+            exe: test.exe
+        exclude:
+          # frequently gets stuck on import despite workaround
+          - os: windows-latest
+            gdver: "4.2.2"
+
+    name: ${{ matrix.name }} (${{ matrix.gdver }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.package.outputs.pkg_single }}
+
+      - shell: bash
+        run: ls -R
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ matrix.gdver }}
+          use-dotnet: false
+          include-templates: true
+          cache: false
+
+      - name: Import
+        uses: ./.github/actions/import
+        with:
+          path: doc/test/gdscript
+
+      - name: Run tests
+        uses: ./.github/actions/run-test-project
+        with:
+          exe: ${{ matrix.exe }}
+
+  test_csharp:
+    needs: [package]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        gdver: ["4.2.2", "4.3.0", "4.4.1", "4.5.0-dev.2"]
+        include:
+          - os: ubuntu-latest
+            name: 🐧🧪C#
+            exe: test.x86_64
+          - os: macos-latest
+            name: 🍎🧪C#
+            exe: test.app/Contents/MacOS/test
+          - os: windows-latest
+            name: 🪟🧪C#
+            exe: test.exe
+        exclude:
+          # frequently gets stuck on import despite workaround
+          - os: windows-latest
+            gdver: "4.2.2"
+
+    name: ${{ matrix.name }} (${{ matrix.gdver }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.package.outputs.pkg_single }}
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ matrix.gdver }}
+          use-dotnet: true
+          include-templates: true
+          cache: false
+
+      - name: Import
+        uses: ./.github/actions/import
+        with:
+          path: doc/test/csharp
+
+      - name: Build
+        shell: bash
+        run: |
+          cd $GAMEDIR
+          dotnet build
+
+      - name: Run tests
+        uses: ./.github/actions/run-test-project
+        with:
+          exe: ${{ matrix.exe }}
+
+  create_release:
+    name: 🪄Release
+    needs: [package, package_cs]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - shell: bash
+        run: |
+          ls -R
+          for x in *; do
+            echo $x
+            pushd $x
+            zip -9 -r ../$x.zip *
+            popd
+          done
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            imgui-godot-*.zip
+            AssetLib-*.zip
+            pdbs.zip

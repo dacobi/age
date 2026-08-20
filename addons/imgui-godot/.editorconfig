@@ -1,0 +1,49 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+charset = utf-8
+
+[*.cs]
+csharp_style_var_when_type_is_apparent = true
+csharp_prefer_braces = when_multiline
+csharp_style_namespace_declarations = file_scoped
+dotnet_style_allow_multiple_blank_lines_experimental = false
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false
+
+dotnet_analyzer_diagnostic.severity = warning
+
+# don't add _ discards for return values
+dotnet_diagnostic.IDE0058.severity = none
+
+# don't change var to explicit type
+dotnet_diagnostic.IDE0008.severity = none
+
+# use expression bodies for methods: when i feel like it
+dotnet_diagnostic.IDE0022.severity = none
+
+# incomplete switch statements are fine
+dotnet_diagnostic.IDE0010.severity = none
+dotnet_diagnostic.IDE0072.severity = none
+
+dotnet_diagnostic.CA1805.severity = none
+dotnet_diagnostic.CA1051.severity = none
+dotnet_diagnostic.CA1001.severity = none
+dotnet_diagnostic.CA1725.severity = none
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1711.severity = none
+
+# Roslynator
+dotnet_diagnostic.rcs0056.severity = warning
+roslynator_max_line_length = 100
+
+dotnet_diagnostic.rcs1194.severity = none
+dotnet_diagnostic.rcs1129.severity = none
+dotnet_diagnostic.rcs1061.severity = none
+dotnet_diagnostic.rcs1006.severity = none
+dotnet_diagnostic.rcs1141.severity = none
+dotnet_diagnostic.rcs1161.severity = none

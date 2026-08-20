@@ -1,0 +1,45 @@
+name: 🦖 .NET Checks
+
+on:
+  push:
+    branches-ignore:
+      - godot3
+  pull_request:
+    branches-ignore:
+      - godot3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet: ["8.0.x", "9.0.x"]
+
+    name: .NET ${{ matrix.dotnet }}
+
+    env:
+      DemoProj: Dear ImGui for Godot Demo.csproj
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+
+      - name: Modify .editorconfig
+        run: |
+          sed -i "s:dotnet_analyzer_diagnostic.severity = warning:dotnet_analyzer_diagnostic.severity = error:" .editorconfig
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Format
+        run: dotnet format --no-restore --verify-no-changes --verbosity detailed "${{ env.DemoProj }}" || (dotnet format --no-restore "${{ env.DemoProj }}" && git diff --color && exit 1)
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal

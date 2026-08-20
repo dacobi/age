@@ -1,0 +1,51 @@
+name: 🤖 Godot Checks
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test_csharp_only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        gdver: ["4.2.2", "4.3.0", "4.4.1", "4.5.0-dev.2"]
+        include:
+          - os: ubuntu-latest
+            name: 🐧🧪C# Only
+            exe: test.x86_64
+          - os: macos-latest
+            name: 🍎🧪C# Only
+            exe: test.app/Contents/MacOS/test
+          - os: windows-latest
+            name: 🪟🧪C# Only
+            exe: test.exe
+
+    name: ${{ matrix.name }} (${{ matrix.gdver }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ matrix.gdver }}
+          use-dotnet: true
+          include-templates: true
+          cache: false
+
+      - name: Import
+        uses: ./.github/actions/import
+        with:
+          path: doc/test/csharp
+
+      - name: Build
+        shell: bash
+        run: |
+          cd $GAMEDIR
+          dotnet build
+
+      - name: Run tests
+        uses: ./.github/actions/run-test-project
+        with:
+          exe: ${{ matrix.exe }}
