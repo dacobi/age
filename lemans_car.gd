@@ -559,7 +559,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		reset_stuck_timer = 0.0
 		
-	if reset_stuck_timer >= 5.0:
+	if reset_stuck_timer >= 2.0:
 		reset_to_track()
 
 	# Update mass and COM from properties set by Lua script
