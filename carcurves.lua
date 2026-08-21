@@ -29,6 +29,7 @@ local is_paused = false
 local orbit_yaw = 0.0
 local orbit_pitch = 0.5
 local orbit_dist = 12.0
+local last_mouse_wheel = 0.0
 
 local frame_count = 0
 
@@ -87,10 +88,12 @@ while true do
 				if orbit_pitch > 1.5 then orbit_pitch = 1.5 end
 				if orbit_pitch < -1.5 then orbit_pitch = -1.5 end
 				
-				-- Process new Mouse Wheel input for zooming
-				local wheel = ioMouseWheelMotion()
+								-- Process Mouse Wheel input for zooming via Godot property
+				local wheel = godotGetProperty("mouse_wheel", track)
 				if wheel then
-					orbit_dist = orbit_dist - wheel * 2.0
+					local delta_wheel = wheel - last_mouse_wheel
+					orbit_dist = orbit_dist - delta_wheel * 2.0
+					last_mouse_wheel = wheel
 				end
 				
 				-- Keep keyboard W/S fallbacks
