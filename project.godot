@@ -27,7 +27,7 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
 
-ImGuiRoot="*uid://dugmpnsxaagba"
+ImGuiRoot="*res://addons/imgui-godot/data/ImGuiRoot.tscn"
 LuaManager="*res://lua_manager_autoload.tscn"
 LoadingScreen="*res://loading_screen.gd"
 
