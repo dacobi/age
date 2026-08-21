@@ -71,9 +71,17 @@ while true do
 			
 			if is_paused then
 				godotSetProperty("process_mode", 4, supercar) -- Disable car physics
+				local race_manager = godotGetNodePointer("RaceManager")
+				if race_manager then
+					godotSetProperty("process_mode", 4, race_manager)
+				end
 				ioMouseCapture() -- Hide and lock mouse for infinite panning
 			else
 				godotSetProperty("process_mode", 0, supercar) -- Re-enable physics
+				local race_manager = godotGetNodePointer("RaceManager")
+				if race_manager then
+					godotSetProperty("process_mode", 0, race_manager)
+				end
 				ioMouseRelease() -- Restore mouse
 			end
 		end
