@@ -32,6 +32,7 @@ var hud_layer: CanvasLayer
 var lap_label: Label
 var time_label: Label
 var countdown_label: Label
+var paused_label: Label
 var beep_player: AudioStreamPlayer
 var beep_low_stream: AudioStream
 var beep_high_stream: AudioStream
@@ -726,6 +727,8 @@ func _input(event):
 			mouse_wheel -= 1.0
 
 func _process(delta):
+	if paused_label:
+		paused_label.visible = is_paused
 	# Ensure all AI cars are in racer_states
 	var rm = get_node_or_null("RaceManager")
 	if rm:
@@ -1485,6 +1488,27 @@ func setup_ui():
 	countdown_label.visible = false
 	hud_layer.add_child(countdown_label)
 	
+	# Paused overlay
+	paused_label = Label.new()
+	paused_label.name = "PausedLabel"
+	paused_label.anchor_left = 0.5
+	paused_label.anchor_right = 0.5
+	paused_label.anchor_top = 0.5
+	paused_label.anchor_bottom = 0.5
+	paused_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	paused_label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	paused_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	var paused_settings = LabelSettings.new()
+	paused_settings.font_size = 120
+	paused_settings.font_color = Color(1.0, 1.0, 1.0, 0.8)
+	paused_settings.outline_size = 12
+	paused_settings.outline_color = Color(0.0, 0.0, 0.0, 0.9)
+	paused_label.label_settings = paused_settings
+	paused_label.text = "PAUSED"
+	paused_label.visible = false
+	hud_layer.add_child(paused_label)
+
 	beep_low_stream = load("res://beep_low.wav")
 	beep_high_stream = load("res://beep_high.wav")
 	beep_player = AudioStreamPlayer.new()
