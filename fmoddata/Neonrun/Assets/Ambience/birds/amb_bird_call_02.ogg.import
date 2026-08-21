@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://xfckjqmngsj1"
-path="res://.godot/imported/amb_bird_call_02.ogg-1261e49fa11bf55d1810c296390e8d3d.oggvorbisstr"
+path="res://.godot/imported/amb_bird_call_02.ogg-deae8ebc1dd25c23725bb138b8501a5d.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Ambience/birds/amb_bird_call_02.ogg"
-dest_files=["res://.godot/imported/amb_bird_call_02.ogg-1261e49fa11bf55d1810c296390e8d3d.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Ambience/birds/amb_bird_call_02.ogg"
+dest_files=["res://.godot/imported/amb_bird_call_02.ogg-deae8ebc1dd25c23725bb138b8501a5d.oggvorbisstr"]
 
 [params]
 

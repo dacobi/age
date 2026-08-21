@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cxyvm5a8yiq3y"
-path="res://.godot/imported/weapons_m4_auto_03.ogg-b02bc4c12c39b135877db3e87670a0a6.oggvorbisstr"
+path="res://.godot/imported/weapons_m4_auto_03.ogg-e67c7a29afffaa16a498fdbd0fb3ffd9.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Weapons/M4/weapons_m4_auto_03.ogg"
-dest_files=["res://.godot/imported/weapons_m4_auto_03.ogg-b02bc4c12c39b135877db3e87670a0a6.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Weapons/M4/weapons_m4_auto_03.ogg"
+dest_files=["res://.godot/imported/weapons_m4_auto_03.ogg-e67c7a29afffaa16a498fdbd0fb3ffd9.oggvorbisstr"]
 
 [params]
 

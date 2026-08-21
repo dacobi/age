@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bv865c3k03ox0"
-path="res://.godot/imported/knapsack_open.ogg-12fa9257e09a50923abc20cb8b9ef323.oggvorbisstr"
+path="res://.godot/imported/knapsack_open.ogg-c6bf2e903383ee5dd767a6181043b7cc.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Haptics/knapsack_open.ogg"
-dest_files=["res://.godot/imported/knapsack_open.ogg-12fa9257e09a50923abc20cb8b9ef323.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Haptics/knapsack_open.ogg"
+dest_files=["res://.godot/imported/knapsack_open.ogg-c6bf2e903383ee5dd767a6181043b7cc.oggvorbisstr"]
 
 [params]
 

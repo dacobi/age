@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://b5vnrwfnehb8k"
-path="res://.godot/imported/ambience_city_walla_chatter_6.ogg-6c0a3dd6423ec5e9a686c8ed259ce2ee.oggvorbisstr"
+path="res://.godot/imported/ambience_city_walla_chatter_6.ogg-473d8c5b95d91ce952ea51eac69e0710.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Ambience/City/ambience_city_walla_chatter_6.ogg"
-dest_files=["res://.godot/imported/ambience_city_walla_chatter_6.ogg-6c0a3dd6423ec5e9a686c8ed259ce2ee.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Ambience/City/ambience_city_walla_chatter_6.ogg"
+dest_files=["res://.godot/imported/ambience_city_walla_chatter_6.ogg-473d8c5b95d91ce952ea51eac69e0710.oggvorbisstr"]
 
 [params]
 

@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bk0l6fgx4rcx"
-path="res://.godot/imported/music_lvl_03_east_pre_rest_re.ogg-c2a9b86c9f6a72b3e2187bad574c8f4b.oggvorbisstr"
+path="res://.godot/imported/music_lvl_03_east_pre_rest_re.ogg-83abc798a05704142805f049365956bf.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Music/music_lvl_03_east_pre_rest_re.ogg"
-dest_files=["res://.godot/imported/music_lvl_03_east_pre_rest_re.ogg-c2a9b86c9f6a72b3e2187bad574c8f4b.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Music/music_lvl_03_east_pre_rest_re.ogg"
+dest_files=["res://.godot/imported/music_lvl_03_east_pre_rest_re.ogg-83abc798a05704142805f049365956bf.oggvorbisstr"]
 
 [params]
 

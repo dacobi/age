@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cbefi4kx21cre"
-path="res://.godot/imported/footsteps_player_wood_03.ogg-c417f3dfcb54891095d5a6afe4ebb6a1.oggvorbisstr"
+path="res://.godot/imported/footsteps_player_wood_03.ogg-68e939f992fcdec46294b4a093ee4d8b.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Character/Footsteps/footsteps_player_wood_03.ogg"
-dest_files=["res://.godot/imported/footsteps_player_wood_03.ogg-c417f3dfcb54891095d5a6afe4ebb6a1.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Character/Footsteps/footsteps_player_wood_03.ogg"
+dest_files=["res://.godot/imported/footsteps_player_wood_03.ogg-68e939f992fcdec46294b4a093ee4d8b.oggvorbisstr"]
 
 [params]
 

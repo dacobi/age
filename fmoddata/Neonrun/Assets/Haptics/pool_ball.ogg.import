@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cqqjornpq30sb"
-path="res://.godot/imported/pool_ball.ogg-6d7b128d4a4d351db110adbb529028bf.oggvorbisstr"
+path="res://.godot/imported/pool_ball.ogg-06dbfb11226138bd236b1fd1c34bd32f.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Haptics/pool_ball.ogg"
-dest_files=["res://.godot/imported/pool_ball.ogg-6d7b128d4a4d351db110adbb529028bf.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Haptics/pool_ball.ogg"
+dest_files=["res://.godot/imported/pool_ball.ogg-06dbfb11226138bd236b1fd1c34bd32f.oggvorbisstr"]
 
 [params]
 

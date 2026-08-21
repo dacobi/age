@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bq3se2fhl8ysn"
-path="res://.godot/imported/heartbeat.ogg-193dbc33175017bd2bddce5655390dbf.oggvorbisstr"
+path="res://.godot/imported/heartbeat.ogg-4d8804f4ac1dde5c2e8c8dd7d58b5559.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Character/heartbeat.ogg"
-dest_files=["res://.godot/imported/heartbeat.ogg-193dbc33175017bd2bddce5655390dbf.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Character/heartbeat.ogg"
+dest_files=["res://.godot/imported/heartbeat.ogg-4d8804f4ac1dde5c2e8c8dd7d58b5559.oggvorbisstr"]
 
 [params]
 

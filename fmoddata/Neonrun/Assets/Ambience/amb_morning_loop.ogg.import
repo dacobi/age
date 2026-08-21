@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://dhcf1lwpf5be6"
-path="res://.godot/imported/amb_morning_loop.ogg-6f767013f00e920e9b0e4b6ec28b45a2.oggvorbisstr"
+path="res://.godot/imported/amb_morning_loop.ogg-83da6c7d9506551817d6cf8c1711b542.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Ambience/amb_morning_loop.ogg"
-dest_files=["res://.godot/imported/amb_morning_loop.ogg-6f767013f00e920e9b0e4b6ec28b45a2.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Ambience/amb_morning_loop.ogg"
+dest_files=["res://.godot/imported/amb_morning_loop.ogg-83da6c7d9506551817d6cf8c1711b542.oggvorbisstr"]
 
 [params]
 

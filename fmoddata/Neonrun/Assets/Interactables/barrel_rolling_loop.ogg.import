@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://tqwlumvgkimc"
-path="res://.godot/imported/barrel_rolling_loop.ogg-d718addc483e995d21f79df101c770fe.oggvorbisstr"
+path="res://.godot/imported/barrel_rolling_loop.ogg-45096023e910f6ec5ab1fcfc2f3f8c12.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Interactables/barrel_rolling_loop.ogg"
-dest_files=["res://.godot/imported/barrel_rolling_loop.ogg-d718addc483e995d21f79df101c770fe.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Interactables/barrel_rolling_loop.ogg"
+dest_files=["res://.godot/imported/barrel_rolling_loop.ogg-45096023e910f6ec5ab1fcfc2f3f8c12.oggvorbisstr"]
 
 [params]
 

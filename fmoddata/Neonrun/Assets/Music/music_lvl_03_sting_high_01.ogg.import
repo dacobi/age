@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://b61serw0pofgt"
-path="res://.godot/imported/music_lvl_03_sting_high_01.ogg-cf9111a5e066bb35d55368ea104a51dc.oggvorbisstr"
+path="res://.godot/imported/music_lvl_03_sting_high_01.ogg-4cd0c548229984d137d0117a93bda829.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Music/music_lvl_03_sting_high_01.ogg"
-dest_files=["res://.godot/imported/music_lvl_03_sting_high_01.ogg-cf9111a5e066bb35d55368ea104a51dc.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Music/music_lvl_03_sting_high_01.ogg"
+dest_files=["res://.godot/imported/music_lvl_03_sting_high_01.ogg-4cd0c548229984d137d0117a93bda829.oggvorbisstr"]
 
 [params]
 

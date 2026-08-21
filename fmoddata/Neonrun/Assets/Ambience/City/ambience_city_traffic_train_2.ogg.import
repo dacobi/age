@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://c47kbkej2kneb"
-path="res://.godot/imported/ambience_city_traffic_train_2.ogg-e403b72763212c4deec1abd36dbd353d.oggvorbisstr"
+path="res://.godot/imported/ambience_city_traffic_train_2.ogg-eac8b368d0c8d6c6b0782f238a21c30d.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Ambience/City/ambience_city_traffic_train_2.ogg"
-dest_files=["res://.godot/imported/ambience_city_traffic_train_2.ogg-e403b72763212c4deec1abd36dbd353d.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Ambience/City/ambience_city_traffic_train_2.ogg"
+dest_files=["res://.godot/imported/ambience_city_traffic_train_2.ogg-eac8b368d0c8d6c6b0782f238a21c30d.oggvorbisstr"]
 
 [params]
 

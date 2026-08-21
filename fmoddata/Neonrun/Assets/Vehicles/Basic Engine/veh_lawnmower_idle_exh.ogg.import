@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://dkpbogvtjqv45"
-path="res://.godot/imported/veh_lawnmower_idle_exh.ogg-cfa1bbc212d1fc577c396a932fcc8120.oggvorbisstr"
+path="res://.godot/imported/veh_lawnmower_idle_exh.ogg-034569deb2189a17854f0e022b770217.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Vehicles/Basic Engine/veh_lawnmower_idle_exh.ogg"
-dest_files=["res://.godot/imported/veh_lawnmower_idle_exh.ogg-cfa1bbc212d1fc577c396a932fcc8120.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Vehicles/Basic Engine/veh_lawnmower_idle_exh.ogg"
+dest_files=["res://.godot/imported/veh_lawnmower_idle_exh.ogg-034569deb2189a17854f0e022b770217.oggvorbisstr"]
 
 [params]
 

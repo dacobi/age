@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://blqlqbjtruw14"
-path="res://.godot/imported/placeholder_640166_main_meco.ogg-f859da58587810afb083d7f6577b6df8.oggvorbisstr"
+path="res://.godot/imported/placeholder_640166_main_meco.ogg-c39c132362235015ac4b5a8abf927799.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Character/Radio/placeholder_640166_main_meco.ogg"
-dest_files=["res://.godot/imported/placeholder_640166_main_meco.ogg-f859da58587810afb083d7f6577b6df8.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Character/Radio/placeholder_640166_main_meco.ogg"
+dest_files=["res://.godot/imported/placeholder_640166_main_meco.ogg-c39c132362235015ac4b5a8abf927799.oggvorbisstr"]
 
 [params]
 
