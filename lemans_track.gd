@@ -84,6 +84,15 @@ var height_offset = 56.0
 var t_car = 0.15
 
 func _ready():
+	# Initialize racer states for all cars currently in the tree
+	if supercar:
+		get_racer_state(supercar)
+	
+	# We also need to initialize AI cars. They might be spawned dynamically by RaceManager.
+	# Let's add a deferred call to init them after RaceManager finishes.
+	call_deferred("init_ai_racer_states")
+
+
 	is_square = false
 
 	if is_square:
@@ -770,7 +779,7 @@ func _process(delta):
 
 	if lap_label and time_label and supercar:
 		var p_state = get_racer_state(supercar)
-		var display_lap = max(1, min(p_state["current_lap"] - 1, final_laps))
+		var display_lap = max(1, min(p_state["current_lap"], final_laps))
 		
 		# Build Leaderboard
 		var sorted = racer_states.keys().duplicate()
@@ -791,7 +800,7 @@ func _process(delta):
 "
 		for i in range(sorted.size()):
 			var drv = sorted[i]
-			var dlap = max(1, min(racer_states[drv]["current_lap"] - 1, final_laps))
+			var dlap = max(1, min(racer_states[drv]["current_lap"], final_laps))
 			lb_txt += "%d. %s (L%d)
 " % [i + 1, drv.name, dlap]
 		
@@ -1543,3 +1552,10 @@ func setup_ui():
 		if jingle_res:
 			victory_jingle_player.stream = jingle_res
 	add_child(victory_jingle_player)
+
+func init_ai_racer_states():
+	var rm = get_node_or_null("RaceManager")
+	if rm:
+		for child in rm.get_children():
+			if child.name.begins_with("Genetic_AI_Car_"):
+				get_racer_state(child)
