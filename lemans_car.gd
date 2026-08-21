@@ -494,12 +494,16 @@ func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, i
 static var next_lane_idx: int = 0
 
 func reset_to_track() -> void:
-	var track = get_parent().get_parent()
 	var path: Path3D = null
-	if track and track.has_node("Path3D"):
-		path = track.get_node("Path3D")
-	elif get_parent() is Path3D:
-		path = get_parent()
+	
+	# Handle both AI (child of RaceManager) and Human (direct child of track)
+	var parent = get_parent()
+	if parent and parent.has_node("Path3D"):
+		path = parent.get_node("Path3D")
+	elif parent and parent.get_parent() and parent.get_parent().has_node("Path3D"):
+		path = parent.get_parent().get_node("Path3D")
+	elif parent is Path3D:
+		path = parent
 		
 	if path and path.curve:
 		var offset = path.curve.get_closest_offset(global_position)
