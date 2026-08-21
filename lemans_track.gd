@@ -727,6 +727,15 @@ func _input(event):
 			mouse_wheel -= 1.0
 
 func _process(delta):
+	if bool(is_paused) != bool(previous_paused):
+		previous_paused = bool(is_paused)
+		if is_paused:
+			if has_node("/root/FmodServer") or ClassDB.class_exists("FmodServer"):
+				FmodServer.pause_all_events()
+		else:
+			if has_node("/root/FmodServer") or ClassDB.class_exists("FmodServer"):
+				FmodServer.unpause_all_events()
+
 	if paused_label:
 		paused_label.visible = is_paused
 	# Ensure all AI cars are in racer_states
