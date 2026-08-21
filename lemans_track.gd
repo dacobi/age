@@ -88,10 +88,6 @@ func _ready():
 	if supercar:
 		get_racer_state(supercar)
 	
-	# We also need to initialize AI cars. They might be spawned dynamically by RaceManager.
-	# Let's add a deferred call to init them after RaceManager finishes.
-	call_deferred("init_ai_racer_states")
-
 
 	is_square = false
 
@@ -730,6 +726,14 @@ func _input(event):
 			mouse_wheel -= 1.0
 
 func _process(delta):
+	# Ensure all AI cars are in racer_states
+	var rm = get_node_or_null("RaceManager")
+	if rm:
+		for child in rm.get_children():
+			if child.name.begins_with("Genetic_AI_Car_"):
+				if not racer_states.has(child):
+					get_racer_state(child)
+
 
 	# Update HUD and Countdown
 		
@@ -1427,6 +1431,27 @@ func setup_ui():
 	add_child(hud_layer)
 	
 	# Top-Left Lap Indicator HUD
+	var lap_bg = ColorRect.new()
+	lap_bg.name = "LapBg"
+	lap_bg.color = Color(0.05, 0.02, 0.12, 0.55)
+	lap_bg.position = Vector2(20, 20)
+	lap_bg.size = Vector2(600, 340)
+	hud_layer.add_child(lap_bg)
+
+	var lap_border = ColorRect.new()
+	lap_border.name = "LapBorder"
+	lap_border.color = Color(1.0, 0.84, 0.0, 1.0) # Gold border
+	lap_border.position = Vector2(20, 20)
+	lap_border.size = Vector2(600, 6)
+	hud_layer.add_child(lap_border)
+
+	var lap_bottom_border = ColorRect.new()
+	lap_bottom_border.name = "LapBottomBorder"
+	lap_bottom_border.color = Color(1.0, 0.84, 0.0, 1.0) # Gold border
+	lap_bottom_border.position = Vector2(20, 360) # 20 + 280
+	lap_bottom_border.size = Vector2(600, 6)
+	hud_layer.add_child(lap_bottom_border)
+
 	lap_label = Label.new()
 	lap_label.name = "LapLabel"
 	lap_label.position = Vector2(40, 30)
@@ -1492,21 +1517,27 @@ func setup_ui():
 	hud_layer.add_child(victory_panel)
 
 	var bg_box = ColorRect.new()
-	bg_box.color = Color(0.05, 0.02, 0.12, 0.9)
-	bg_box.position = Vector2(-350, -180)
-	bg_box.size = Vector2(700, 360)
+	bg_box.color = Color(0.05, 0.02, 0.12, 0.55)
+	bg_box.position = Vector2(-400, -180)
+	bg_box.size = Vector2(800, 500)
 	victory_panel.add_child(bg_box)
 
 	var border = ColorRect.new()
 	border.color = Color(1.0, 0.84, 0.0, 1.0) # Gold border
-	border.position = Vector2(-350, -180)
-	border.size = Vector2(700, 6)
+	border.position = Vector2(-400, -180)
+	border.size = Vector2(800, 6)
 	victory_panel.add_child(border)
+
+	var border_bottom = ColorRect.new()
+	border_bottom.color = Color(1.0, 0.84, 0.0, 1.0) # Gold border
+	border_bottom.position = Vector2(-400, 320) # -180 + 500
+	border_bottom.size = Vector2(800, 6)
+	victory_panel.add_child(border_bottom)
 
 	var vic_label = Label.new()
 	vic_label.name = "VictoryText"
-	vic_label.position = Vector2(-350, -160)
-	vic_label.size = Vector2(700, 340)
+	vic_label.position = Vector2(-400, -160)
+	vic_label.size = Vector2(800, 480)
 	vic_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var vic_settings = LabelSettings.new()
 	vic_settings.font_size = 32
@@ -1553,9 +1584,3 @@ func setup_ui():
 			victory_jingle_player.stream = jingle_res
 	add_child(victory_jingle_player)
 
-func init_ai_racer_states():
-	var rm = get_node_or_null("RaceManager")
-	if rm:
-		for child in rm.get_children():
-			if child.name.begins_with("Genetic_AI_Car_"):
-				get_racer_state(child)
