@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://can1sn0rivypb"
-path="res://.godot/imported/shotgun_m1014_prime_out.ogg-77f0e8d17c4e474b9f9de1f4bce2581b.oggvorbisstr"
+path="res://.godot/imported/shotgun_m1014_prime_out.ogg-52e5863efd38be9352adf5ff6144ccb8.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Haptics/shotgun_m1014_prime_out.ogg"
-dest_files=["res://.godot/imported/shotgun_m1014_prime_out.ogg-77f0e8d17c4e474b9f9de1f4bce2581b.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Haptics/shotgun_m1014_prime_out.ogg"
+dest_files=["res://.godot/imported/shotgun_m1014_prime_out.ogg-52e5863efd38be9352adf5ff6144ccb8.oggvorbisstr"]
 
 [params]
 

@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bvhfos17lqkuk"
-path="res://.godot/imported/jp_main_menu.ogg-b2d12866b62c9c53ac407c7a1fcb597b.oggvorbisstr"
+path="res://.godot/imported/jp_main_menu.ogg-68305819b82ef02afbb138a2675c5491.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/AudioTable/Dialogue/JP/jp_main_menu.ogg"
-dest_files=["res://.godot/imported/jp_main_menu.ogg-b2d12866b62c9c53ac407c7a1fcb597b.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/AudioTable/Dialogue/JP/jp_main_menu.ogg"
+dest_files=["res://.godot/imported/jp_main_menu.ogg-68305819b82ef02afbb138a2675c5491.oggvorbisstr"]
 
 [params]
 

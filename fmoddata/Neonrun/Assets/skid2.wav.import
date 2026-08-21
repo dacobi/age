@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://bi62tod2kd336"
-path="res://.godot/imported/skid2.wav-f9e8bbcd97f41345123bc416fdbafc43.sample"
+path="res://.godot/imported/skid2.wav-18ff4fac7e30851878d072e4fd9d82c6.sample"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/skid2.wav"
-dest_files=["res://.godot/imported/skid2.wav-f9e8bbcd97f41345123bc416fdbafc43.sample"]
+source_file="res://fmoddata/Neonrun/Assets/skid2.wav"
+dest_files=["res://.godot/imported/skid2.wav-18ff4fac7e30851878d072e4fd9d82c6.sample"]
 
 [params]
 

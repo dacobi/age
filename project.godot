@@ -27,14 +27,14 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
 
-ImGuiRoot="*res://addons/imgui-godot/data/ImGuiRoot.tscn"
+ImGuiRoot="*uid://dugmpnsxaagba"
 LuaManager="*res://lua_manager_autoload.tscn"
 LoadingScreen="*res://loading_screen.gd"
 
 [display]
+
 window/size/viewport_width=1024
 window/size/viewport_height=768
-
 window/vsync/vsync_mode=0
 
 [editor_plugins]

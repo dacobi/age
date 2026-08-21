@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://djwb7ncbbmhw0"
-path="res://.godot/imported/car_engine.ogg-8b794e7b6b81196bdab171c7eece87dc.oggvorbisstr"
+path="res://.godot/imported/car_engine.ogg-ef18c774eda7e51b4c70b1ba5159aa90.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Haptics/car_engine.ogg"
-dest_files=["res://.godot/imported/car_engine.ogg-8b794e7b6b81196bdab171c7eece87dc.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Haptics/car_engine.ogg"
+dest_files=["res://.godot/imported/car_engine.ogg-ef18c774eda7e51b4c70b1ba5159aa90.oggvorbisstr"]
 
 [params]
 

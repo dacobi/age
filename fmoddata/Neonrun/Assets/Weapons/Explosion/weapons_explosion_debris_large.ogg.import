@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bkjbviutmainw"
-path="res://.godot/imported/weapons_explosion_debris_large.ogg-0d5d73b0844378a2fbcf4e66afb2e2a0.oggvorbisstr"
+path="res://.godot/imported/weapons_explosion_debris_large.ogg-fb6ba51bc4425062c03622d6ee0edb17.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Weapons/Explosion/weapons_explosion_debris_large.ogg"
-dest_files=["res://.godot/imported/weapons_explosion_debris_large.ogg-0d5d73b0844378a2fbcf4e66afb2e2a0.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Weapons/Explosion/weapons_explosion_debris_large.ogg"
+dest_files=["res://.godot/imported/weapons_explosion_debris_large.ogg-fb6ba51bc4425062c03622d6ee0edb17.oggvorbisstr"]
 
 [params]
 

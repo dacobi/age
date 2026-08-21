@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://ckevgkietu242"
-path="res://.godot/imported/foley_door_close_02.ogg-bba8887b8f2a0c4f2e8b6a97fcbdf308.oggvorbisstr"
+path="res://.godot/imported/foley_door_close_02.ogg-1f2d58635f8519c9663428af494a0f6c.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Character/Hand Foley/Door/foley_door_close_02.ogg"
-dest_files=["res://.godot/imported/foley_door_close_02.ogg-bba8887b8f2a0c4f2e8b6a97fcbdf308.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Character/Hand Foley/Door/foley_door_close_02.ogg"
+dest_files=["res://.godot/imported/foley_door_close_02.ogg-1f2d58635f8519c9663428af494a0f6c.oggvorbisstr"]
 
 [params]
 

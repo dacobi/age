@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bvx24bdccb5o2"
-path="res://.godot/imported/wooden_collision_2_dry_dull.ogg-dcafb142ca82845b17b4274a8d3acd2c.oggvorbisstr"
+path="res://.godot/imported/wooden_collision_2_dry_dull.ogg-7072dd3d864527f205f0ee291f51cf3a.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Interactables/wooden_collision_2_dry_dull.ogg"
-dest_files=["res://.godot/imported/wooden_collision_2_dry_dull.ogg-dcafb142ca82845b17b4274a8d3acd2c.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Interactables/wooden_collision_2_dry_dull.ogg"
+dest_files=["res://.godot/imported/wooden_collision_2_dry_dull.ogg-7072dd3d864527f205f0ee291f51cf3a.oggvorbisstr"]
 
 [params]
 

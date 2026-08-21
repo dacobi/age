@@ -723,10 +723,6 @@ func _input(event):
 func _process(delta):
 
 	# Update HUD and Countdown
-	if lap_label and supercar:
-		var p_state = get_racer_state(supercar)
-		var display_lap = max(1, min(p_state["current_lap"], final_laps))
-		lap_label.text = "Lap: %d / %d" % [display_lap, final_laps]
 		
 	if countdown_value >= 0:
 		countdown_timer -= delta
@@ -772,9 +768,37 @@ func _process(delta):
 			if racer_states[car]["current_lap"] > 0:
 				racer_states[car]["current_lap_time"] += delta
 
-	if time_label and supercar:
+	if lap_label and time_label and supercar:
 		var p_state = get_racer_state(supercar)
-		time_label.text = "TIME: " + format_time(race_time) + "\nLAP: " + format_time(p_state["current_lap_time"])
+		var display_lap = max(1, min(p_state["current_lap"] - 1, final_laps))
+		
+		# Build Leaderboard
+		var sorted = racer_states.keys().duplicate()
+		sorted.sort_custom(func(a, b):
+			var a_lap = racer_states[a]["current_lap"]
+			var b_lap = racer_states[b]["current_lap"]
+			if a_lap != b_lap:
+				return a_lap > b_lap
+			var a_prog = 0.0
+			var b_prog = 0.0
+			if path_node:
+				a_prog = path_node.curve.get_closest_offset(a.global_position)
+				b_prog = path_node.curve.get_closest_offset(b.global_position)
+			return a_prog > b_prog
+		)
+		
+		var lb_txt = "STANDINGS
+"
+		for i in range(sorted.size()):
+			var drv = sorted[i]
+			var dlap = max(1, min(racer_states[drv]["current_lap"] - 1, final_laps))
+			lb_txt += "%d. %s (L%d)
+" % [i + 1, drv.name, dlap]
+		
+		lap_label.text = lb_txt
+		time_label.text = "LAP %d / %d
+TIME: %s
+CURR: %s" % [display_lap, final_laps, format_time(race_time), format_time(p_state["current_lap_time"])]
 
 	if race_finished:
 		victory_lap_timer += delta
@@ -1312,26 +1336,47 @@ func _on_gate_area_entered(area: Area3D):
 			state["halfway_cleared"] = false
 			print("Car ", car.name, " LAP COMPLETED! Current Lap: %d / %d" % [state["current_lap"], final_laps])
 			
-			if state["current_lap"] > final_laps:
-				race_finished = true
-				print("RACE FINISHED! Winner: ", car.name, " Total Time: ", format_time(race_time))
-				if victory_jingle_player:
-					victory_jingle_player.play()
-				spawn_fireworks()
-				if victory_panel:
-					victory_panel.visible = true
-					var vic_label = victory_panel.get_node_or_null("VictoryText")
-					if vic_label:
-						var best_lap = state["lap_times"][0] if state["lap_times"].size() > 0 else 0.0
-						for lt in state["lap_times"]:
-							if lt < best_lap: best_lap = lt
-						var txt = "--- RACE FINISHED! ---\n"
-						txt += "WINNER: " + car.name + "\n\n"
-						txt += "TOTAL TIME:  " + format_time(race_time) + "\n"
-						txt += "BEST LAP:    " + format_time(best_lap) + "\n\n"
-						for l_idx in range(state["lap_times"].size()):
-							txt += "Lap %d: %s\n" % [l_idx + 1, format_time(state["lap_times"][l_idx])]
-						vic_label.text = txt
+			if state["current_lap"] > final_laps and not state.has("finished"):
+				state["finished"] = true
+				state["finish_time"] = race_time
+				
+				if car == supercar:
+					race_finished = true
+					print("HUMAN PLAYER FINISHED! Total Time: ", format_time(race_time))
+					if victory_jingle_player:
+						victory_jingle_player.play()
+					spawn_fireworks()
+					if victory_panel:
+						victory_panel.visible = true
+						var vic_label = victory_panel.get_node_or_null("VictoryText")
+						if vic_label:
+							var best_lap = state["lap_times"][0] if state["lap_times"].size() > 0 else 0.0
+							for lt in state["lap_times"]:
+								if lt < best_lap: best_lap = lt
+							
+							var txt = "--- RACE FINISHED! ---
+"
+							
+							# Build a list of all finished cars sorted by finish_time
+							var finished_cars = []
+							for r_car in racer_states.keys():
+								if racer_states[r_car].has("finished"):
+									finished_cars.append(r_car)
+							
+							finished_cars.sort_custom(func(a, b): return racer_states[a]["finish_time"] < racer_states[b]["finish_time"])
+							
+							for i in range(finished_cars.size()):
+								var f_car = finished_cars[i]
+								txt += "%d. %s - %s
+" % [i + 1, f_car.name, format_time(racer_states[f_car]["finish_time"])]
+							
+							txt += "
+YOUR BEST LAP: " + format_time(best_lap) + "
+"
+							for l_idx in range(state["lap_times"].size()):
+								txt += "Lap %d: %s
+" % [l_idx + 1, format_time(state["lap_times"][l_idx])]
+							vic_label.text = txt
 
 func spawn_random_powerups():
 	var nitro_script = load("res://nitro_powerup.gd")

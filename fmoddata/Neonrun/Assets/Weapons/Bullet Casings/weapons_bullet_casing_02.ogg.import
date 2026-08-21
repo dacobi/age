@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://ur0wauavbarw"
-path="res://.godot/imported/weapons_bullet_casing_02.ogg-9de40d98864e723d518999d5357deb60.oggvorbisstr"
+path="res://.godot/imported/weapons_bullet_casing_02.ogg-fea20f145fef30e51ac325be71d5fa86.oggvorbisstr"
 
 [deps]
 
-source_file="res://fmoddata/CarExamples/Assets/Weapons/Bullet Casings/weapons_bullet_casing_02.ogg"
-dest_files=["res://.godot/imported/weapons_bullet_casing_02.ogg-9de40d98864e723d518999d5357deb60.oggvorbisstr"]
+source_file="res://fmoddata/Neonrun/Assets/Weapons/Bullet Casings/weapons_bullet_casing_02.ogg"
+dest_files=["res://.godot/imported/weapons_bullet_casing_02.ogg-fea20f145fef30e51ac325be71d5fa86.oggvorbisstr"]
 
 [params]
 
