@@ -1,3 +1,4 @@
 [gd_scene format=3 uid="uid://lua_manager_autoload"]
 
 [node name="LuaManager" type="LuaManager"]
+process_priority = 100
