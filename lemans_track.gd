@@ -1564,6 +1564,7 @@ func setup_ui():
 	lap_popup_panel.anchor_top = 0.25
 	lap_popup_panel.anchor_bottom = 0.25
 	lap_popup_panel.visible = false
+	lap_popup_panel.z_index = 100
 	hud_layer.add_child(lap_popup_panel)
 
 	var lap_pop_bg = ColorRect.new()
