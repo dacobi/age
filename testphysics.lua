@@ -1,3 +1,5 @@
+ioWindowSetFullScreen(true)
+
 godotLoadScene("lemans_area.tscn")
 delay(200) -- give it a moment to load
 
@@ -46,6 +48,7 @@ while true do
 	-- Handle Q to quit (moved from ESCAPE)
 	if ioKBClicked("SDLK_q") then
 		print("Exiting game logic...")
+		ioWindowSetFullScreen(false)
 		break
 	end
 
