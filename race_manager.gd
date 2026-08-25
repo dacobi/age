@@ -240,7 +240,10 @@ func spawn_car(brain_weights, index: int) -> void:
 func reset_race() -> void:
 	for driver in active_drivers:
 		if driver.car != null:
-			driver.car.queue_free()
+			var car = driver.car
+			if car.get_parent():
+				car.get_parent().remove_child(car)
+			car.queue_free()
 	
 	active_drivers.clear()
 	start_first_generation()
