@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cq1iqcx2ych0i"]
 
 [ext_resource type="Script" uid="uid://7i1mxet0v11y" path="res://lemans_track.gd" id="1_track_script"]
-[ext_resource type="Texture2D" uid="uid://g852huxij3b0" path="res://sky/rogland_clear_night.hdr" id="2_d0abv"]
+[ext_resource type="Texture2D" uid="uid://7lwhx6y02nnk" path="res://sky/evening.hdr" id="2_d0abv"]
 [ext_resource type="PackedScene" path="res://lemans_car.tscn" id="2_supercar"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_6xuvv"]

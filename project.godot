@@ -21,7 +21,7 @@ Initialization/live_update=true
 
 [application]
 
-config/name="GCG Godot Engine"
+config/name="Neonrun"
 run/main_scene="res://init_scene.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 

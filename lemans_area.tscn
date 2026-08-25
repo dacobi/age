@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cq1iqcx2ych0i"]
 
 [ext_resource type="Script" uid="uid://cwt7c3u7dviee" path="res://lemans_area.gd" id="1_track_script"]
-[ext_resource type="Texture2D" uid="uid://c38hbsanr2xic" path="res://sky/desert_rock_sun.hdr" id="2_7dgu3"]
+[ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="2_7dgu3"]
 [ext_resource type="PackedScene" path="res://lemans_car.tscn" id="2_supercar"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ouvil"]

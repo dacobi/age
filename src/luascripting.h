@@ -60,7 +60,8 @@ public:
         GCMD_GET_PROPERTY,
         GCMD_WATCH_PROPERTY,
         GCMD_WATCH_SIGNAL,
-        GCMD_LOAD_SCENE
+        GCMD_LOAD_SCENE,
+        GCMD_SET_FULLSCREEN
     };
 
     using AddBouncerFunc = std::function<void(const std::string&)>;
@@ -199,6 +200,7 @@ private:
     static int lua_ioMouseBTNClicked(lua_State* L);
     static int lua_ioMouseBTNDown(lua_State* L);
     static int lua_ioMouseBTNUp(lua_State* L);
+    static int lua_ioWindowSetFullScreen(lua_State* L);
 
     // Joystick API
     static int lua_ioJoystickOpen(lua_State* L);

@@ -20,7 +20,6 @@ var current_cam_pitch = 0.0
 
 var mouse_wheel = 0.0
 
-var reset_car = false
 var reset_game = false
 var powerup_nodes: Array = []
 
@@ -907,7 +906,6 @@ func _process(delta):
 
 	if reset_game:
 		reset_game = false
-		reset_car = false
 		current_lap = 0
 		halfway_cleared = false
 		race_time = 0.0
@@ -940,25 +938,6 @@ func _process(delta):
 				p.visible = true
 				p.collision_layer = 4
 				p.set("respawn_timer", 0.0)
-
-	elif reset_car or (supercar and supercar.global_position.y < -150.0):
-		reset_car = false
-		if supercar:
-			if is_square:
-				var new_t = Transform3D(Basis.IDENTITY, Vector3(0.0, 0.5, 0.0))
-				if supercar.has_method("reset_position"):
-					supercar.reset_position(new_t)
-				else:
-					supercar.global_transform = new_t
-			else:
-				var closest_prog = path_node.curve.get_closest_offset(supercar.global_position)
-				var t_respawn = path_node.global_transform * path_node.curve.sample_baked_with_rotation(closest_prog, true, true)
-				if t_respawn:
-					t_respawn.origin += t_respawn.basis.y * 1.5
-					if supercar.has_method("reset_position"):
-						supercar.reset_position(t_respawn)
-					else:
-						supercar.global_transform = t_respawn
 
 	var camera_node = get_node_or_null("Camera3D")
 	if camera_node and supercar:
