@@ -239,6 +239,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("ioMouseBTNClicked", lua_ioMouseBTNClicked);
     reg("ioMouseBTNDown", lua_ioMouseBTNDown);
     reg("ioMouseBTNUp", lua_ioMouseBTNUp);
+    reg("ioWindowSetFullScreen", lua_ioWindowSetFullScreen);
 
     reg("ioJoystickOpen", lua_ioJoystickOpen);
     reg("ioJoystickClose", lua_ioJoystickClose);
@@ -1046,6 +1047,17 @@ static godot::Key string_to_key(const std::string& str) {
     if (str == "Space" || str == "SDLK_SPACE") return godot::KEY_SPACE;
     if (str == "Escape" || str == "SDLK_ESCAPE") return godot::KEY_ESCAPE;
     if (str == "F1" || str == "SDLK_F1") return godot::KEY_F1;
+    if (str == "F2" || str == "SDLK_F2") return godot::KEY_F2;
+    if (str == "F3" || str == "SDLK_F3") return godot::KEY_F3;
+    if (str == "F4" || str == "SDLK_F4") return godot::KEY_F4;
+    if (str == "F5" || str == "SDLK_F5") return godot::KEY_F5;
+    if (str == "F6" || str == "SDLK_F6") return godot::KEY_F6;
+    if (str == "F7" || str == "SDLK_F7") return godot::KEY_F7;
+    if (str == "F8" || str == "SDLK_F8") return godot::KEY_F8;
+    if (str == "F9" || str == "SDLK_F9") return godot::KEY_F9;
+    if (str == "F10" || str == "SDLK_F10") return godot::KEY_F10;
+    if (str == "F11" || str == "SDLK_F11") return godot::KEY_F11;
+    if (str == "F12" || str == "SDLK_F12") return godot::KEY_F12;
     return godot::KEY_NONE;
 }
 
@@ -2243,3 +2255,17 @@ int LuaScripting::lua_imguiSameLine(lua_State* L) {
     return 0;
 }
 
+
+int LuaScripting::lua_ioWindowSetFullScreen(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->godotCmdFunc) {
+        bool fullscreen = false;
+        if (lua_gettop(L) >= 1 && lua_isboolean(L, 1)) {
+            fullscreen = lua_toboolean(L, 1);
+        }
+        auto sd = std::make_shared<LuaSyncData>();
+        float fargs[3] = {fullscreen ? 1.0f : 0.0f, 0, 0};
+        self->godotCmdFunc(GCMD_SET_FULLSCREEN, "", fargs, sd, L, self);
+    }
+    return 0;
+}
