@@ -34,6 +34,12 @@ public:
 
     int getFrameCount() const { return frame_count; }
     bool isRecording() const { return recording; }
+    double getRecordedElapsedSeconds() const {
+        if (!recording) return 0.0;
+        auto now = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed = now - start_time;
+        return elapsed.count();
+    }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
 

@@ -1949,7 +1949,7 @@ void LuaScripting::renderLuaImGui() {
     static bool was_recording_last_frame = false;
 
     if (recorder.isRecording() && record_use_max && record_max_seconds > 0) {
-        if (recorder.getFrameCount() >= record_max_seconds * 60) {
+        if (recorder.getRecordedElapsedSeconds() >= record_max_seconds) {
             recorder.stop();
         }
     }
@@ -1971,8 +1971,9 @@ void LuaScripting::renderLuaImGui() {
         ImGui::Checkbox("Hide Window When Recording", &record_hide_window);
 
         if (recorder.isRecording()) {
-            int mins = recorder.getFrameCount() / (60 * 60);
-            int secs = (recorder.getFrameCount() / 60) % 60;
+            int elapsed_s = (int)recorder.getRecordedElapsedSeconds();
+            int mins = elapsed_s / 60;
+            int secs = elapsed_s % 60;
             ImGui::Text("REC  %02d:%02d  (%d frames)", mins, secs, recorder.getFrameCount());
             if (ImGui::Button("Stop Recording")) {
                 recorder.stop();
