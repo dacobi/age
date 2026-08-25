@@ -555,7 +555,7 @@ func _physics_process(delta: float) -> void:
 	var auto_reset_speed = linear_velocity.length()
 	var is_flipped = global_transform.basis.y.dot(Vector3.UP) < 0.2
 	
-	if (auto_reset_speed < 2.0 and not in_countdown) or is_flipped:
+	if (auto_reset_speed < 2.0 and not in_countdown and is_ai_controlled) or is_flipped:
 		reset_stuck_timer += delta
 	else:
 		reset_stuck_timer = 0.0
