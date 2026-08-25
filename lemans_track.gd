@@ -476,8 +476,8 @@ func _ready():
 			var grid_transform = path_node.global_transform * path_node.curve.sample_baked_with_rotation(spawn_offset, true, true)
 			if grid_transform:
 				supercar.global_transform = grid_transform
-				# Player takes the 4th lane (+37.5)
-				supercar.global_position += grid_transform.basis.x * 37.5 + grid_transform.basis.y * 0.5
+				# Player takes the 3rd lane (+12.5) [Swapped with AI 2]
+				supercar.global_position += grid_transform.basis.x * 12.5 + grid_transform.basis.y * 0.5
 				if "start_transform" in supercar:
 					supercar.start_transform = supercar.global_transform
 		
@@ -974,10 +974,13 @@ CURR: %s" % [display_lap, final_laps, format_time(race_time), format_time(p_stat
 				supercar.global_position = Vector3(0.0, 0.5, 0.0)
 				supercar.global_transform.basis = Basis.IDENTITY
 			else:
-				var grid_transform = path_node.global_transform * path_node.curve.sample_baked_with_rotation(15.0, true, true)
+				var spawn_offset = 15.0 - 25.0
+				var track_len = path_node.curve.get_baked_length()
+				var safe_offset = fmod(spawn_offset + track_len, track_len)
+				var grid_transform = path_node.global_transform * path_node.curve.sample_baked_with_rotation(safe_offset, true, true)
 				if grid_transform:
 					supercar.global_transform = grid_transform
-					supercar.global_position += grid_transform.basis.x * 13.0 + grid_transform.basis.y * 0.5
+					supercar.global_position += grid_transform.basis.x * 12.5 + grid_transform.basis.y * 0.5
 			supercar.linear_velocity = Vector3.ZERO
 			supercar.angular_velocity = Vector3.ZERO
 		for p in powerup_nodes:
