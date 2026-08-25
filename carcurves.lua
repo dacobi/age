@@ -1,4 +1,5 @@
 ioWindowSetFullScreen(true)
+local is_fullscreen = true
 
 godotLoadScene("lemans_track.tscn")
 
@@ -49,6 +50,13 @@ while true do
 		ioWindowSetFullScreen(false)
 		break
 	end
+
+	-- Handle F11 for fullscreen toggle
+	if ioKBClicked("SDLK_F11") then
+		is_fullscreen = not is_fullscreen
+		ioWindowSetFullScreen(is_fullscreen)
+	end
+
 
 	local track = godotGetNodePointer("MegaRacerScene")
 	local in_edit = false

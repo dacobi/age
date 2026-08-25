@@ -1280,8 +1280,16 @@ void LuaManager::_process(double delta) {
         if (!cmd.sd) continue;
         
         switch (cmd.cmd) {
-            case LuaScripting::GCMD_LOAD_SCENE: {
-                String full_path = "res://" + cmd.name;
+            case LuaScripting::GCMD_SET_FULLSCREEN: {
+                bool fullscreen = (cmd.args[0] > 0.5f);
+                if (fullscreen) {
+                    get_window()->set_mode(Window::MODE_FULLSCREEN);
+                } else {
+                    get_window()->set_mode(Window::MODE_WINDOWED);
+                }
+                break;
+            }
+            case LuaScripting::GCMD_LOAD_SCENE: {                String full_path = "res://" + cmd.name;
                 UtilityFunctions::print("LuaManager delegating scene load to GDScript (Gemini Web approach): ", full_path);
                 
                 Node* ls = get_tree()->get_root()->get_node_or_null("LoadingScreen");
