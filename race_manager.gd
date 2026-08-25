@@ -203,8 +203,10 @@ func spawn_car(brain_weights, index: int) -> void:
 		var right_vec = spawn_t.basis.x.normalized()
 		
 		# Distribute them horizontally in a single line across 4 evenly spaced 25m lanes
-		# AI takes lanes 0, 1, 2 (-37.5, -12.5, +12.5)
+		# AI takes lanes 0, 1, 2 (-37.5, -12.5, +37.5) [Swapped with player]
 		var horiz_offset = (float(index) - 1.5) * 25.0
+		if index == 2:
+			horiz_offset = 37.5
 		spawn_t.origin += right_vec * horiz_offset
 		
 		car.global_transform = spawn_t
