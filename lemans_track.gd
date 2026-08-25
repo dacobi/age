@@ -1601,27 +1601,27 @@ func setup_ui():
 	lap_bg.name = "LapBg"
 	lap_bg.color = Color(0.05, 0.02, 0.12, 0.55)
 	lap_bg.position = Vector2(20, 20)
-	lap_bg.size = Vector2(600, 340)
+	lap_bg.size = Vector2(500, 260)
 	hud_layer.add_child(lap_bg)
 
 	var lap_border = ColorRect.new()
 	lap_border.name = "LapBorder"
 	lap_border.color = Color(1.0, 0.84, 0.0, 1.0) # Gold border
 	lap_border.position = Vector2(20, 20)
-	lap_border.size = Vector2(600, 6)
+	lap_border.size = Vector2(500, 6)
 	hud_layer.add_child(lap_border)
 
 	var lap_bottom_border = ColorRect.new()
 	lap_bottom_border.name = "LapBottomBorder"
 	lap_bottom_border.color = Color(1.0, 0.84, 0.0, 1.0) # Gold border
-	lap_bottom_border.position = Vector2(20, 360) # 20 + 280
-	lap_bottom_border.size = Vector2(600, 6)
+	lap_bottom_border.position = Vector2(20, 280)
+	lap_bottom_border.size = Vector2(500, 6)
 	hud_layer.add_child(lap_bottom_border)
 
 	lap_label = RichTextLabel.new()
 	lap_label.name = "LapLabel"
 	lap_label.position = Vector2(40, 30)
-	lap_label.size = Vector2(800, 400)
+	lap_label.size = Vector2(480, 260)
 	lap_label.bbcode_enabled = true
 	lap_label.add_theme_font_size_override("normal_font_size", 36)
 	lap_label.add_theme_color_override("default_color", Color(1.0, 0.9, 0.1))
