@@ -850,11 +850,24 @@ func _physics_process(delta: float) -> void:
 	is_grounded_state = grounded
 	if not grounded:
 		air_time += delta
-		if air_time > 0.2:
-			# Heavily damp all rotational momentum (forward pitching from the jump lip)
-			# This stops the spinning and locks the car into its natural launch trajectory
-			var damp_torque = -angular_velocity * 15000.0
-			apply_torque(damp_torque)
+		
+		# Sim-based Reaction Torque
+		# Engine applies torque to the driven wheels (Force * Radius), which applies an equal opposite torque to the chassis.
+		# Because the wheels are in the air and have low mass, they hit max RPM almost instantly.
+		# We approximate this short burst of angular momentum transfer with a continuous 0.04 multiplier.
+		var sim_air_factor = 0.04
+		var engine_pitch_torque = motor_input * acceleration * radius_rear * 2.0 * sim_air_factor
+		
+		# Brake calipers apply torque to stop the wheels. 
+		var brake_pitch_torque = 0.0
+		if wheels[2].is_braking or wheels[3].is_braking:
+			brake_pitch_torque = -final_brake * 15000.0 * sim_air_factor
+			
+		var pitch_torque_val = engine_pitch_torque + brake_pitch_torque
+		if pitch_torque_val != 0.0:
+			# Local X is the pitch axis (right vector)
+			var local_right = global_transform.basis.x
+			apply_torque(local_right * pitch_torque_val)
 	else:
 		air_time = 0.0
 
