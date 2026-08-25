@@ -174,7 +174,12 @@ void Recorder::stop() {
 
 bool Recorder::canAcceptVideoFrame() {
     std::lock_guard<std::mutex> lock(video_mutex);
-    return video_queue.size() < 1;
+    if (video_queue.size() >= 1) return false;
+    
+    auto now = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed = now - start_time;
+    int64_t pts = (int64_t)(elapsed.count() * fps);
+    return pts >= next_video_pts;
 }
 
 void Recorder::pushVideoFrame(const uint8_t* rgba_pixels, int pitch) {
@@ -182,7 +187,14 @@ void Recorder::pushVideoFrame(const uint8_t* rgba_pixels, int pitch) {
     auto now = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed = now - start_time;
     int64_t pts = (int64_t)(elapsed.count() * fps);
-    std::vector<uint8_t> data(rgba_pixels, rgba_pixels + pitch * height);
+    
+    if (pts < next_video_pts) {
+        pts = next_video_pts;
+    }
+    next_video_pts = pts + 1;
+    
+    int data_size = pitch * height;
+    std::vector<uint8_t> data(rgba_pixels, rgba_pixels + data_size);
     std::lock_guard<std::mutex> lock(video_mutex);
     video_queue.push({std::move(data), pts});
 }
