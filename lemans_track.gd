@@ -29,7 +29,10 @@ var countdown_value: int = 4 # 4 (1s silent warmup on boot), 3, 2, 1, 0 (GO!), -
 var countdown_timer: float = 1.0
 
 var hud_layer: CanvasLayer
-var lap_label: Label
+var lap_label: RichTextLabel
+var lap_popup_panel: Control
+var lap_popup_label: RichTextLabel
+var lap_popup_timer: float = 0.0
 var time_label: Label
 var countdown_label: Label
 var paused_label: Label
@@ -812,13 +815,40 @@ func _process(delta):
 			return a_prog > b_prog
 		)
 		
-		var lb_txt = "STANDINGS
-"
+		var track_len = 4500.0
+		if path_node: track_len = path_node.curve.get_baked_length()
+		
+		var leader_drv = sorted[0]
+		var leader_prog = 0.0
+		if path_node: leader_prog = path_node.curve.get_closest_offset(leader_drv.global_position)
+		var leader_total = racer_states[leader_drv]["current_lap"] * track_len + leader_prog
+		
+		var lb_txt = "[table=4]\n"
 		for i in range(sorted.size()):
 			var drv = sorted[i]
 			var dlap = max(1, min(racer_states[drv]["current_lap"], final_laps))
-			lb_txt += "%d. %s (L%d)
-" % [i + 1, drv.name, dlap]
+			
+			var disp_name = drv.name
+			if disp_name.begins_with("Genetic_AI_Car_"):
+				disp_name = "AI Car " + disp_name.trim_prefix("Genetic_AI_Car_")
+			elif disp_name == "SuperCar":
+				disp_name = "Player"
+				
+			var delta_str = "Leader"
+			if i > 0:
+				var drv_prog = 0.0
+				if path_node: drv_prog = path_node.curve.get_closest_offset(drv.global_position)
+				var drv_total = racer_states[drv]["current_lap"] * track_len + drv_prog
+				
+				var delta_dist = leader_total - drv_total
+				if delta_dist > 0.0:
+					var speed = drv.linear_velocity.length()
+					if speed < 15.0: speed = 15.0 # avoid infinite delta time
+					var delta_time = delta_dist / speed
+					delta_str = "+%.1fs" % delta_time
+			
+			lb_txt += "[cell]%d. [/cell][cell]%s [/cell][cell]%s [/cell][cell]Lap %d[/cell]\n" % [i + 1, disp_name, delta_str, dlap]
+		lb_txt += "[/table]"
 		
 		lap_label.text = lb_txt
 		time_label.text = "LAP %d / %d
@@ -1019,6 +1049,12 @@ CURR: %s" % [display_lap, final_laps, format_time(race_time), format_time(p_stat
 			camera_node.look_at(supercar.global_position, Vector3.UP)
 
 func _physics_process(delta):
+	if lap_popup_timer > 0.0:
+		lap_popup_timer -= delta
+		if lap_popup_timer <= 0.0:
+			if lap_popup_panel:
+				lap_popup_panel.visible = false
+
 	var camera_node = get_node_or_null("Camera3D")
 	if camera_node and supercar and not in_edit_mode and not is_paused:
 		current_cam_yaw = lerp(current_cam_yaw, -cam_rx * 2.0, 5.0 * delta)
@@ -1360,6 +1396,63 @@ func spawn_fireworks():
 		particles.scale_amount_max = 1.0
 		particles.color = colors[i % colors.size()]
 
+
+
+func trigger_lap_popup(lap_time: float):
+	if not lap_popup_label:
+		return
+	
+	var sorted = racer_states.keys().duplicate()
+	sorted.sort_custom(func(a, b):
+		var a_lap = racer_states[a]["current_lap"]
+		var b_lap = racer_states[b]["current_lap"]
+		if a_lap != b_lap:
+			return a_lap > b_lap
+		var a_prog = 0.0
+		var b_prog = 0.0
+		if path_node:
+			a_prog = path_node.curve.get_closest_offset(a.global_position)
+			b_prog = path_node.curve.get_closest_offset(b.global_position)
+		return a_prog > b_prog
+	)
+	
+	var pos_index = sorted.find(supercar)
+	var pos_str = str(pos_index + 1)
+	if pos_index == 0: pos_str += "st"
+	elif pos_index == 1: pos_str += "nd"
+	elif pos_index == 2: pos_str += "rd"
+	else: pos_str += "th"
+	
+	var delta_str = ""
+	if pos_index > 0:
+		var track_len = 4500.0
+		if path_node: track_len = path_node.curve.get_baked_length()
+		var leader_drv = sorted[0]
+		var leader_prog = 0.0
+		if path_node: leader_prog = path_node.curve.get_closest_offset(leader_drv.global_position)
+		var leader_total = racer_states[leader_drv]["current_lap"] * track_len + leader_prog
+		var drv_prog = 0.0
+		if path_node: drv_prog = path_node.curve.get_closest_offset(supercar.global_position)
+		var drv_total = racer_states[supercar]["current_lap"] * track_len + drv_prog
+		var delta_dist = leader_total - drv_total
+		if delta_dist > 0.0:
+			var speed = supercar.linear_velocity.length()
+			if speed < 15.0: speed = 15.0
+			delta_str = "+%.1fs to Leader" % (delta_dist / speed)
+	else:
+		delta_str = "Leader"
+		
+	var txt = "[center]"
+	txt += "Position: " + pos_str + "\n"
+	txt += "Lap Time: " + format_time(lap_time) + "\n"
+	if delta_str != "Leader":
+		txt += delta_str
+	txt += "[/center]"
+	
+	lap_popup_label.text = txt
+	lap_popup_panel.visible = true
+	lap_popup_timer = 4.0
+
 func _on_gate_area_entered(area: Area3D):
 	print("GATE AREA ENTERED BY: ", area.name)
 	if area.name == "CheckpointSphere" or (supercar and area.get_parent() == supercar):
@@ -1368,12 +1461,21 @@ func _on_gate_area_entered(area: Area3D):
 		print("GATE CROSSED BY CAR: ", car.name, " current lap: ", state["current_lap"], " halfway: ", state["halfway_cleared"])
 		
 		if (state["halfway_cleared"] or state["current_lap"] == 0) and not race_finished:
+			var show_popup = false
+			var finished_lap_time = 0.0
 			if state["current_lap"] > 0:
 				state["lap_times"].append(state["current_lap_time"])
+				finished_lap_time = state["current_lap_time"]
 				state["current_lap_time"] = 0.0
+				if car == supercar:
+					show_popup = true
+					
 			state["current_lap"] += 1
 			state["halfway_cleared"] = false
 			print("Car ", car.name, " LAP COMPLETED! Current Lap: %d / %d" % [state["current_lap"], final_laps])
+			
+			if show_popup:
+				trigger_lap_popup(finished_lap_time)
 			
 			if state["current_lap"] > final_laps and not state.has("finished"):
 				state["finished"] = true
@@ -1455,6 +1557,44 @@ func setup_ui():
 	hud_layer = CanvasLayer.new()
 	hud_layer.name = "GameUI"
 	add_child(hud_layer)
+	lap_popup_panel = Control.new()
+	lap_popup_panel.name = "LapPopupPanel"
+	lap_popup_panel.anchor_left = 0.5
+	lap_popup_panel.anchor_right = 0.5
+	lap_popup_panel.anchor_top = 0.25
+	lap_popup_panel.anchor_bottom = 0.25
+	lap_popup_panel.visible = false
+	hud_layer.add_child(lap_popup_panel)
+
+	var lap_pop_bg = ColorRect.new()
+	lap_pop_bg.color = Color(0.05, 0.02, 0.12, 0.55)
+	lap_pop_bg.position = Vector2(-300, -100)
+	lap_pop_bg.size = Vector2(600, 200)
+	lap_popup_panel.add_child(lap_pop_bg)
+	
+	var pop_border_top = ColorRect.new()
+	pop_border_top.color = Color(1.0, 0.84, 0.0, 1.0)
+	pop_border_top.position = Vector2(-300, -100)
+	pop_border_top.size = Vector2(600, 6)
+	lap_popup_panel.add_child(pop_border_top)
+	
+	var pop_border_bot = ColorRect.new()
+	pop_border_bot.color = Color(1.0, 0.84, 0.0, 1.0)
+	pop_border_bot.position = Vector2(-300, 94)
+	pop_border_bot.size = Vector2(600, 6)
+	lap_popup_panel.add_child(pop_border_bot)
+
+	lap_popup_label = RichTextLabel.new()
+	lap_popup_label.name = "LapPopupLabel"
+	lap_popup_label.position = Vector2(-300, -80)
+	lap_popup_label.size = Vector2(600, 180)
+	lap_popup_label.bbcode_enabled = true
+	lap_popup_label.add_theme_font_size_override("normal_font_size", 36)
+	lap_popup_label.add_theme_color_override("default_color", Color(1.0, 0.9, 0.1))
+	lap_popup_label.add_theme_constant_override("outline_size", 8)
+	lap_popup_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	lap_popup_panel.add_child(lap_popup_label)
+
 	
 	# Top-Left Lap Indicator HUD
 	var lap_bg = ColorRect.new()
@@ -1478,16 +1618,15 @@ func setup_ui():
 	lap_bottom_border.size = Vector2(600, 6)
 	hud_layer.add_child(lap_bottom_border)
 
-	lap_label = Label.new()
+	lap_label = RichTextLabel.new()
 	lap_label.name = "LapLabel"
 	lap_label.position = Vector2(40, 30)
-	var lap_settings = LabelSettings.new()
-	lap_settings.font_size = 42
-	lap_settings.font_color = Color(1.0, 0.9, 0.1) # Neon yellow/gold
-	lap_settings.outline_size = 8
-	lap_settings.outline_color = Color(0.0, 0.0, 0.0, 0.9)
-	lap_label.label_settings = lap_settings
-	lap_label.text = "Lap: 1 / 3"
+	lap_label.size = Vector2(800, 400)
+	lap_label.bbcode_enabled = true
+	lap_label.add_theme_font_size_override("normal_font_size", 36)
+	lap_label.add_theme_color_override("default_color", Color(1.0, 0.9, 0.1))
+	lap_label.add_theme_constant_override("outline_size", 8)
+	lap_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
 	hud_layer.add_child(lap_label)
 	
 	# Center Screen Countdown
