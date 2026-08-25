@@ -85,22 +85,7 @@ func _physics_process(delta: float) -> void:
 	if not debug_mesh.is_inside_tree():
 		return
 		
-	# Respect the track's master countdown (3, 2, 1) on the first generation!
-	var track = car.get_parent().get_parent()
-	if track != null and "countdown_value" in track and track.countdown_value > 0:
-		car.accel_input = 0.0
-		car.brake_input = 0.0 
-		car.handbrake_input = 1.0 # Use handbrake so we don't trigger reverse!
-		car.steer_input = 0.0
-		return
-		
 	car.handbrake_input = 0.0
-		
-	if car.in_countdown:
-		car.accel_input = 0.0
-		car.brake_input = 0.0
-		car.steer_input = 0.0
-		return
 		
 
 		
@@ -109,9 +94,15 @@ func _physics_process(delta: float) -> void:
 	if track_node != null and "countdown_value" in track_node and track_node.countdown_value > 0:
 		in_countdown = true
 		
-	if car.in_countdown or in_countdown:
-		# Do nothing while counting down
-		pass
+	if car.has_method("set"):
+		car.set("in_countdown", in_countdown)
+		
+	if in_countdown:
+		car.accel_input = 0.0
+		car.brake_input = 0.0 
+		car.handbrake_input = 1.0 # Use handbrake so we don't trigger reverse!
+		car.steer_input = 0.0
+		return
 	else:
 		# Checkpoint Timer
 		time_since_last_checkpoint += delta
