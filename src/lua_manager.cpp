@@ -1451,6 +1451,11 @@ void LuaManager::_process(double delta) {
             if (lua_engine->recorder.canAcceptVideoFrame()) {
                 godot::Ref<godot::Image> img = get_viewport()->get_texture()->get_image();
                 if (img.is_valid()) {
+                    int rw = lua_engine->recorder.getWidth();
+                    int rh = lua_engine->recorder.getHeight();
+                    if (img->get_width() != rw || img->get_height() != rh) {
+                        img->resize(rw, rh);
+                    }
                     if (img->get_format() != godot::Image::FORMAT_RGBA8) {
                         img->convert(godot::Image::FORMAT_RGBA8);
                     }

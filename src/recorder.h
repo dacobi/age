@@ -34,6 +34,8 @@ public:
 
     int getFrameCount() const { return frame_count; }
     bool isRecording() const { return recording; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
 
 private:
     void workerFunc();

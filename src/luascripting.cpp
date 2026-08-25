@@ -1927,6 +1927,25 @@ void LuaScripting::renderLuaImGui() {
     }
     f2_was_pressed = f2_is_pressed;
     
+    static bool f4_was_pressed = false;
+    bool f4_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F4);
+    if (f4_is_pressed && !f4_was_pressed) {
+        strncpy(record_path_buf, "output.mp4", sizeof(record_path_buf));
+        record_use_max = true;
+        record_max_seconds = 180;
+        record_hide_window = true;
+        
+        if (!recorder.isRecording()) {
+            int w = godot::DisplayServer::get_singleton()->window_get_size().x;
+            int h = godot::DisplayServer::get_singleton()->window_get_size().y;
+            int audio_rate = godot::AudioServer::get_singleton()->get_mix_rate();
+            recorder.start(w, h, 60, audio_rate, 2, record_path_buf);
+            show_recorder = false;
+        }
+    }
+    f4_was_pressed = f4_is_pressed;
+
+    
     static bool was_recording_last_frame = false;
 
     if (recorder.isRecording() && record_use_max && record_max_seconds > 0) {
