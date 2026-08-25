@@ -1,4 +1,5 @@
 ioWindowSetFullScreen(true)
+local is_fullscreen = true
 
 godotLoadScene("lemans_area.tscn")
 delay(200) -- give it a moment to load
@@ -15,6 +16,10 @@ setAudioVolume(50)
 -- Get the supercar node pointer
 godotSelectRoot()
 local supercar = godotGetNodePointer("SuperCar")
+if supercar then
+	godotSetProperty("auto_reset_enabled", false, supercar)
+end
+
 print("SUPERCAR POINTER IS: ", supercar)
 
 -- Include shared car physics and controls
@@ -52,7 +57,20 @@ while true do
 		break
 	end
 
+	-- Handle F11 for fullscreen toggle
+	if ioKBClicked("SDLK_F11") then
+		is_fullscreen = not is_fullscreen
+		ioWindowSetFullScreen(is_fullscreen)
+	end
+
+
 	local track = godotGetNodePointer("MegaRacerScene")
+
+	if supercar and not has_disabled_auto_reset then
+		godotSetProperty("auto_reset_enabled", false, supercar)
+		has_disabled_auto_reset = true
+	end
+
 	local in_edit = false
 	if track then
 		local res = godotGetProperty("in_edit_mode", track)
@@ -121,7 +139,7 @@ while true do
 				godotSetProperty("orbit_pitch", orbit_pitch, track)
 				godotSetProperty("orbit_dist", orbit_dist, track)
 			else
-				updateCarControlsAndPhysics(supercar, joy_handle, track, "reset_car")
+				updateCarControlsAndPhysics(supercar, joy_handle, track, nil)
 				frame_count = frame_count + 1
 				updateCarTelemetry(supercar, frame_count)
 			end

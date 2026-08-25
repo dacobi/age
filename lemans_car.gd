@@ -7,6 +7,7 @@ var steer_input: float = 0.0
 var handbrake_input: float = 0.0
 var air_time: float = 0.0
 var is_grounded_state: bool = false
+var auto_reset_enabled: bool = true
 
 var mount_FL = Vector3(-1.0, -0.025, -1.7)
 var mount_FR = Vector3(1.0, -0.025, -1.7)
@@ -547,7 +548,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		reset_fall_timer = 0.0
 		
-	if reset_fall_timer >= 3.0:
+	if reset_fall_timer >= 3.0 and auto_reset_enabled:
 		reset_to_track()
 		
 	# 2. Stuck / Stalled / Flipped detection (5 seconds)
@@ -559,7 +560,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		reset_stuck_timer = 0.0
 		
-	if reset_stuck_timer >= 2.0:
+	if reset_stuck_timer >= 2.0 and auto_reset_enabled:
 		reset_to_track()
 
 	# Update mass and COM from properties set by Lua script
