@@ -237,14 +237,16 @@ func spawn_car(brain_weights, index: int) -> void:
 	
 	active_drivers.append(driver)
 
-func advance_generation() -> void:
+func reset_race() -> void:
 	for driver in active_drivers:
 		if driver.car != null:
 			driver.car.queue_free()
 	
 	active_drivers.clear()
-	
 	start_first_generation()
+
+func advance_generation() -> void:
+	reset_race()
 
 func mutate(weights: PackedFloat32Array) -> PackedFloat32Array:
 	for i in range(weights.size()):

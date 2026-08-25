@@ -494,7 +494,7 @@ func _ready():
 	
 		var camera_node = get_node_or_null("Camera3D")
 		if camera_node and supercar:
-			var offset = Vector3(0, 11.01, 15.69)
+			var offset = Vector3(0, 11.01, 15.69).normalized() * (Vector3(0, 11.01, 15.69).length() + 100.0)
 			camera_node.global_position = supercar.global_position + supercar.global_transform.basis * offset
 			camera_node.look_at(supercar.global_position + supercar.global_transform.basis * Vector3(0, 0.4, -0.5), supercar.global_transform.basis.y)
 
@@ -958,6 +958,9 @@ CURR: %s" % [display_lap, final_laps, format_time(race_time), format_time(p_stat
 		reset_car = false
 		racer_states.clear()
 		race_time = 0.0
+		rm = get_node_or_null("RaceManager")
+		if rm and rm.has_method("reset_race"):
+			rm.reset_race()
 		race_finished = false
 		victory_lap_timer = 0.0
 		if victory_panel: victory_panel.visible = false
@@ -1025,7 +1028,15 @@ func _physics_process(delta):
 		var up = Vector3.UP
 		
 		var rotated_forward = forward.rotated(up, current_cam_yaw)
-		var offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
+		var base_offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
+		
+		var extra_dist = 0.0
+		if countdown_value > 0:
+			var total_countdown_time = max(0.0, float(countdown_value) - 1.0 + countdown_timer)
+			var zoom_progress = clamp((total_countdown_time - 0.25) / 3.75, 0.0, 1.0)
+			extra_dist = pow(zoom_progress, 2.0) * 100.0
+			
+		var offset = base_offset.normalized() * (base_offset.length() + extra_dist)
 		var target_pos = supercar.global_position + offset
 		
 		camera_node.global_position = camera_node.global_position.lerp(target_pos, 10.0 * delta)
