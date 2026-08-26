@@ -91,9 +91,11 @@ private:
     std::vector<String> playlist_urls;
     int current_playlist_index = 0;
     bool is_downloading_next = false;
+    bool manual_skip = false;
     String next_downloaded_file = "";
     std::shared_ptr<std::thread> download_thread;
     std::mutex audio_mutex;
+    std::mutex download_join_mutex;
     bool playlist_mode = false;
     bool audio_is_starting = false;
     void _download_next_playlist_item();
@@ -105,6 +107,9 @@ private:
     void _play_audio_dynamic_deferred(const String& filename);
     void _set_audio_volume_deferred(int vol);
     void _rewind_audio_deferred();
+    void _pause_audio_deferred(bool paused);
+    void _stop_audio_deferred();
+    void _skip_to_playlist_track(int idx);
     void _skip_audio_deferred(int amount);
     void _set_resize_enabled_deferred(bool enabled);
     void _maximize_window_deferred();

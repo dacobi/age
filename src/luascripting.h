@@ -32,6 +32,7 @@ struct LuaSyncData {
 class LuaScripting {
 public:
     std::function<void()> nextAudioFunc;
+
 public:
     enum GodotCmd {
         GCMD_GET_NODE_POINTER,
@@ -75,6 +76,10 @@ public:
     using RandomizeFunc = std::function<void(bool isPlasma, bool isXY)>;
     using SetAudioFunc = std::function<void(const std::string&, std::shared_ptr<LuaSyncData>)>;
     using PlayAudioFunc = std::function<void()>;
+using PauseAudioFunc = std::function<void()>;
+using GetPlaylistFunc = std::function<std::vector<std::string>()>;
+using GetPlaylistIndexFunc = std::function<int()>;
+using PlayPlaylistTrackFunc = std::function<void(int)>;
     using StopAudioFunc = std::function<void()>;
     using RewindAudioFunc = std::function<void()>;
     using SkipAudioFunc = std::function<void(int)>;
@@ -288,6 +293,13 @@ private:
     RandomizeFunc randomizeFunc;
     SetAudioFunc setAudioFunc;
     PlayAudioFunc playAudioFunc;
+public:
+    PauseAudioFunc pauseAudioFunc;
+    GetPlaylistFunc getPlaylistFunc;
+    GetPlaylistIndexFunc getPlaylistIndexFunc;
+    PlayPlaylistTrackFunc playPlaylistTrackFunc;
+private:
+
     StopAudioFunc stopAudioFunc;
     RewindAudioFunc rewindAudioFunc;
     SkipAudioFunc skipAudioFunc;
