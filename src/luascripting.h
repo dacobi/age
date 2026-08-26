@@ -78,6 +78,7 @@ public:
     using PlayAudioFunc = std::function<void()>;
 using PauseAudioFunc = std::function<void()>;
 using GetPlaylistFunc = std::function<std::vector<std::string>()>;
+using GetPlaylistNameFunc = std::function<std::string()>;
 using GetPlaylistIndexFunc = std::function<int()>;
 using PlayPlaylistTrackFunc = std::function<void(int)>;
     using StopAudioFunc = std::function<void()>;
@@ -296,6 +297,7 @@ private:
 public:
     PauseAudioFunc pauseAudioFunc;
     GetPlaylistFunc getPlaylistFunc;
+    GetPlaylistNameFunc getPlaylistNameFunc;
     GetPlaylistIndexFunc getPlaylistIndexFunc;
     PlayPlaylistTrackFunc playPlaylistTrackFunc;
 private:

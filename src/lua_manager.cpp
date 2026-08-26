@@ -176,6 +176,7 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_pause_audio_deferred", "paused"), &LuaManager::_pause_audio_deferred);
     ClassDB::bind_method(D_METHOD("_stop_audio_deferred"), &LuaManager::_stop_audio_deferred);
     ClassDB::bind_method(D_METHOD("_skip_to_playlist_track", "idx"), &LuaManager::_skip_to_playlist_track);
+    ClassDB::bind_method(D_METHOD("_play_next_playlist_item"), &LuaManager::_play_next_playlist_item);
     ClassDB::bind_method(D_METHOD("_skip_audio_deferred", "amount"), &LuaManager::_skip_audio_deferred);
     ClassDB::bind_method(D_METHOD("_set_resize_enabled_deferred", "enabled"), &LuaManager::_set_resize_enabled_deferred);
     ClassDB::bind_method(D_METHOD("_maximize_window_deferred"), &LuaManager::_maximize_window_deferred);
@@ -937,50 +938,87 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
 }
 
 void LuaManager::_start_initial_download(const String& url) {
-    // Fetch all IDs blocking (in this background thread)
-    PackedStringArray flat_args;
-    flat_args.push_back("--flat-playlist");
-    flat_args.push_back("--print");
-    flat_args.push_back("id");
-    flat_args.push_back("--no-warnings");
-    flat_args.push_back(url);
-    
-    Array out;
-    int32_t ret = OS::get_singleton()->execute("yt-dlp", flat_args, out, false, false);
-    if (ret == 0 && out.size() > 0) {
-        String output = out[0];
-        PackedStringArray lines = output.split("\n", false);
-        {
+    if (url.contains("list=")) {
+        PackedStringArray flat_args;
+        flat_args.push_back("--flat-playlist");
+        flat_args.push_back("--print");
+        flat_args.push_back("%(playlist_title)s|%(id)s|%(title)s");
+        flat_args.push_back("--no-warnings");
+        flat_args.push_back(url);
+        
+        Array out;
+        int32_t ret = OS::get_singleton()->execute("yt-dlp", flat_args, out, false, false);
+        if (ret == 0 && out.size() > 0) {
+            String output = out[0];
+            PackedStringArray lines = output.split("\n", false);
+            {
+                std::lock_guard<std::mutex> lock(audio_mutex);
+                playlist_urls.clear();
+                playlist_titles.clear();
+                playlist_name = "Current Queue";
+                
+                for (int i = 0; i < lines.size(); i++) {
+                    String line = lines[i].strip_edges();
+                    if (line.length() > 0 && !line.begins_with("WARNING") && !line.begins_with("ERROR")) {
+                        PackedStringArray parts = line.split("|");
+                        if (parts.size() >= 2) {
+                            String p_title = parts[0];
+                            if (p_title != "NA" && p_title != "") {
+                                playlist_name = p_title;
+                            }
+                            String id = parts[1];
+                            String t_title = id;
+                            if (parts.size() >= 3) {
+                                t_title = parts[2];
+                                for (int j = 3; j < parts.size(); j++) {
+                                    t_title += "|" + parts[j];
+                                }
+                            }
+                            playlist_urls.push_back("https://www.youtube.com/watch?v=" + id);
+                            playlist_titles.push_back(t_title);
+                        } else if (parts.size() == 1) {
+                            playlist_urls.push_back("https://www.youtube.com/watch?v=" + parts[0]);
+                            playlist_titles.push_back(parts[0]);
+                        }
+                    }
+                }
+                playlist_mode = true;
+                current_playlist_index = 0;
+                is_downloading_next = false;
+            }
+        } else {
             std::lock_guard<std::mutex> lock(audio_mutex);
             playlist_urls.clear();
-            for (int i = 0; i < lines.size(); i++) {
-                String id = lines[i].strip_edges();
-                if (id.length() > 0 && !id.begins_with("WARNING") && !id.begins_with("ERROR")) {
-                    playlist_urls.push_back("https://www.youtube.com/watch?v=" + id);
-                }
-            }
+            playlist_titles.clear();
+            playlist_urls.push_back(url);
+            playlist_titles.push_back("Track 1");
+            playlist_name = "Single Track";
             current_playlist_index = 0;
-            playlist_mode = (playlist_urls.size() > 1);
+            playlist_mode = false;
+            is_downloading_next = false;
         }
     } else {
         std::lock_guard<std::mutex> lock(audio_mutex);
         playlist_urls.clear();
+        playlist_titles.clear();
         playlist_urls.push_back(url);
+        playlist_titles.push_back("Track 1");
+        playlist_name = "Single Track";
         current_playlist_index = 0;
         playlist_mode = false;
-    }
-
-    String first_url;
-    {
-        std::lock_guard<std::mutex> lock(audio_mutex);
-        if (playlist_urls.size() == 0) {
-            is_downloading_next = false;
-            return;
-        }
-        first_url = playlist_urls[0];
+        is_downloading_next = false;
     }
     
-    String temp_file = "user://yt_temp_0.mp3";
+    String url_to_download;
+    int idx;
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (playlist_urls.empty()) return;
+        url_to_download = playlist_urls[0];
+        idx = 0;
+    }
+    
+    String temp_file = String("user://yt_temp_") + String::num_int64(idx % 2) + ".mp3";
     String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
     
     PackedStringArray args;
@@ -990,32 +1028,22 @@ void LuaManager::_start_initial_download(const String& url) {
     args.push_back("-o");
     args.push_back(global_path);
     args.push_back("--force-overwrites");
-    args.push_back(first_url);
+    args.push_back(url_to_download);
     
     Array dl_out;
     int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
     
-    if (dl_ret == 0) {
-        // Start playing the first track on the main thread
-        audio_is_starting = true;
-        this->call_deferred("_play_audio_dynamic_deferred", temp_file);
-        
-        std::lock_guard<std::mutex> lock(audio_mutex);
-        current_playlist_index = 1;
-        is_downloading_next = false;
-        
-        // Let the main thread's _check_audio_finished trigger the NEXT download!
-        // We don't spawn another thread from this thread to keep things simple.
-        // Actually, _check_audio_finished only triggers when player FINISHES.
-        // So we should just let _check_audio_finished know we need the NEXT download.
-        // Or we can just spawn it here... wait, we can't join the current thread from itself!
-        // So we will just set a flag `needs_next_download` and let _process handle it!
-    } else {
+    {
         std::lock_guard<std::mutex> lock(audio_mutex);
         is_downloading_next = false;
+        if (dl_ret == 0) {
+            next_downloaded_file = temp_file;
+        } else {
+            next_downloaded_file = "";
+        }
     }
+    this->call_deferred("_play_next_playlist_item");
 }
-
 
 void LuaManager::_download_next_playlist_item() {
     String url;
@@ -1439,10 +1467,15 @@ void LuaManager::_ready() {
     lua_engine->getPlaylistFunc = [this]() -> std::vector<std::string> {
         std::lock_guard<std::mutex> lock(audio_mutex);
         std::vector<std::string> res;
-        for (int i = 0; i < playlist_urls.size(); i++) {
-            res.push_back(std::string(playlist_urls[i].utf8().get_data()));
+        for (int i = 0; i < playlist_titles.size(); i++) {
+            res.push_back(std::string(playlist_titles[i].utf8().get_data()));
         }
         return res;
+    };
+    
+    lua_engine->getPlaylistNameFunc = [this]() -> std::string {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        return std::string(playlist_name.utf8().get_data());
     };
     
     lua_engine->getPlaylistIndexFunc = [this]() -> int {

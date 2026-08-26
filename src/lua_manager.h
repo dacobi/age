@@ -89,6 +89,8 @@ private:
     void _clear_and_run_deferred(const String& filename);
     void _do_clear_and_run(const String& filename);
     std::vector<String> playlist_urls;
+    std::vector<String> playlist_titles;
+    String playlist_name;
     int current_playlist_index = 0;
     bool is_downloading_next = false;
     bool manual_skip = false;
