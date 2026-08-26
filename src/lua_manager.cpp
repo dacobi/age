@@ -229,6 +229,9 @@ LuaManager::LuaManager() {
 }
 
 LuaManager::~LuaManager() {
+    if (download_thread && download_thread->joinable()) {
+        download_thread->join();
+    }
     if (lua_engine) {
         lua_engine->stop();
         delete lua_engine;
@@ -900,10 +903,46 @@ void LuaManager::_do_clear_and_run(const String& filename) {
 bool LuaManager::_play_audio_deferred(const String& filename) {
     if (filename.begins_with("ytdlp://")) {
         String url = filename.substr(8);
-        String temp_file = "user://yt_temp.mp3";
-        String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
         
-        UtilityFunctions::print("Starting ytdlp download for: ", url);
+        // Fetch all IDs blocking
+        PackedStringArray flat_args;
+        flat_args.push_back("--flat-playlist");
+        flat_args.push_back("--print");
+        flat_args.push_back("id");
+        flat_args.push_back("--no-warnings");
+        flat_args.push_back(url);
+        
+        Array out;
+        int32_t ret = OS::get_singleton()->execute("yt-dlp", flat_args, out, false, false);
+        if (ret == 0 && out.size() > 0) {
+            String output = out[0];
+            PackedStringArray lines = output.split("\n", false);
+            {
+                std::lock_guard<std::mutex> lock(audio_mutex);
+                playlist_urls.clear();
+                for (int i = 0; i < lines.size(); i++) {
+                    String id = lines[i].strip_edges();
+                    if (id.length() > 0 && !id.begins_with("WARNING") && !id.begins_with("ERROR")) {
+                        playlist_urls.push_back("https://www.youtube.com/watch?v=" + id);
+                    }
+                }
+                current_playlist_index = 0;
+                playlist_mode = (playlist_urls.size() > 1);
+            }
+        } else {
+            std::lock_guard<std::mutex> lock(audio_mutex);
+            playlist_urls.clear();
+            playlist_urls.push_back(url);
+            current_playlist_index = 0;
+            playlist_mode = false;
+        }
+
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (playlist_urls.size() == 0) return false;
+        
+        String first_url = playlist_urls[0];
+        String temp_file = "user://yt_temp_0.mp3";
+        String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
         
         PackedStringArray args;
         args.push_back("-x");
@@ -912,22 +951,116 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
         args.push_back("-o");
         args.push_back(global_path);
         args.push_back("--force-overwrites");
-        args.push_back(url);
+        args.push_back(first_url);
         
-        Array out;
-        int32_t ret = OS::get_singleton()->execute("yt-dlp", args, out, false, true);
-        if (ret == 0) {
+        Array dl_out;
+        int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
+        if (dl_ret == 0) {
+            audio_is_starting = true;
             this->call_deferred("_play_audio_dynamic_deferred", temp_file);
+            current_playlist_index = 1;
+            
+            if (current_playlist_index < playlist_urls.size()) {
+                if (download_thread) {
+                    if (download_thread->joinable()) download_thread->join();
+                }
+                is_downloading_next = true;
+                download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            }
             return true;
         } else {
-            UtilityFunctions::printerr("ytdlp failed for url: ", url, " code: ", ret);
             return false;
         }
     }
     
+    std::lock_guard<std::mutex> lock(audio_mutex);
+    playlist_mode = false;
+    audio_is_starting = true;
     this->call_deferred("_play_audio_dynamic_deferred", filename);
     return true;
 }
+
+void LuaManager::_download_next_playlist_item() {
+    String url;
+    int idx;
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (current_playlist_index >= playlist_urls.size()) {
+            is_downloading_next = false;
+            return;
+        }
+        url = playlist_urls[current_playlist_index];
+        idx = current_playlist_index;
+    }
+    
+    String temp_file = String("user://yt_temp_") + String::num_int64(idx % 2) + ".mp3";
+    String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
+    
+    PackedStringArray args;
+    args.push_back("-x");
+    args.push_back("--audio-format");
+    args.push_back("mp3");
+    args.push_back("-o");
+    args.push_back(global_path);
+    args.push_back("--force-overwrites");
+    args.push_back(url);
+    
+    Array dl_out;
+    int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
+    
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        is_downloading_next = false;
+        if (dl_ret == 0) {
+            next_downloaded_file = temp_file;
+        } else {
+            next_downloaded_file = "";
+        }
+    }
+}
+
+void LuaManager::_play_next_playlist_item() {
+    std::lock_guard<std::mutex> lock(audio_mutex);
+    if (!playlist_mode) return;
+    
+    if (next_downloaded_file != "") {
+        audio_is_starting = true;
+        this->call_deferred("_play_audio_dynamic_deferred", next_downloaded_file);
+        next_downloaded_file = "";
+        current_playlist_index++;
+        
+        if (current_playlist_index < playlist_urls.size()) {
+            if (download_thread && download_thread->joinable()) {
+                download_thread->join();
+            }
+            is_downloading_next = true;
+            download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+        }
+    } else if (!is_downloading_next && current_playlist_index < playlist_urls.size()) {
+        current_playlist_index++;
+        if (current_playlist_index < playlist_urls.size()) {
+            if (download_thread && download_thread->joinable()) {
+                download_thread->join();
+            }
+            is_downloading_next = true;
+            download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+        }
+    }
+}
+
+void LuaManager::_check_audio_finished() {
+    AudioStreamPlayer* player = nullptr;
+    if (audio_player_id != 0) {
+        Object* obj = ObjectDB::get_instance(audio_player_id);
+        if (obj) player = Object::cast_to<AudioStreamPlayer>(obj);
+    }
+    
+    if (audio_is_starting) return;
+    if (player && !player->is_playing()) {
+        _play_next_playlist_item();
+    }
+}
+
 
 void LuaManager::_play_audio_dynamic_deferred(const String& filename) {
     AudioStreamPlayer* player = nullptr;
@@ -950,12 +1083,10 @@ void LuaManager::_play_audio_dynamic_deferred(const String& filename) {
     
     if (p.ends_with(".mp3")) {
         stream = AudioStreamMP3::load_from_file(p);
-    } else if (p.ends_with(".wav")) {
-        stream = AudioStreamWAV::load_from_file(p);
     } else if (p.ends_with(".ogg")) {
         stream = AudioStreamOggVorbis::load_from_file(p);
-    } else {
-        stream = ResourceLoader::get_singleton()->load(p);
+    } else if (p.ends_with(".wav")) {
+        stream = AudioStreamWAV::load_from_file(p);
     }
     
     if (stream.is_valid()) {
@@ -963,6 +1094,11 @@ void LuaManager::_play_audio_dynamic_deferred(const String& filename) {
         player->play();
     } else {
         UtilityFunctions::printerr("Failed to load dynamic audio: ", p);
+    }
+    
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        audio_is_starting = false;
     }
 }
 
@@ -1211,6 +1347,9 @@ void LuaManager::run_script(const String& filename) {
 }
 
 void LuaManager::_process(double delta) {
+    if (playlist_mode) {
+        _check_audio_finished();
+    }
     for (auto it = videos_to_preload.begin(); it != videos_to_preload.end(); ) {
         Object* obj = ObjectDB::get_instance(*it);
         if (obj) {
