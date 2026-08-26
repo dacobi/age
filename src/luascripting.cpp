@@ -1933,7 +1933,7 @@ void LuaScripting::renderLuaImGui() {
     if (f4_is_pressed && !f4_was_pressed) {
         strncpy(record_path_buf, "output.mp4", sizeof(record_path_buf));
         record_use_max = true;
-        record_max_seconds = 180;
+        record_max_seconds = 200;
         record_hide_window = true;
         
         if (!recorder.isRecording()) {
