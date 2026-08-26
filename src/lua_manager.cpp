@@ -1246,17 +1246,14 @@ void LuaManager::_skip_to_playlist_track(int idx) {
 }
 
 void LuaManager::_rewind_audio_deferred() {
-    if (audio_player_id != 0) {
-        if (Object* obj = ObjectDB::get_instance(audio_player_id)) {
-            if (AudioStreamPlayer* player = Object::cast_to<AudioStreamPlayer>(obj)) {
-                bool was_paused = player->get_stream_paused();
-                player->play(0.0);
-                if (was_paused) {
-                    player->set_stream_paused(true);
-                }
-            }
+    int prev_idx = 0;
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (current_playlist_index >= 2) {
+            prev_idx = current_playlist_index - 2;
         }
     }
+    this->call_deferred("_skip_to_playlist_track", prev_idx);
 }
 
 void LuaManager::_skip_audio_deferred(int amount) {
