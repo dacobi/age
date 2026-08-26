@@ -1,3 +1,4 @@
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include <memory>
@@ -98,12 +99,15 @@ private:
     std::shared_ptr<std::thread> download_thread;
     std::mutex audio_mutex;
     std::mutex download_join_mutex;
+    std::atomic<int> skip_counter{0};
+    std::atomic<int> current_download_skip_id{-1};
+    std::atomic<int> initial_download_id{0};
     bool playlist_mode = false;
     bool audio_is_starting = false;
     void _download_next_playlist_item();
     void _play_next_playlist_item();
     void _check_audio_finished();
-    void _start_initial_download(const String& url);
+    void _start_initial_download(const String& url, int my_id);
 
     bool _play_audio_deferred(const String& filename);
     void _play_audio_dynamic_deferred(const String& filename);
