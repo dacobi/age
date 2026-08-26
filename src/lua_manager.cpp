@@ -907,9 +907,13 @@ void LuaManager::_do_clear_and_run(const String& filename) {
 bool LuaManager::_play_audio_deferred(const String& filename) {
     if (filename.begins_with("ytdlp://")) {
         String url = filename.substr(8);
+        initial_download_id++;
+        int my_id = initial_download_id.load();
         
-        std::thread([this, url]() {
+        std::thread([this, url, my_id]() {
             std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+            if (my_id != initial_download_id.load()) return;
+            
             std::shared_ptr<std::thread> old_thread;
             {
                 std::lock_guard<std::mutex> lock(audio_mutex);
@@ -921,9 +925,10 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
             if (old_thread && old_thread->joinable()) {
                 old_thread->join();
             }
+            if (my_id != initial_download_id.load()) return;
             {
                 std::lock_guard<std::mutex> lock(audio_mutex);
-                download_thread = std::make_shared<std::thread>( [this, url]() { this->_start_initial_download(url); } );
+                download_thread = std::make_shared<std::thread>( [this, url, my_id]() { this->_start_initial_download(url, my_id); } );
             }
         }).detach();
         
@@ -937,7 +942,7 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
     return true;
 }
 
-void LuaManager::_start_initial_download(const String& url) {
+void LuaManager::_start_initial_download(const String& url, int my_id) {
     if (url.contains("list=")) {
         PackedStringArray flat_args;
         flat_args.push_back("--flat-playlist");
@@ -948,6 +953,7 @@ void LuaManager::_start_initial_download(const String& url) {
         
         Array out;
         int32_t ret = OS::get_singleton()->execute("yt-dlp", flat_args, out, false, false);
+        if (my_id != initial_download_id.load()) return;
         if (ret == 0 && out.size() > 0) {
             String output = out[0];
             PackedStringArray lines = output.split("\n", false);
@@ -1035,6 +1041,10 @@ void LuaManager::_start_initial_download(const String& url) {
     
     {
         std::lock_guard<std::mutex> lock(audio_mutex);
+        if (idx != current_playlist_index) {
+            // This download was cancelled/superseded by a skip!
+            return;
+        }
         is_downloading_next = false;
         if (dl_ret == 0) {
             next_downloaded_file = temp_file;
@@ -1046,6 +1056,7 @@ void LuaManager::_start_initial_download(const String& url) {
 }
 
 void LuaManager::_download_next_playlist_item() {
+    int my_dl_skip = current_download_skip_id.load();
     String url;
     int idx;
     {
@@ -1075,6 +1086,10 @@ void LuaManager::_download_next_playlist_item() {
     
     {
         std::lock_guard<std::mutex> lock(audio_mutex);
+        if (my_dl_skip != current_download_skip_id.load() || idx != current_playlist_index) {
+            // This download was cancelled/superseded by a skip!
+            return;
+        }
         is_downloading_next = false;
         if (dl_ret == 0) {
             next_downloaded_file = temp_file;
@@ -1096,8 +1111,12 @@ void LuaManager::_play_next_playlist_item() {
         
         if (current_playlist_index < playlist_urls.size()) {
             is_downloading_next = true;
-            std::thread([this]() {
+            skip_counter++;
+            int my_skip = skip_counter.load();
+            std::thread([this, my_skip]() {
                 std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+                if (my_skip != this->skip_counter.load()) return; // Abort if another skip happened while waiting
+                
                 std::shared_ptr<std::thread> old_thread;
                 {
                     std::lock_guard<std::mutex> lock2(audio_mutex);
@@ -1107,7 +1126,11 @@ void LuaManager::_play_next_playlist_item() {
                 if (old_thread && old_thread->joinable()) {
                     old_thread->join();
                 }
+                
+                if (my_skip != this->skip_counter.load()) return; // Abort if cancelled during join
+                
                 std::lock_guard<std::mutex> lock3(audio_mutex);
+                current_download_skip_id = my_skip;
                 download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
             }).detach();
         }
@@ -1120,8 +1143,12 @@ void LuaManager::_play_next_playlist_item() {
         
         if (current_playlist_index < playlist_urls.size()) {
             is_downloading_next = true;
-            std::thread([this]() {
+            skip_counter++;
+            int my_skip = skip_counter.load();
+            std::thread([this, my_skip]() {
                 std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+                if (my_skip != this->skip_counter.load()) return; // Abort if another skip happened while waiting
+                
                 std::shared_ptr<std::thread> old_thread;
                 {
                     std::lock_guard<std::mutex> lock2(audio_mutex);
@@ -1131,7 +1158,11 @@ void LuaManager::_play_next_playlist_item() {
                 if (old_thread && old_thread->joinable()) {
                     old_thread->join();
                 }
+                
+                if (my_skip != this->skip_counter.load()) return; // Abort if cancelled during join
+                
                 std::lock_guard<std::mutex> lock3(audio_mutex);
+                current_download_skip_id = my_skip;
                 download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
             }).detach();
         }
@@ -1519,7 +1550,9 @@ void LuaManager::_process(double delta) {
         std::lock_guard<std::mutex> lock(audio_mutex);
         if (playlist_mode && !is_downloading_next && next_downloaded_file == "" && current_playlist_index > 0 && current_playlist_index < playlist_urls.size()) {
             is_downloading_next = true; // Set flag early so _process doesn't trigger again
-            std::thread([this]() {
+            skip_counter++;
+            int my_skip = skip_counter.load();
+            std::thread([this, my_skip]() {
                 std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
                 std::shared_ptr<std::thread> old_thread;
                 {
@@ -1531,6 +1564,7 @@ void LuaManager::_process(double delta) {
                     old_thread->join();
                 }
                 std::lock_guard<std::mutex> lock3(audio_mutex);
+                current_download_skip_id = my_skip;
                 download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
             }).detach();
         }
