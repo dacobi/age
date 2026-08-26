@@ -1,3 +1,6 @@
+#include <thread>
+#include <mutex>
+#include <memory>
 #ifndef LUA_MANAGER_H
 #define LUA_MANAGER_H
 
@@ -85,6 +88,19 @@ private:
     void _set_bg_deferred(const String& syntax);
     void _clear_and_run_deferred(const String& filename);
     void _do_clear_and_run(const String& filename);
+    std::vector<String> playlist_urls;
+    int current_playlist_index = 0;
+    bool is_downloading_next = false;
+    String next_downloaded_file = "";
+    std::shared_ptr<std::thread> download_thread;
+    std::mutex audio_mutex;
+    bool playlist_mode = false;
+    bool audio_is_starting = false;
+    void _download_next_playlist_item();
+    void _play_next_playlist_item();
+    void _check_audio_finished();
+    void _start_initial_download(const String& url);
+
     bool _play_audio_deferred(const String& filename);
     void _play_audio_dynamic_deferred(const String& filename);
     void _set_audio_volume_deferred(int vol);
