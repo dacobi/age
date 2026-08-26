@@ -2008,38 +2008,18 @@ void LuaScripting::renderLuaImGui() {
     if (show_playlist) {
         ImGui::Begin("Radio / Playlist", &show_playlist);
         
-        static const char* tracks[][2] = {
-            {"MegaRacer Synthwave (Playlist)", "ytdlp://https://www.youtube.com/watch?v=LC88mhGVIy8&list=PLCuEH5Tl2B8qq-98aYCRPmsG16PXUmPRd"},
-            {"Nightcall - Kavinsky", "ytdlp://https://www.youtube.com/watch?v=MV_3Dpw-BRY"},
-            {"Turbo Killer - Carpenter Brut", "ytdlp://https://www.youtube.com/watch?v=er416Ad3t1g"},
-            {"Blinding Lights - The Weeknd", "ytdlp://https://www.youtube.com/watch?v=4NRXx6U8ABQ"}
-        };
-        
-        ImGui::Text("Load a Preset Playlist:");
-        for (int i = 0; i < 4; i++) {
-            if (ImGui::Selectable(tracks[i][0])) {
-                if (setAudioFunc) {
-                    setAudioFunc(tracks[i][1], nullptr);
-                }
-            }
-        }
-        
-        ImGui::Separator();
-        
-        ImGui::Text("Current Queue:");
-        if (getPlaylistFunc && getPlaylistIndexFunc && playPlaylistTrackFunc) {
+        if (getPlaylistFunc && getPlaylistIndexFunc && playPlaylistTrackFunc && getPlaylistNameFunc) {
+            std::string pname = getPlaylistNameFunc();
+            if (pname == "") pname = "Current Queue";
+            ImGui::Text("%s", pname.c_str());
+            
             std::vector<std::string> q = getPlaylistFunc();
             int curr = getPlaylistIndexFunc();
             
-            // Adjust current index since it's incremented when a track starts
-            // actually, current_playlist_index points to the NEXT track to download. 
-            // the playing one is current_playlist_index - 1 (or -2 if downloading).
-            // We just highlight them.
-            
             ImGui::BeginChild("QueueChild", ImVec2(0, 150), true);
             for (size_t i = 0; i < q.size(); i++) {
-                char buf[256];
-                snprintf(buf, sizeof(buf), "Track %d: %s", (int)i+1, q[i].c_str());
+                char buf[512];
+                snprintf(buf, sizeof(buf), "%d. %s", (int)i+1, q[i].c_str());
                 bool is_selected = (curr == (int)i + 1); // rough guess for playing track
                 if (ImGui::Selectable(buf, is_selected)) {
                     playPlaylistTrackFunc(i);
