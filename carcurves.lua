@@ -3,17 +3,28 @@ local is_fullscreen = true
 
 godotLoadScene("lemans_track.tscn")
 
-delay(200) -- give it a moment to load
+
+
 
 print("\n=== MegaRacer Synthwave Driving Demo Loaded ===")
 print("Controls: Up/Down arrow keys to Accelerate and Brake/Reverse.")
 print("          Left/Right arrow keys to Steer.")
 print("Press ESC to exit.\n")
 
+local kwp = setAudio("ytdlp://https://www.youtube.com/watch?v=LC88mhGVIy8&list=PLCuEH5Tl2B8qq-98aYCRPmsG16PXUmPRd")
+
+if not kwp then
+	print("no yt playlist")
+else
+	print("yt playlist OK")
+end
+
+
 setAudioVolume(50)
 -- setRecordMax(30)
 -- startRecord("track.ogv")
 
+delay(500) -- give it a moment to load
 
 -- Get the supercar node pointer
 godotSelectRoot()

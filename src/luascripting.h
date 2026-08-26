@@ -31,6 +31,8 @@ struct LuaSyncData {
 
 class LuaScripting {
 public:
+    std::function<void()> nextAudioFunc;
+public:
     enum GodotCmd {
         GCMD_GET_NODE_POINTER,
         GCMD_SELECT_ROOT,
@@ -161,6 +163,7 @@ private:
     static int lua_rewindAudio(lua_State* L);
     static int lua_skipAudio(lua_State* L);
     static int lua_setAudioVolume(lua_State* L);
+    static int lua_nextAudio(lua_State* L);
     static int lua_startRecord(lua_State* L);
     static int lua_stopRecord(lua_State* L);
     static int lua_setRecordMax(lua_State* L);
