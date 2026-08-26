@@ -114,8 +114,9 @@ func apply_wheel_physics(car: RigidBody3D) -> void:
 			# Front tires maintain full natural curve, with a strong minimum anchor for pivots
 			x_traction = maxf(x_traction, 0.5)
 		else:
-			# Rear tires maintain 100% natural baseline grip, but are allowed to slip smoothly down to 10% on power!
-			x_traction = maxf(x_traction, 0.1)
+			# Rear tires maintain 100% natural baseline grip, but are allowed to slip smoothly down to 35% on power!
+			# This prevents the pendulum spin-out effect while drifting.
+			x_traction = maxf(x_traction, 0.35)
 
 	# Use dynamic suspension load! This correctly factors in downforce, body roll, and banked track angles!
 	var dynamic_load = maxf(0.0, spring_force - spring_damp_f)
@@ -127,7 +128,10 @@ func apply_wheel_physics(car: RigidBody3D) -> void:
 	# Convert viscous lateral drag (parachute effect) into constant Coulomb friction
 	# We cap the lateral slip multiplier to 3.0 so you can slide sideways at 200km/h without stopping instantly
 	var lateral_slip = minf(absf(steering_x_vel), 3.0)
-	var x_force = -global_basis.x * signf(steering_x_vel) * lateral_slip * x_traction * effective_load * 2.0
+	
+	# Dynamic glide: 2.0 multiplier for crisp turn-in when gripping, smoothly dropping to let the car glide sideways
+	var glide_mult = lerpf(0.5, 2.0, x_traction)
+	var x_force = -global_basis.x * signf(steering_x_vel) * lateral_slip * x_traction * effective_load * glide_mult
 	
 	# Clamp lateral force to prevent 360 spins at 250 km/h
 	var max_grip = effective_load * float(car.get("wheel_friction_slip"))
