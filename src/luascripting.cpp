@@ -208,6 +208,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("rewindAudio", lua_rewindAudio);
     reg("skipAudio", lua_skipAudio);
     reg("setAudioVolume", lua_setAudioVolume);
+    reg("nextAudio", lua_nextAudio);
     reg("startRecord", lua_startRecord);
     reg("stopRecord", lua_stopRecord);
     reg("setRecordMax", lua_setRecordMax);
@@ -1921,7 +1922,7 @@ void LuaScripting::renderLuaImGui() {
     }
     
     static bool f2_was_pressed = false;
-    bool f2_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F2);
+    bool f2_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F3);
     if (f2_is_pressed && !f2_was_pressed) {
         show_recorder = !show_recorder;
     }
@@ -1997,7 +1998,7 @@ void LuaScripting::renderLuaImGui() {
 
     static bool show_gamepad_diagnostic = false;
     static bool f3_was_pressed = false;
-    bool f3_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F3);
+    bool f3_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F2);
     if (f3_is_pressed && !f3_was_pressed) {
         show_gamepad_diagnostic = !show_gamepad_diagnostic;
     }
@@ -2287,5 +2288,11 @@ int LuaScripting::lua_ioWindowSetFullScreen(lua_State* L) {
         float fargs[3] = {fullscreen ? 1.0f : 0.0f, 0, 0};
         self->godotCmdFunc(GCMD_SET_FULLSCREEN, "", fargs, sd, L, self);
     }
+    return 0;
+}
+
+int LuaScripting::lua_nextAudio(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->nextAudioFunc) self->nextAudioFunc();
     return 0;
 }
