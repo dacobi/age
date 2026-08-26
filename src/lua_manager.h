@@ -93,6 +93,7 @@ private:
     std::vector<String> playlist_titles;
     String playlist_name;
     int current_playlist_index = 0;
+    int playing_playlist_index = -1;
     bool is_downloading_next = false;
     bool manual_skip = false;
     String next_downloaded_file = "";
