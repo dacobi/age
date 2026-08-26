@@ -11,9 +11,9 @@ print("Controls: Up/Down arrow keys to Accelerate and Brake/Reverse.")
 print("          Left/Right arrow keys to Steer.")
 print("Press ESC to exit.\n")
 
---local kwp = setAudio("ytdlp://https://www.youtube.com/watch?v=LC88mhGVIy8&list=PLCuEH5Tl2B8qq-98aYCRPmsG16PXUmPRd")
+local kwp = setAudio("ytdlp://https://www.youtube.com/watch?v=LC88mhGVIy8&list=PLCuEH5Tl2B8qq-98aYCRPmsG16PXUmPRd")
 
-local kwp = setAudio("ytdlp://https://www.youtube.com/watch?v=uAU11MdxrQs&list=PLW1RcRBbTvYLjvTnU91lDZC0lrzhqolaM")
+--local kwp = setAudio("ytdlp://https://www.youtube.com/watch?v=uAU11MdxrQs&list=PLW1RcRBbTvYLjvTnU91lDZC0lrzhqolaM")
 
 if not kwp then
 	print("no yt playlist")
