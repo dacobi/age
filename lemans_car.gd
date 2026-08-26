@@ -587,8 +587,9 @@ func _physics_process(delta: float) -> void:
 	var local_yaw_rate = local_angular_vel.y
 	
 	# Apply a counter-torque strictly along the car's local Up vector
-	var counter_torque = -global_transform.basis.y * (local_yaw_rate * mass * yaw_damping)
-	apply_torque(counter_torque)
+	if is_grounded_state:
+		var counter_torque = -global_transform.basis.y * (local_yaw_rate * mass * yaw_damping)
+		apply_torque(counter_torque)
 	
 	# Arcade Nitro Traction Feature (Slide Recovery)
 	if nitro_input > 0.5 and prev_nitro_input <= 0.5:
