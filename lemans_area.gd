@@ -21,6 +21,7 @@ var current_cam_pitch = 0.0
 var mouse_wheel = 0.0
 
 var reset_game = false
+var reset_car = false
 var powerup_nodes: Array = []
 
 var current_lap: int = 0
@@ -938,6 +939,21 @@ func _process(delta):
 				p.visible = true
 				p.collision_layer = 4
 				p.set("respawn_timer", 0.0)
+
+	elif reset_car or (supercar and supercar.global_position.y < -150.0):
+		reset_car = false
+		if supercar:
+			if is_square:
+				supercar.global_position = Vector3(0.0, 0.5, 0.0)
+				supercar.global_transform.basis = Basis.IDENTITY
+			else:
+				var closest_prog = path_node.curve.get_closest_offset(supercar.global_position)
+				var t_respawn = path_node.global_transform * path_node.curve.sample_baked_with_rotation(closest_prog, true, true)
+				if t_respawn:
+					supercar.global_transform = t_respawn
+					supercar.global_position += t_respawn.basis.y * 1.5
+			supercar.linear_velocity = Vector3.ZERO
+			supercar.angular_velocity = Vector3.ZERO
 
 	var camera_node = get_node_or_null("Camera3D")
 	if camera_node and supercar:
