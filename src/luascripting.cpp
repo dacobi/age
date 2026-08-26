@@ -2020,7 +2020,7 @@ void LuaScripting::renderLuaImGui() {
             for (size_t i = 0; i < q.size(); i++) {
                 char buf[512];
                 snprintf(buf, sizeof(buf), "%d. %s", (int)i+1, q[i].c_str());
-                bool is_selected = (curr == (int)i + 1); // rough guess for playing track
+                bool is_selected = (curr == (int)i);
                 if (ImGui::Selectable(buf, is_selected)) {
                     playPlaylistTrackFunc(i);
                 }

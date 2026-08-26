@@ -990,6 +990,7 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
                 }
                 playlist_mode = true;
                 current_playlist_index = 0;
+                playing_playlist_index = 0;
                 is_downloading_next = false;
             }
         } else {
@@ -1000,6 +1001,7 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
             playlist_titles.push_back("Track 1");
             playlist_name = "Single Track";
             current_playlist_index = 0;
+                playing_playlist_index = 0;
             playlist_mode = false;
             is_downloading_next = false;
         }
@@ -1011,6 +1013,7 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
         playlist_titles.push_back("Track 1");
         playlist_name = "Single Track";
         current_playlist_index = 0;
+                playing_playlist_index = 0;
         playlist_mode = false;
         is_downloading_next = false;
     }
@@ -1107,6 +1110,7 @@ void LuaManager::_play_next_playlist_item() {
         audio_is_starting = true;
         this->call_deferred("_play_audio_dynamic_deferred", next_downloaded_file);
         next_downloaded_file = "";
+        playing_playlist_index = current_playlist_index;
         current_playlist_index++;
         
         if (current_playlist_index < playlist_urls.size()) {
@@ -1260,6 +1264,7 @@ void LuaManager::_skip_to_playlist_track(int idx) {
         std::lock_guard<std::mutex> lock(audio_mutex);
         if (idx >= 0 && idx < playlist_urls.size()) {
             current_playlist_index = idx;
+            playing_playlist_index = idx;
             next_downloaded_file = "";
             manual_skip = true;
             is_downloading_next = false;
@@ -1508,7 +1513,7 @@ void LuaManager::_ready() {
     
     lua_engine->getPlaylistIndexFunc = [this]() -> int {
         std::lock_guard<std::mutex> lock(audio_mutex);
-        return current_playlist_index;
+        return playing_playlist_index;
     };
     
     lua_engine->playPlaylistTrackFunc = [this](int idx) {
