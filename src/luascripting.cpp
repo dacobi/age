@@ -2016,7 +2016,7 @@ void LuaScripting::renderLuaImGui() {
             std::vector<std::string> q = getPlaylistFunc();
             int curr = getPlaylistIndexFunc();
             
-            ImGui::BeginChild("QueueChild", ImVec2(0, -(ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y * 3)), true);
+            ImGui::BeginChild("QueueChild", ImVec2(0, -(ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y * 3)), true, ImGuiWindowFlags_HorizontalScrollbar);
             for (size_t i = 0; i < q.size(); i++) {
                 char buf[512];
                 snprintf(buf, sizeof(buf), "%d. %s", (int)i+1, q[i].c_str());
