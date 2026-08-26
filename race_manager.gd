@@ -67,11 +67,10 @@ func spawn_checkpoints():
 		beam.position = Vector3(0, 60.0, 0) # Hover 60 meters above the track
 		
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(1.0, 0.0, 1.0, 0.4) # Magenta, highly transparent
+		mat.albedo_color = Color(0.8, 0.1, 0.8, 1.0)
 		mat.emission_enabled = true
-		mat.emission = Color(1.0, 0.0, 1.0) # Magenta
-		mat.emission_energy_multiplier = 0.8
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.emission = Color(0.8, 0.1, 0.8)
+		mat.emission_energy_multiplier = 6.0
 		beam.material_override = mat
 		
 		cp.add_child(beam)
