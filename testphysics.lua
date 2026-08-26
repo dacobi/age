@@ -139,7 +139,7 @@ while true do
 				godotSetProperty("orbit_pitch", orbit_pitch, track)
 				godotSetProperty("orbit_dist", orbit_dist, track)
 			else
-				updateCarControlsAndPhysics(supercar, joy_handle, track, nil)
+				updateCarControlsAndPhysics(supercar, joy_handle, track, "reset_car")
 				frame_count = frame_count + 1
 				updateCarTelemetry(supercar, frame_count)
 			end
