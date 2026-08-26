@@ -173,6 +173,9 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_play_audio_dynamic_deferred", "filename"), &LuaManager::_play_audio_dynamic_deferred);
     ClassDB::bind_method(D_METHOD("_set_audio_volume_deferred", "vol"), &LuaManager::_set_audio_volume_deferred);
     ClassDB::bind_method(D_METHOD("_rewind_audio_deferred"), &LuaManager::_rewind_audio_deferred);
+    ClassDB::bind_method(D_METHOD("_pause_audio_deferred", "paused"), &LuaManager::_pause_audio_deferred);
+    ClassDB::bind_method(D_METHOD("_stop_audio_deferred"), &LuaManager::_stop_audio_deferred);
+    ClassDB::bind_method(D_METHOD("_skip_to_playlist_track", "idx"), &LuaManager::_skip_to_playlist_track);
     ClassDB::bind_method(D_METHOD("_skip_audio_deferred", "amount"), &LuaManager::_skip_audio_deferred);
     ClassDB::bind_method(D_METHOD("_set_resize_enabled_deferred", "enabled"), &LuaManager::_set_resize_enabled_deferred);
     ClassDB::bind_method(D_METHOD("_maximize_window_deferred"), &LuaManager::_maximize_window_deferred);
@@ -904,14 +907,24 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
     if (filename.begins_with("ytdlp://")) {
         String url = filename.substr(8);
         
-        {
-            std::lock_guard<std::mutex> lock(audio_mutex);
-            if (download_thread && download_thread->joinable()) {
-                download_thread->join();
+        std::thread([this, url]() {
+            std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+            std::shared_ptr<std::thread> old_thread;
+            {
+                std::lock_guard<std::mutex> lock(audio_mutex);
+                old_thread = download_thread;
+                download_thread = nullptr;
+                is_downloading_next = true;
+                playlist_urls.clear(); // Important so _process doesn't trigger
             }
-            is_downloading_next = true;
-            download_thread = std::make_shared<std::thread>( [this, url]() { this->_start_initial_download(url); } );
-        }
+            if (old_thread && old_thread->joinable()) {
+                old_thread->join();
+            }
+            {
+                std::lock_guard<std::mutex> lock(audio_mutex);
+                download_thread = std::make_shared<std::thread>( [this, url]() { this->_start_initial_download(url); } );
+            }
+        }).detach();
         
         return true;
     }
@@ -1054,20 +1067,45 @@ void LuaManager::_play_next_playlist_item() {
         current_playlist_index++;
         
         if (current_playlist_index < playlist_urls.size()) {
-            if (download_thread && download_thread->joinable()) {
-                download_thread->join();
-            }
             is_downloading_next = true;
-            download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            std::thread([this]() {
+                std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+                std::shared_ptr<std::thread> old_thread;
+                {
+                    std::lock_guard<std::mutex> lock2(audio_mutex);
+                    old_thread = download_thread;
+                    download_thread = nullptr;
+                }
+                if (old_thread && old_thread->joinable()) {
+                    old_thread->join();
+                }
+                std::lock_guard<std::mutex> lock3(audio_mutex);
+                download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            }).detach();
         }
     } else if (!is_downloading_next && current_playlist_index < playlist_urls.size()) {
-        current_playlist_index++;
+        if (!manual_skip) {
+            current_playlist_index++;
+        } else {
+            manual_skip = false;
+        }
+        
         if (current_playlist_index < playlist_urls.size()) {
-            if (download_thread && download_thread->joinable()) {
-                download_thread->join();
-            }
             is_downloading_next = true;
-            download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            std::thread([this]() {
+                std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+                std::shared_ptr<std::thread> old_thread;
+                {
+                    std::lock_guard<std::mutex> lock2(audio_mutex);
+                    old_thread = download_thread;
+                    download_thread = nullptr;
+                }
+                if (old_thread && old_thread->joinable()) {
+                    old_thread->join();
+                }
+                std::lock_guard<std::mutex> lock3(audio_mutex);
+                download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            }).detach();
         }
     }
 }
@@ -1080,7 +1118,7 @@ void LuaManager::_check_audio_finished() {
     }
     
     if (audio_is_starting) return;
-    if (player && !player->is_playing()) {
+    if (player && !player->is_playing() && !player->get_stream_paused()) {
         _play_next_playlist_item();
     }
 }
@@ -1137,11 +1175,57 @@ void LuaManager::_set_audio_volume_deferred(int vol) {
     }
 }
 
+void LuaManager::_pause_audio_deferred(bool paused) {
+    if (audio_player_id != 0) {
+        if (Object* obj = ObjectDB::get_instance(audio_player_id)) {
+            if (AudioStreamPlayer* player = Object::cast_to<AudioStreamPlayer>(obj)) {
+                player->set_stream_paused(paused);
+            }
+        }
+    }
+}
+
+void LuaManager::_stop_audio_deferred() {
+    if (audio_player_id != 0) {
+        if (Object* obj = ObjectDB::get_instance(audio_player_id)) {
+            if (AudioStreamPlayer* player = Object::cast_to<AudioStreamPlayer>(obj)) {
+                player->play(0.0);
+                player->set_stream_paused(true);
+            }
+        }
+    }
+}
+
+void LuaManager::_skip_to_playlist_track(int idx) {
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (idx >= 0 && idx < playlist_urls.size()) {
+            current_playlist_index = idx;
+            next_downloaded_file = "";
+            manual_skip = true;
+            is_downloading_next = false;
+        }
+    }
+    
+    if (audio_player_id != 0) {
+        if (Object* obj = ObjectDB::get_instance(audio_player_id)) {
+            if (AudioStreamPlayer* player = Object::cast_to<AudioStreamPlayer>(obj)) {
+                player->set_stream_paused(false); // Make sure it's unpaused so _check_audio_finished triggers!
+                player->stop();
+            }
+        }
+    }
+}
+
 void LuaManager::_rewind_audio_deferred() {
     if (audio_player_id != 0) {
         if (Object* obj = ObjectDB::get_instance(audio_player_id)) {
             if (AudioStreamPlayer* player = Object::cast_to<AudioStreamPlayer>(obj)) {
-                player->seek(0.0);
+                bool was_paused = player->get_stream_paused();
+                player->play(0.0);
+                if (was_paused) {
+                    player->set_stream_paused(true);
+                }
             }
         }
     }
@@ -1228,9 +1312,9 @@ void LuaManager::_ready() {
             }
         },
         // playAudioFunc
-        []() { UtilityFunctions::print("Stub: playAudioFunc"); },
+        [this]() { this->call_deferred("_pause_audio_deferred", false); },
         // stopAudioFunc
-        []() { UtilityFunctions::print("Stub: stopAudioFunc"); },
+        [this]() { this->call_deferred("_stop_audio_deferred"); },
         // rewindAudioFunc
         [this]() { this->call_deferred("_rewind_audio_deferred"); },
         // skipAudioFunc
@@ -1344,7 +1428,32 @@ void LuaManager::_ready() {
             }
         }
     );
+
+    lua_engine->nextAudioFunc = [this]() { 
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        this->call_deferred("_skip_to_playlist_track", current_playlist_index);
+    };
     
+    lua_engine->pauseAudioFunc = [this]() { this->call_deferred("_pause_audio_deferred", true); };
+
+    lua_engine->getPlaylistFunc = [this]() -> std::vector<std::string> {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        std::vector<std::string> res;
+        for (int i = 0; i < playlist_urls.size(); i++) {
+            res.push_back(std::string(playlist_urls[i].utf8().get_data()));
+        }
+        return res;
+    };
+    
+    lua_engine->getPlaylistIndexFunc = [this]() -> int {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        return current_playlist_index;
+    };
+    
+    lua_engine->playPlaylistTrackFunc = [this](int idx) {
+        this->call_deferred("_skip_to_playlist_track", idx);
+    };
+
     // Start script if init.lua exists
     if (godot::FileAccess::file_exists("res://init.lua")) {
         lua_engine->runScript("init.lua");
@@ -1379,11 +1488,21 @@ void LuaManager::_process(double delta) {
     {
         std::lock_guard<std::mutex> lock(audio_mutex);
         if (playlist_mode && !is_downloading_next && next_downloaded_file == "" && current_playlist_index > 0 && current_playlist_index < playlist_urls.size()) {
-            if (download_thread && download_thread->joinable()) {
-                download_thread->join();
-            }
-            is_downloading_next = true;
-            download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            is_downloading_next = true; // Set flag early so _process doesn't trigger again
+            std::thread([this]() {
+                std::lock_guard<std::mutex> join_lock(this->download_join_mutex);
+                std::shared_ptr<std::thread> old_thread;
+                {
+                    std::lock_guard<std::mutex> lock2(audio_mutex);
+                    old_thread = download_thread;
+                    download_thread = nullptr;
+                }
+                if (old_thread && old_thread->joinable()) {
+                    old_thread->join();
+                }
+                std::lock_guard<std::mutex> lock3(audio_mutex);
+                download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            }).detach();
         }
     }
     for (auto it = videos_to_preload.begin(); it != videos_to_preload.end(); ) {
