@@ -45,8 +45,8 @@ script = ExtResource("1_track_script")
 environment = SubResource("Environment_cyber")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1531001288]
-transform = Transform3D(0.866025, -0.25, 0.433013, 0.25, 0.933013, 0.25, -0.433013, 0.108253, 0.89481, 0, 10, 0)
-light_color = Color(1, 1, 1, 1)
+transform = Transform3D(0.999961, 0.000861, 0.008754, 0.0, 0.9952, -0.097861, -0.008796, 0.097857, 0.995162, 0, 10, 0)
+light_color = Color(0.3, 0.2, 0.2, 1)
 light_energy = 2.0
 shadow_enabled = true
 
