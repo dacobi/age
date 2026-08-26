@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cq1iqcx2ych0i"]
 
-[ext_resource type="Material" path="res://materials/new_asphalt/new_asphalt.tres" id="mat_asphalt"]
+[ext_resource type="Material" path="res://materials/grey_cracked_rock/grey_cracked_rock.tres" id="mat_asphalt"]
 [ext_resource type="Script" uid="uid://7i1mxet0v11y" path="res://lemans_track.gd" id="1_track_script"]
 [ext_resource type="Texture2D" uid="uid://7lwhx6y02nnk" path="res://sky/evening.hdr" id="2_d0abv"]
 [ext_resource type="PackedScene" path="res://lemans_car.tscn" id="2_supercar"]
@@ -46,7 +46,7 @@ environment = SubResource("Environment_cyber")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1531001288]
 transform = Transform3D(0.866025, -0.25, 0.433013, 0.25, 0.933013, 0.25, -0.433013, 0.108253, 0.89481, 0, 10, 0)
-light_color = Color(1, 0.6, 0.8, 1)
+light_color = Color(1, 1, 1, 1)
 light_energy = 2.0
 shadow_enabled = true
 
