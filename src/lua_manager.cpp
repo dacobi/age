@@ -904,73 +904,16 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
     if (filename.begins_with("ytdlp://")) {
         String url = filename.substr(8);
         
-        // Fetch all IDs blocking
-        PackedStringArray flat_args;
-        flat_args.push_back("--flat-playlist");
-        flat_args.push_back("--print");
-        flat_args.push_back("id");
-        flat_args.push_back("--no-warnings");
-        flat_args.push_back(url);
-        
-        Array out;
-        int32_t ret = OS::get_singleton()->execute("yt-dlp", flat_args, out, false, false);
-        if (ret == 0 && out.size() > 0) {
-            String output = out[0];
-            PackedStringArray lines = output.split("\n", false);
-            {
-                std::lock_guard<std::mutex> lock(audio_mutex);
-                playlist_urls.clear();
-                for (int i = 0; i < lines.size(); i++) {
-                    String id = lines[i].strip_edges();
-                    if (id.length() > 0 && !id.begins_with("WARNING") && !id.begins_with("ERROR")) {
-                        playlist_urls.push_back("https://www.youtube.com/watch?v=" + id);
-                    }
-                }
-                current_playlist_index = 0;
-                playlist_mode = (playlist_urls.size() > 1);
-            }
-        } else {
+        {
             std::lock_guard<std::mutex> lock(audio_mutex);
-            playlist_urls.clear();
-            playlist_urls.push_back(url);
-            current_playlist_index = 0;
-            playlist_mode = false;
-        }
-
-        std::lock_guard<std::mutex> lock(audio_mutex);
-        if (playlist_urls.size() == 0) return false;
-        
-        String first_url = playlist_urls[0];
-        String temp_file = "user://yt_temp_0.mp3";
-        String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
-        
-        PackedStringArray args;
-        args.push_back("-x");
-        args.push_back("--audio-format");
-        args.push_back("mp3");
-        args.push_back("-o");
-        args.push_back(global_path);
-        args.push_back("--force-overwrites");
-        args.push_back(first_url);
-        
-        Array dl_out;
-        int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
-        if (dl_ret == 0) {
-            audio_is_starting = true;
-            this->call_deferred("_play_audio_dynamic_deferred", temp_file);
-            current_playlist_index = 1;
-            
-            if (current_playlist_index < playlist_urls.size()) {
-                if (download_thread) {
-                    if (download_thread->joinable()) download_thread->join();
-                }
-                is_downloading_next = true;
-                download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+            if (download_thread && download_thread->joinable()) {
+                download_thread->join();
             }
-            return true;
-        } else {
-            return false;
+            is_downloading_next = true;
+            download_thread = std::make_shared<std::thread>( [this, url]() { this->_start_initial_download(url); } );
         }
+        
+        return true;
     }
     
     std::lock_guard<std::mutex> lock(audio_mutex);
@@ -979,6 +922,87 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
     this->call_deferred("_play_audio_dynamic_deferred", filename);
     return true;
 }
+
+void LuaManager::_start_initial_download(const String& url) {
+    // Fetch all IDs blocking (in this background thread)
+    PackedStringArray flat_args;
+    flat_args.push_back("--flat-playlist");
+    flat_args.push_back("--print");
+    flat_args.push_back("id");
+    flat_args.push_back("--no-warnings");
+    flat_args.push_back(url);
+    
+    Array out;
+    int32_t ret = OS::get_singleton()->execute("yt-dlp", flat_args, out, false, false);
+    if (ret == 0 && out.size() > 0) {
+        String output = out[0];
+        PackedStringArray lines = output.split("\n", false);
+        {
+            std::lock_guard<std::mutex> lock(audio_mutex);
+            playlist_urls.clear();
+            for (int i = 0; i < lines.size(); i++) {
+                String id = lines[i].strip_edges();
+                if (id.length() > 0 && !id.begins_with("WARNING") && !id.begins_with("ERROR")) {
+                    playlist_urls.push_back("https://www.youtube.com/watch?v=" + id);
+                }
+            }
+            current_playlist_index = 0;
+            playlist_mode = (playlist_urls.size() > 1);
+        }
+    } else {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        playlist_urls.clear();
+        playlist_urls.push_back(url);
+        current_playlist_index = 0;
+        playlist_mode = false;
+    }
+
+    String first_url;
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (playlist_urls.size() == 0) {
+            is_downloading_next = false;
+            return;
+        }
+        first_url = playlist_urls[0];
+    }
+    
+    String temp_file = "user://yt_temp_0.mp3";
+    String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
+    
+    PackedStringArray args;
+    args.push_back("-x");
+    args.push_back("--audio-format");
+    args.push_back("mp3");
+    args.push_back("-o");
+    args.push_back(global_path);
+    args.push_back("--force-overwrites");
+    args.push_back(first_url);
+    
+    Array dl_out;
+    int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
+    
+    if (dl_ret == 0) {
+        // Start playing the first track on the main thread
+        audio_is_starting = true;
+        this->call_deferred("_play_audio_dynamic_deferred", temp_file);
+        
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        current_playlist_index = 1;
+        is_downloading_next = false;
+        
+        // Let the main thread's _check_audio_finished trigger the NEXT download!
+        // We don't spawn another thread from this thread to keep things simple.
+        // Actually, _check_audio_finished only triggers when player FINISHES.
+        // So we should just let _check_audio_finished know we need the NEXT download.
+        // Or we can just spawn it here... wait, we can't join the current thread from itself!
+        // So we will just set a flag `needs_next_download` and let _process handle it!
+    } else {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        is_downloading_next = false;
+    }
+}
+
 
 void LuaManager::_download_next_playlist_item() {
     String url;
@@ -1349,6 +1373,18 @@ void LuaManager::run_script(const String& filename) {
 void LuaManager::_process(double delta) {
     if (playlist_mode) {
         _check_audio_finished();
+    }
+    
+    // Auto-start next download if idle
+    {
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (playlist_mode && !is_downloading_next && next_downloaded_file == "" && current_playlist_index > 0 && current_playlist_index < playlist_urls.size()) {
+            if (download_thread && download_thread->joinable()) {
+                download_thread->join();
+            }
+            is_downloading_next = true;
+            download_thread = std::make_shared<std::thread>(&LuaManager::_download_next_playlist_item, this);
+        }
     }
     for (auto it = videos_to_preload.begin(); it != videos_to_preload.end(); ) {
         Object* obj = ObjectDB::get_instance(*it);
