@@ -90,11 +90,14 @@ private:
     void _clear_and_run_deferred(const String& filename);
     void _do_clear_and_run(const String& filename);
     std::vector<String> playlist_urls;
+    std::vector<String> playlist_ids;
+    std::vector<String> failed_downloads;
     std::vector<String> playlist_titles;
     String playlist_name;
     int current_playlist_index = 0;
     int playing_playlist_index = -1;
     bool is_downloading_next = false;
+    bool all_playlist_cached = false;
     bool manual_skip = false;
     String next_downloaded_file = "";
     std::shared_ptr<std::thread> download_thread;
