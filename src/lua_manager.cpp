@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/h_box_container.hpp>
 #include <godot_cpp/classes/panel_container.hpp>
@@ -920,7 +921,9 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
                 old_thread = download_thread;
                 download_thread = nullptr;
                 is_downloading_next = true;
-                playlist_urls.clear(); // Important so _process doesn't trigger
+                playlist_urls.clear();
+                playlist_ids.clear();
+                failed_downloads.clear(); // Important so _process doesn't trigger
             }
             if (old_thread && old_thread->joinable()) {
                 old_thread->join();
@@ -943,6 +946,10 @@ bool LuaManager::_play_audio_deferred(const String& filename) {
 }
 
 void LuaManager::_start_initial_download(const String& url, int my_id) {
+    Ref<DirAccess> dir = DirAccess::open("user://");
+    if (dir.is_valid()) {
+        dir->make_dir("yt_cache");
+    }
     if (url.contains("list=")) {
         PackedStringArray flat_args;
         flat_args.push_back("--flat-playlist");
@@ -960,6 +967,8 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
             {
                 std::lock_guard<std::mutex> lock(audio_mutex);
                 playlist_urls.clear();
+                playlist_ids.clear();
+                failed_downloads.clear();
                 playlist_titles.clear();
                 playlist_name = "Current Queue";
                 
@@ -981,9 +990,11 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
                                 }
                             }
                             playlist_urls.push_back("https://www.youtube.com/watch?v=" + id);
+                            playlist_ids.push_back(id);
                             playlist_titles.push_back(t_title);
                         } else if (parts.size() == 1) {
                             playlist_urls.push_back("https://www.youtube.com/watch?v=" + parts[0]);
+                            playlist_ids.push_back(parts[0]);
                             playlist_titles.push_back(parts[0]);
                         }
                     }
@@ -992,12 +1003,23 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
                 current_playlist_index = 0;
                 playing_playlist_index = 0;
                 is_downloading_next = false;
+            all_playlist_cached = false;
+                all_playlist_cached = false;
             }
         } else {
             std::lock_guard<std::mutex> lock(audio_mutex);
             playlist_urls.clear();
+            playlist_ids.clear();
+            failed_downloads.clear();
             playlist_titles.clear();
             playlist_urls.push_back(url);
+            String yt_id = url;
+            if (url.contains("v=")) {
+                yt_id = url.get_slice("v=", 1).get_slice("&", 0);
+            } else {
+                yt_id = String::num_int64(url.hash());
+            }
+            playlist_ids.push_back(yt_id);
             playlist_titles.push_back("Track 1");
             playlist_name = "Single Track";
             current_playlist_index = 0;
@@ -1008,8 +1030,17 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
     } else {
         std::lock_guard<std::mutex> lock(audio_mutex);
         playlist_urls.clear();
+                playlist_ids.clear();
+                failed_downloads.clear();
         playlist_titles.clear();
         playlist_urls.push_back(url);
+        String yt_id = url;
+        if (url.contains("v=")) {
+            yt_id = url.get_slice("v=", 1).get_slice("&", 0);
+        } else {
+            yt_id = String::num_int64(url.hash());
+        }
+        playlist_ids.push_back(yt_id);
         playlist_titles.push_back("Track 1");
         playlist_name = "Single Track";
         current_playlist_index = 0;
@@ -1019,16 +1050,29 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
     }
     
     String url_to_download;
+    String yt_id;
     int idx;
     {
         std::lock_guard<std::mutex> lock(audio_mutex);
         if (playlist_urls.empty()) return;
         url_to_download = playlist_urls[0];
+        yt_id = playlist_ids[0];
         idx = 0;
     }
     
-    String temp_file = String("user://yt_temp_") + String::num_int64(idx % 2) + ".mp3";
-    String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
+    String cache_file = "user://yt_cache/" + yt_id + ".mp3";
+    
+    if (FileAccess::file_exists(cache_file)) {
+        if (my_id != initial_download_id.load()) return;
+        std::lock_guard<std::mutex> lock(audio_mutex);
+        if (idx != current_playlist_index) return;
+        is_downloading_next = false;
+        next_downloaded_file = cache_file;
+        this->call_deferred("_play_next_playlist_item");
+        return;
+    }
+    
+    String global_path = ProjectSettings::get_singleton()->globalize_path(cache_file);
     
     PackedStringArray args;
     args.push_back("-x");
@@ -1050,7 +1094,7 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
         }
         is_downloading_next = false;
         if (dl_ret == 0) {
-            next_downloaded_file = temp_file;
+            next_downloaded_file = cache_file;
         } else {
             next_downloaded_file = "";
         }
@@ -1058,53 +1102,17 @@ void LuaManager::_start_initial_download(const String& url, int my_id) {
     this->call_deferred("_play_next_playlist_item");
 }
 
-void LuaManager::_download_next_playlist_item() {
-    int my_dl_skip = current_download_skip_id.load();
-    String url;
-    int idx;
-    {
-        std::lock_guard<std::mutex> lock(audio_mutex);
-        if (current_playlist_index >= playlist_urls.size()) {
-            is_downloading_next = false;
-            return;
-        }
-        url = playlist_urls[current_playlist_index];
-        idx = current_playlist_index;
-    }
-    
-    String temp_file = String("user://yt_temp_") + String::num_int64(idx % 2) + ".mp3";
-    String global_path = ProjectSettings::get_singleton()->globalize_path(temp_file);
-    
-    PackedStringArray args;
-    args.push_back("-x");
-    args.push_back("--audio-format");
-    args.push_back("mp3");
-    args.push_back("-o");
-    args.push_back(global_path);
-    args.push_back("--force-overwrites");
-    args.push_back(url);
-    
-    Array dl_out;
-    int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
-    
-    {
-        std::lock_guard<std::mutex> lock(audio_mutex);
-        if (my_dl_skip != current_download_skip_id.load() || idx != current_playlist_index) {
-            // This download was cancelled/superseded by a skip!
-            return;
-        }
-        is_downloading_next = false;
-        if (dl_ret == 0) {
-            next_downloaded_file = temp_file;
-        } else {
-            next_downloaded_file = "";
-        }
-    }
-}
 
 void LuaManager::_play_next_playlist_item() {
     std::lock_guard<std::mutex> lock(audio_mutex);
     if (!playlist_mode) return;
+    
+    if (next_downloaded_file == "" && current_playlist_index < playlist_ids.size()) {
+        String cache_path = "user://yt_cache/" + playlist_ids[current_playlist_index] + ".mp3";
+        if (FileAccess::file_exists(cache_path)) {
+            next_downloaded_file = cache_path;
+        }
+    }
     
     if (next_downloaded_file != "") {
         audio_is_starting = true;
@@ -1173,6 +1181,79 @@ void LuaManager::_play_next_playlist_item() {
     }
 }
 
+void LuaManager::_download_next_playlist_item() {
+    int my_dl_skip = current_download_skip_id.load();
+    
+    while (true) {
+        String url;
+        String yt_id;
+        int idx = -1;
+        {
+            std::lock_guard<std::mutex> lock(audio_mutex);
+            if (my_dl_skip != current_download_skip_id.load()) return;
+            
+            if (current_playlist_index < playlist_urls.size()) {
+                String expected_path = "user://yt_cache/" + playlist_ids[current_playlist_index] + ".mp3";
+                if (!FileAccess::file_exists(expected_path) && std::find(failed_downloads.begin(), failed_downloads.end(), playlist_ids[current_playlist_index]) == failed_downloads.end()) {
+                    idx = current_playlist_index;
+                }
+            }
+            
+            if (idx == -1) {
+                for (int i = 0; i < playlist_urls.size(); i++) {
+                    String expected_path = "user://yt_cache/" + playlist_ids[i] + ".mp3";
+                    if (!FileAccess::file_exists(expected_path) && std::find(failed_downloads.begin(), failed_downloads.end(), playlist_ids[i]) == failed_downloads.end()) {
+                        idx = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (idx == -1) {
+                is_downloading_next = false;
+                all_playlist_cached = true;
+                return;
+            }
+            
+            url = playlist_urls[idx];
+            yt_id = playlist_ids[idx];
+        }
+        
+        String cache_file = "user://yt_cache/" + yt_id + ".mp3";
+        String global_path = ProjectSettings::get_singleton()->globalize_path(cache_file);
+        
+        PackedStringArray args;
+        args.push_back("-x");
+        args.push_back("--audio-format");
+        args.push_back("mp3");
+        args.push_back("-o");
+        args.push_back(global_path);
+        args.push_back("--force-overwrites");
+        args.push_back(url);
+        
+        Array dl_out;
+        int32_t dl_ret = OS::get_singleton()->execute("yt-dlp", args, dl_out, false, true);
+        
+        {
+            std::lock_guard<std::mutex> lock(audio_mutex);
+            if (my_dl_skip != current_download_skip_id.load()) return;
+            
+            if (dl_ret != 0) {
+                failed_downloads.push_back(yt_id);
+            }
+            if (idx == current_playlist_index) {
+                is_downloading_next = false;
+                if (dl_ret == 0) {
+                    next_downloaded_file = cache_file;
+                } else {
+                    next_downloaded_file = "";
+                }
+                return; // Let _process trigger _play_next_playlist_item to start playing and spawn a new wrapper thread for the rest
+            }
+        }
+    }
+}
+
 void LuaManager::_check_audio_finished() {
     AudioStreamPlayer* player = nullptr;
     if (audio_player_id != 0) {
@@ -1185,7 +1266,6 @@ void LuaManager::_check_audio_finished() {
         _play_next_playlist_item();
     }
 }
-
 
 void LuaManager::_play_audio_dynamic_deferred(const String& filename) {
     AudioStreamPlayer* player = nullptr;
@@ -1268,6 +1348,7 @@ void LuaManager::_skip_to_playlist_track(int idx) {
             next_downloaded_file = "";
             manual_skip = true;
             is_downloading_next = false;
+            all_playlist_cached = false;
         }
     }
     
@@ -1553,7 +1634,7 @@ void LuaManager::_process(double delta) {
     // Auto-start next download if idle
     {
         std::lock_guard<std::mutex> lock(audio_mutex);
-        if (playlist_mode && !is_downloading_next && next_downloaded_file == "" && current_playlist_index > 0 && current_playlist_index < playlist_urls.size()) {
+        if (playlist_mode && !is_downloading_next && !all_playlist_cached && next_downloaded_file == "" && current_playlist_index > 0 && current_playlist_index < playlist_urls.size()) {
             is_downloading_next = true; // Set flag early so _process doesn't trigger again
             skip_counter++;
             int my_skip = skip_counter.load();
