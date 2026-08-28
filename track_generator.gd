@@ -47,6 +47,27 @@ static func _build_straight(root: Node3D, length: float, width: float):
 	c_line.use_collision = true
 	c_line.material = get_centerline_mat()
 	root.add_child(c_line)
+	
+	var w = 2.0
+	var border_l = CSGPolygon3D.new()
+	border_l.mode = CSGPolygon3D.MODE_DEPTH
+	border_l.depth = length
+	border_l.polygon = PackedVector2Array([
+		Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+	])
+	border_l.use_collision = true
+	border_l.material = get_cyan_mat()
+	root.add_child(border_l)
+
+	var border_r = CSGPolygon3D.new()
+	border_r.mode = CSGPolygon3D.MODE_DEPTH
+	border_r.depth = length
+	border_r.polygon = PackedVector2Array([
+		Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+	])
+	border_r.use_collision = true
+	border_r.material = get_cyan_mat()
+	root.add_child(border_r)
 
 static func _build_transition(root: Node3D, length: float, sw: float, ew: float):
 	var road = CSGPolygon3D.new()
@@ -70,6 +91,31 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
 	c_line.position.y = 0.25
 	c_line.material = get_centerline_mat()
 	root.add_child(c_line)
+	
+	var w = 2.0
+	var border_l = CSGPolygon3D.new()
+	border_l.mode = CSGPolygon3D.MODE_DEPTH
+	border_l.depth = 4.0
+	border_l.polygon = PackedVector2Array([
+		Vector2(-sw/2.0 - w/2.0, 0), Vector2(-ew/2.0 - w/2.0, length), 
+		Vector2(-ew/2.0 + w/2.0, length), Vector2(-sw/2.0 + w/2.0, 0)
+	])
+	border_l.rotation_degrees.x = -90
+	border_l.use_collision = true
+	border_l.material = get_cyan_mat()
+	root.add_child(border_l)
+	
+	var border_r = CSGPolygon3D.new()
+	border_r.mode = CSGPolygon3D.MODE_DEPTH
+	border_r.depth = 4.0
+	border_r.polygon = PackedVector2Array([
+		Vector2(sw/2.0 - w/2.0, 0), Vector2(ew/2.0 - w/2.0, length), 
+		Vector2(ew/2.0 + w/2.0, length), Vector2(sw/2.0 + w/2.0, 0)
+	])
+	border_r.rotation_degrees.x = -90
+	border_r.use_collision = true
+	border_r.material = get_cyan_mat()
+	root.add_child(border_r)
 
 static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: float, ramp_length: float):
 	var hw = width / 2.0
@@ -129,7 +175,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
 		csg.path_local = true
 		csg.path_continuous_u = true
 		csg.path_u_distance = 16.0
-		csg.path_interval = 1.0
+		csg.path_interval = 0.25
 		csg.path_rotation_accurate = true
 		csg.path_simplify_angle = 0.0
 		csg.path_interval_type = 1
@@ -149,6 +195,17 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
 	create_path_csg.call(c_line, 1, get_centerline_mat())
 	
 	var w = 2.0
+
+	var border_l = PackedVector2Array([
+		Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+	])
+	create_path_csg.call(border_l, 1, get_cyan_mat())
+	
+	var border_r = PackedVector2Array([
+		Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+	])
+	create_path_csg.call(border_r, 1, get_cyan_mat())
+	
 	var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
 	create_path_csg.call(ai_l, 128, null)
 	
@@ -192,7 +249,7 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
 		csg.path_local = true
 		csg.path_continuous_u = true
 		csg.path_u_distance = 16.0
-		csg.path_interval = 1.0
+		csg.path_interval = 0.25
 		csg.path_rotation_accurate = true
 		csg.path_simplify_angle = 0.0
 		csg.path_interval_type = 1
@@ -212,6 +269,17 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
 	create_path_csg.call(c_line, 1, get_centerline_mat())
 	
 	var w = 2.0
+
+	var border_l = PackedVector2Array([
+		Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+	])
+	create_path_csg.call(border_l, 1, get_cyan_mat())
+	
+	var border_r = PackedVector2Array([
+		Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+	])
+	create_path_csg.call(border_r, 1, get_cyan_mat())
+	
 	var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
 	create_path_csg.call(ai_l, 128, null)
 	
