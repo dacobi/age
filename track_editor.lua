@@ -1,0 +1,105 @@
+regGlobalFloat("editor_param_5", 80.0) -- End Width
+regGlobalFloat("editor_param_6", 15.0)  -- Ramp Angle
+regGlobalFloat("editor_action", 0.0)
+regGlobalFloat("editor_param_1", 90.0) -- Length or Angle
+regGlobalFloat("editor_param_2", 80.0)  -- Width
+regGlobalFloat("editor_param_3", 100.0) -- Radius (for curves)
+regGlobalFloat("editor_param_4", 0.0)   -- Drop Distance / Incline
+regGlobalFloat("editor_clear", 0.0)
+
+print("Starting Track Editor UI...")
+godotLoadScene("track_editor.tscn")
+
+while true do
+    imguiBegin("Track Editor")
+    
+    imguiText("Procedural Track Builder")
+    imguiSeparator()
+    
+    imguiText("Element Parameters:")
+    imguiSliderFloat("Length/Angle", "editor_param_1", -180.0, 500.0)
+    imguiSliderFloat("Width (Start)", "editor_param_2", 10.0, 200.0)
+    imguiSliderFloat("Width (End)", "editor_param_5", 10.0, 200.0)
+    imguiSliderFloat("Radius (Curve)", "editor_param_3", 10.0, 500.0)
+    imguiSliderFloat("Drop/Incline", "editor_param_4", -100.0, 100.0)
+    imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 45.0)
+    
+    imguiSeparator()
+    imguiText("Add Elements:")
+    
+    imguiButton("Add Straight", "editor_action_straight")
+    local btn_straight = getGlobalFloat("editor_action_straight")
+    if btn_straight > 0.5 then
+        setGlobalFloat("editor_action", 1.0)
+        setGlobalFloat("editor_action_straight", 0.0)
+    end
+    
+    imguiSameLine()
+    
+    imguiButton("Add Curve", "editor_action_curve")
+    local btn_curve = getGlobalFloat("editor_action_curve")
+    if btn_curve > 0.5 then
+        setGlobalFloat("editor_action", 2.0)
+        setGlobalFloat("editor_action_curve", 0.0)
+    end
+    
+
+    imguiSameLine()
+    imguiButton("Add Drop", "editor_action_drop")
+    local btn_drop = getGlobalFloat("editor_action_drop")
+    if btn_drop > 0.5 then
+        setGlobalFloat("editor_action", 3.0)
+        setGlobalFloat("editor_action_drop", 0.0)
+    end
+    
+    imguiButton("Add Transition", "editor_action_trans")
+    local btn_trans = getGlobalFloat("editor_action_trans")
+    if btn_trans > 0.5 then
+        setGlobalFloat("editor_action", 4.0)
+        setGlobalFloat("editor_action_trans", 0.0)
+    end
+    
+    imguiSameLine()
+    imguiButton("Add Gate", "editor_action_gate")
+    imguiSameLine()
+    imguiButton("Add Gap", "editor_action_gap")
+    local btn_gap = getGlobalFloat("editor_action_gap")
+    if btn_gap > 0.5 then
+        setGlobalFloat("editor_action", 6.0)
+        setGlobalFloat("editor_action_gap", 0.0)
+    end
+    imguiSameLine()
+    imguiButton("Close Loop", "editor_action_close")
+    local btn_close = getGlobalFloat("editor_action_close")
+    if btn_close > 0.5 then
+        setGlobalFloat("editor_action", 7.0)
+        setGlobalFloat("editor_action_close", 0.0)
+    end
+
+
+    local btn_gate = getGlobalFloat("editor_action_gate")
+    if btn_gate > 0.5 then
+        setGlobalFloat("editor_action", 5.0)
+        setGlobalFloat("editor_action_gate", 0.0)
+    end
+
+    
+    imguiSeparator()
+    imguiSeparator()
+    imguiButton("Save JSON", "editor_action_save")
+    imguiSameLine()
+    imguiButton("Load JSON", "editor_action_load")
+    
+    if getGlobalFloat("editor_action_save") > 0.5 then
+        setGlobalFloat("editor_action", 8.0)
+        setGlobalFloat("editor_action_save", 0.0)
+    end
+    if getGlobalFloat("editor_action_load") > 0.5 then
+        setGlobalFloat("editor_action", 9.0)
+        setGlobalFloat("editor_action_load", 0.0)
+    end
+    imguiButton("Clear Track", "editor_clear")
+    
+    imguiEnd()
+    delay(16)
+end
