@@ -56,6 +56,8 @@ function renderEditorUI()
     
     
     imguiButton("Clear Track", "editor_clear")
+    imguiSameLine()
+    imguiButton("Undo", "editor_action_undo")
     
     imguiEnd()
 end
@@ -113,6 +115,10 @@ while true do
     if getGlobalFloat("editor_action_load") > 0.5 then
         setGlobalFloat("editor_action", 9.0)
         setGlobalFloat("editor_action_load", 0.0)
+    end
+    if getGlobalFloat("editor_action_undo") > 0.5 then
+        setGlobalFloat("editor_action", 10.0)
+        setGlobalFloat("editor_action_undo", 0.0)
     end
 
     delay(1)
