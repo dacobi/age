@@ -59,17 +59,17 @@ func _process(_delta):
         var p6 = lua_manager.get_global_float("editor_param_6")
         
         if action == 1.0:
-            track_data.append({"type": "straight", "length": p1, "width": p2})
+            track_data.append({"type": "straight", "length": p1, "width": p2, "incline": p4})
         elif action == 2.0:
             track_data.append({"type": "curve", "angle": p1, "radius": p3, "width": p2})
         elif action == 3.0:
             track_data.append({"type": "drop", "drop_distance": p4})
         elif action == 4.0:
-            track_data.append({"type": "transition", "length": p1, "start_width": p2, "end_width": p5})
+            track_data.append({"type": "transition", "length": p1, "start_width": p2, "end_width": p5, "incline": p4})
         elif action == 5.0:
             track_data.append({"type": "gate", "length": p1, "track_width": p2, "gate_width": p5})
         elif action == 6.0:
-            track_data.append({"type": "gap", "length": p1, "width": p2, "ramp_angle": p6, "ramp_length": 20.0})
+            track_data.append({"type": "gap", "length": p1, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p1 * 0.2)})
         elif action == 7.0:
             track_data.append({"type": "close_loop", "width": p2})
         elif action == 8.0:
@@ -160,7 +160,18 @@ func rebuild_track():
             piece_node.add_child(_create_ai_sidewall(length, -width/2.0 - 2.0))
             piece_node.add_child(_create_ai_sidewall(length, width/2.0 + 2.0))
             
-            end_transform = end_transform.translated_local(Vector3(0, 0, -length))
+            var incline = float(piece.get("incline", 0.0))
+            if abs(incline) < 0.1:
+                end_transform = end_transform.translated_local(Vector3(0, 0, -length))
+            else:
+                piece_node.rotation_degrees.x = incline / 2.0
+                var theta = deg_to_rad(incline)
+                var R = length / abs(theta)
+                var sign_pitch = 1.0 if incline > 0 else -1.0
+                var y = (R - R * cos(abs(theta))) * sign_pitch
+                var z = -R * sin(abs(theta))
+                end_transform = current_transform.translated_local(Vector3(0, y, z))
+                end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta * sign_pitch)
             
         elif type == "curve":
             var raw_angle = float(piece.get("angle", 90.0))
