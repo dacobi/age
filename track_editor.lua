@@ -6,6 +6,7 @@ regGlobalFloat("editor_param_2", 80.0)  -- Width
 regGlobalFloat("editor_param_3", 100.0) -- Radius (for curves)
 regGlobalFloat("editor_param_4", 0.0)   -- Drop Distance / Incline
 regGlobalFloat("editor_clear", 0.0)
+regGlobalFloat("editor_show_final", 0.0)
 
 print("Starting Track Editor UI...")
 godotLoadScene("track_editor.tscn")
@@ -58,6 +59,9 @@ function renderEditorUI()
     imguiButton("Clear Track", "editor_clear")
     imguiSameLine()
     imguiButton("Undo", "editor_action_undo")
+    
+    imguiSeparator()
+    imguiCheckbox("Show Final", "editor_show_final")
     
     imguiEnd()
 end

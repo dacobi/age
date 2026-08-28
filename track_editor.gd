@@ -3,12 +3,17 @@ extends Node3D
 var track_data: Array = []
 var history_stack: Array = []
 var built_nodes: Array = []
+var is_showing_final = false
+var final_parent: Node3D
 
 @onready var track_root = $TrackRoot
 var lua_manager = null
 
 func _ready():
     Engine.max_fps = 60
+    final_parent = Node3D.new()
+    add_child(final_parent)
+    final_parent.visible = false
     lua_manager = get_tree().root.get_node_or_null("LuaManager")
     if not lua_manager:
         lua_manager = get_node_or_null("/root/LuaManager")
@@ -27,6 +32,20 @@ func _process(_delta):
         rebuild_track()
         return
 
+    var show_final = lua_manager.get_global_float("editor_show_final") > 0.5
+    if show_final != is_showing_final:
+        is_showing_final = show_final
+        if is_showing_final:
+            track_root.visible = false
+            final_parent.visible = true
+            preload("res://track_generator.gd").generate(track_data, final_parent)
+        else:
+            track_root.visible = true
+            final_parent.visible = false
+            
+    if is_showing_final:
+        return
+        
     var action = lua_manager.get_global_float("editor_action")
     if action > 0.0:
         if action >= 1.0 and action <= 7.0:
@@ -107,6 +126,9 @@ func clear_track():
     built_nodes.clear()
 
 func rebuild_track():
+    if is_showing_final:
+        preload("res://track_generator.gd").generate(track_data, final_parent)
+
     clear_track()
     var current_transform = Transform3D.IDENTITY
     
