@@ -148,23 +148,33 @@ func rebuild_track():
             var length = float(piece.get("length", 100.0))
             var width = float(piece.get("width", 104.0))
             
-            var road = _create_straight_csg(length, width, 0.0)
+            var incline = float(piece.get("incline", 0.0))
+            var render_len = length
+            
+            if abs(incline) >= 0.1:
+                var theta = deg_to_rad(incline)
+                var R = length / abs(theta)
+                var sign_pitch = 1.0 if incline > 0 else -1.0
+                var y = (R - R * cos(abs(theta))) * sign_pitch
+                var z = -R * sin(abs(theta))
+                render_len = sqrt(y*y + z*z)
+            
+            var road = _create_straight_csg(render_len, width, 0.0)
             piece_node.add_child(road)
-            var border_l = _create_straight_border(length, -width/2.0)
+            var border_l = _create_straight_border(render_len, -width/2.0)
             piece_node.add_child(border_l)
-            var border_r = _create_straight_border(length, width/2.0)
+            var border_r = _create_straight_border(render_len, width/2.0)
             piece_node.add_child(border_r)
             
-            var ai_vision = _create_straight_csg(length, width, -2.0, 128) 
+            var ai_vision = _create_straight_csg(render_len, width, -2.0, 128) 
             piece_node.add_child(ai_vision)
-            piece_node.add_child(_create_ai_sidewall(length, -width/2.0 - 2.0))
-            piece_node.add_child(_create_ai_sidewall(length, width/2.0 + 2.0))
+            piece_node.add_child(_create_ai_sidewall(render_len, -width/2.0 - 2.0))
+            piece_node.add_child(_create_ai_sidewall(render_len, width/2.0 + 2.0))
             
-            var incline = float(piece.get("incline", 0.0))
             if abs(incline) < 0.1:
                 end_transform = end_transform.translated_local(Vector3(0, 0, -length))
             else:
-                piece_node.rotation_degrees.x = incline / 2.0
+                piece_node.rotate_object_local(Vector3(1, 0, 0), deg_to_rad(incline) / 2.0)
                 var theta = deg_to_rad(incline)
                 var R = length / abs(theta)
                 var sign_pitch = 1.0 if incline > 0 else -1.0
@@ -194,39 +204,47 @@ func rebuild_track():
             var sw = float(piece.get("start_width", 104.0))
             var ew = float(piece.get("end_width", 52.0))
             
-            var road = _create_transition_csg(length, sw, ew, 0.0)
+            var incline = float(piece.get("incline", 0.0))
+            var render_len = length
+            
+            if abs(incline) >= 0.1:
+                var theta = deg_to_rad(incline)
+                var R = length / abs(theta)
+                var sign_pitch = 1.0 if incline > 0 else -1.0
+                var y = (R - R * cos(abs(theta))) * sign_pitch
+                var z = -R * sin(abs(theta))
+                render_len = sqrt(y*y + z*z)
+            
+            var road = _create_transition_csg(render_len, sw, ew, 0.0)
             piece_node.add_child(road)
-            var border_l = _create_transition_border(length, -sw/2.0, -ew/2.0)
+            var border_l = _create_transition_border(render_len, -sw/2.0, -ew/2.0)
             piece_node.add_child(border_l)
-            var border_r = _create_transition_border(length, sw/2.0, ew/2.0)
+            var border_r = _create_transition_border(render_len, sw/2.0, ew/2.0)
             piece_node.add_child(border_r)
             
-            var ai_vision = _create_transition_csg(length, sw, ew, -2.0, 128)
+            var ai_vision = _create_transition_csg(render_len, sw, ew, -2.0, 128)
             piece_node.add_child(ai_vision)
             
-            var ai_wall_l = _create_transition_border(length, -sw/2.0 - 2.0, -ew/2.0 - 2.0)
+            var ai_wall_l = _create_transition_border(render_len, -sw/2.0 - 2.0, -ew/2.0 - 2.0)
             ai_wall_l.position.y = 20.0
             ai_wall_l.depth = 40.0
             ai_wall_l.collision_layer = 128
             ai_wall_l.collision_mask = 0
             ai_wall_l.visible = false
-            ai_wall_l.material = null
             piece_node.add_child(ai_wall_l)
             
-            var ai_wall_r = _create_transition_border(length, sw/2.0 + 2.0, ew/2.0 + 2.0)
+            var ai_wall_r = _create_transition_border(render_len, sw/2.0 + 2.0, ew/2.0 + 2.0)
             ai_wall_r.position.y = 20.0
             ai_wall_r.depth = 40.0
             ai_wall_r.collision_layer = 128
             ai_wall_r.collision_mask = 0
             ai_wall_r.visible = false
-            ai_wall_r.material = null
             piece_node.add_child(ai_wall_r)
             
-            var incline = float(piece.get("incline", 0.0))
             if abs(incline) < 0.1:
                 end_transform = end_transform.translated_local(Vector3(0, 0, -length))
             else:
-                piece_node.rotation_degrees.x = incline / 2.0
+                piece_node.rotate_object_local(Vector3(1, 0, 0), deg_to_rad(incline) / 2.0)
                 var theta = deg_to_rad(incline)
                 var R = length / abs(theta)
                 var sign_pitch = 1.0 if incline > 0 else -1.0
