@@ -101,6 +101,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
 		Vector2(-ew/2.0 + w/2.0, length), Vector2(-sw/2.0 + w/2.0, 0)
 	])
 	border_l.rotation_degrees.x = -90
+	border_l.position.y = 4.0
 	border_l.use_collision = true
 	border_l.material = get_cyan_mat()
 	root.add_child(border_l)
@@ -113,6 +114,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
 		Vector2(ew/2.0 + w/2.0, length), Vector2(sw/2.0 + w/2.0, 0)
 	])
 	border_r.rotation_degrees.x = -90
+	border_r.position.y = 4.0
 	border_r.use_collision = true
 	border_r.material = get_cyan_mat()
 	root.add_child(border_r)
