@@ -8,4 +8,8 @@ func _ready():
 	$DirectionalLight3D.visible = false
 	
 	# Start loading cars.lua via the global LoadingScreen
-	get_node("/root/LoadingScreen").start_loading("cars.lua")
+	if not FileAccess.file_exists("res://init.lua"):
+		get_node("/root/LoadingScreen").start_loading("track_editor.lua")
+	else:
+		# Do not load cars.lua if init.lua is handling the boot process
+		pass
