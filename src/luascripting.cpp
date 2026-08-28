@@ -2159,19 +2159,8 @@ int LuaScripting::lua_imguiBegin(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (lua_isstring(L, 1) && self) {
         std::string title = lua_tostring(L, 1);
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            it->widgets.clear();
-        } else {
-            ImGuiWindowDef w;
-            w.title = title;
-            self->lua_imgui_windows.push_back(w);
-        }
         self->active_window_title = title;
+        self->active_window_widgets.clear();
     }
     return 0;
 }
@@ -2193,143 +2182,112 @@ int LuaScripting::lua_imguiRemoveWindow(lua_State* L) {
 
 int LuaScripting::lua_imguiEnd(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self) {
+    if (self && !self->active_window_title.empty()) {
         std::lock_guard<std::mutex> lock(self->imgui_mutex);
+        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
+            return w.title == self->active_window_title;
+        });
+        if (it != self->lua_imgui_windows.end()) {
+            it->widgets = self->active_window_widgets;
+        } else {
+            ImGuiWindowDef w;
+            w.title = self->active_window_title;
+            w.widgets = self->active_window_widgets;
+            self->lua_imgui_windows.push_back(w);
+        }
         self->active_window_title = "";
+        self->active_window_widgets.clear();
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiText(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1) && self) {
-        std::string text = lua_tostring(L, 1);
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1)) {
             w.type = ImGuiWidget::TEXT;
-            w.label = text;
-            it->widgets.push_back(w);
-        }
+            w.label = lua_tostring(L, 1);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiSeparator(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self) {
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
-            w.type = ImGuiWidget::SEPARATOR;
-            it->widgets.push_back(w);
-        }
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        w.type = ImGuiWidget::SEPARATOR;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiCheckbox(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1) && lua_isstring(L, 2) && self) {
-        std::string label = lua_tostring(L, 1);
-        std::string var_name = lua_tostring(L, 2);
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1) && lua_isstring(L, 2)) {
             w.type = ImGuiWidget::CHECKBOX;
-            w.label = label;
-            w.var_name = var_name;
-            it->widgets.push_back(w);
-        }
+            w.label = lua_tostring(L, 1);
+            w.var_name = lua_tostring(L, 2);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiSliderFloat(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isnumber(L, 3) && lua_isnumber(L, 4) && self) {
-        std::string label = lua_tostring(L, 1);
-        std::string var_name = lua_tostring(L, 2);
-        float min_val = (float)lua_tonumber(L, 3);
-        float max_val = (float)lua_tonumber(L, 4);
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isnumber(L, 3) && lua_isnumber(L, 4)) {
             w.type = ImGuiWidget::SLIDER_FLOAT;
-            w.label = label;
-            w.var_name = var_name;
-            w.min_val = min_val;
-            w.max_val = max_val;
-            it->widgets.push_back(w);
-        }
+            w.label = lua_tostring(L, 1);
+            w.var_name = lua_tostring(L, 2);
+            w.min_val = (float)lua_tonumber(L, 3);
+            w.max_val = (float)lua_tonumber(L, 4);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiButton(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1) && lua_isstring(L, 2) && self) {
-        std::string label = lua_tostring(L, 1);
-        std::string var_name = lua_tostring(L, 2);
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1) && lua_isstring(L, 2)) {
             w.type = ImGuiWidget::BUTTON;
-            w.label = label;
-            w.var_name = var_name;
-            it->widgets.push_back(w);
-        }
+            w.label = lua_tostring(L, 1);
+            w.var_name = lua_tostring(L, 2);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiProgressBar(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1) && lua_isstring(L, 2) && self) {
-        std::string overlay_text = lua_tostring(L, 1);
-        std::string var_name = lua_tostring(L, 2);
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1) && lua_isstring(L, 2)) {
             w.type = ImGuiWidget::PROGRESS_BAR;
-            w.label = overlay_text;
-            w.var_name = var_name;
-            it->widgets.push_back(w);
-        }
+            w.label = lua_tostring(L, 1);
+            w.var_name = lua_tostring(L, 2);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }
 
 int LuaScripting::lua_imguiSameLine(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self) {
-        std::lock_guard<std::mutex> lock(self->imgui_mutex);
-        auto it = std::find_if(self->lua_imgui_windows.begin(), self->lua_imgui_windows.end(), [&](const ImGuiWindowDef& w) {
-            return w.title == self->active_window_title;
-        });
-        if (it != self->lua_imgui_windows.end()) {
-            ImGuiWidget w;
-            w.type = ImGuiWidget::SAME_LINE;
-            it->widgets.push_back(w);
-        }
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        w.type = ImGuiWidget::SAME_LINE;
+        self->active_window_widgets.push_back(w);
     }
     return 0;
 }

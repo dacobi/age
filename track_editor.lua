@@ -10,7 +10,7 @@ regGlobalFloat("editor_clear", 0.0)
 print("Starting Track Editor UI...")
 godotLoadScene("track_editor.tscn")
 
-while true do
+function renderEditorUI()
     imguiBegin("Track Editor")
     
     imguiText("Procedural Track Builder")
@@ -28,54 +28,77 @@ while true do
     imguiText("Add Elements:")
     
     imguiButton("Add Straight", "editor_action_straight")
-    local btn_straight = getGlobalFloat("editor_action_straight")
-    if btn_straight > 0.5 then
-        setGlobalFloat("editor_action", 1.0)
-        setGlobalFloat("editor_action_straight", 0.0)
-    end
     
     imguiSameLine()
     
     imguiButton("Add Curve", "editor_action_curve")
-    local btn_curve = getGlobalFloat("editor_action_curve")
-    if btn_curve > 0.5 then
-        setGlobalFloat("editor_action", 2.0)
-        setGlobalFloat("editor_action_curve", 0.0)
-    end
     
-
     imguiSameLine()
     imguiButton("Add Drop", "editor_action_drop")
-    local btn_drop = getGlobalFloat("editor_action_drop")
-    if btn_drop > 0.5 then
-        setGlobalFloat("editor_action", 3.0)
-        setGlobalFloat("editor_action_drop", 0.0)
-    end
+    
     
     imguiButton("Add Transition", "editor_action_trans")
-    local btn_trans = getGlobalFloat("editor_action_trans")
-    if btn_trans > 0.5 then
-        setGlobalFloat("editor_action", 4.0)
-        setGlobalFloat("editor_action_trans", 0.0)
-    end
+    
     
     imguiSameLine()
     imguiButton("Add Gate", "editor_action_gate")
     imguiSameLine()
     imguiButton("Add Gap", "editor_action_gap")
+    
+    imguiSameLine()
+    imguiButton("Close Loop", "editor_action_close")
+        
+    imguiSeparator()
+    imguiSeparator()
+    imguiButton("Save JSON", "editor_action_save")
+    imguiSameLine()
+    imguiButton("Load JSON", "editor_action_load")
+    
+    
+    imguiButton("Clear Track", "editor_clear")
+    
+    imguiEnd()
+end
+    -- body
+
+while true do
+    renderEditorUI()
+
+    local btn_straight = getGlobalFloat("editor_action_straight")
+    if btn_straight > 0.5 then
+        setGlobalFloat("editor_action", 1.0)
+        setGlobalFloat("editor_action_straight", 0.0)
+    end
+
+    local btn_curve = getGlobalFloat("editor_action_curve")
+    if btn_curve > 0.5 then
+        setGlobalFloat("editor_action", 2.0)
+        setGlobalFloat("editor_action_curve", 0.0)
+    end   
+
+    local btn_drop = getGlobalFloat("editor_action_drop")
+    if btn_drop > 0.5 then
+        setGlobalFloat("editor_action", 3.0)
+        setGlobalFloat("editor_action_drop", 0.0)
+    end
+
+    local btn_trans = getGlobalFloat("editor_action_trans")
+    if btn_trans > 0.5 then
+        setGlobalFloat("editor_action", 4.0)
+        setGlobalFloat("editor_action_trans", 0.0)
+    end
+
     local btn_gap = getGlobalFloat("editor_action_gap")
     if btn_gap > 0.5 then
         setGlobalFloat("editor_action", 6.0)
         setGlobalFloat("editor_action_gap", 0.0)
     end
-    imguiSameLine()
-    imguiButton("Close Loop", "editor_action_close")
+
     local btn_close = getGlobalFloat("editor_action_close")
     if btn_close > 0.5 then
         setGlobalFloat("editor_action", 7.0)
         setGlobalFloat("editor_action_close", 0.0)
     end
-
 
     local btn_gate = getGlobalFloat("editor_action_gate")
     if btn_gate > 0.5 then
@@ -83,13 +106,6 @@ while true do
         setGlobalFloat("editor_action_gate", 0.0)
     end
 
-    
-    imguiSeparator()
-    imguiSeparator()
-    imguiButton("Save JSON", "editor_action_save")
-    imguiSameLine()
-    imguiButton("Load JSON", "editor_action_load")
-    
     if getGlobalFloat("editor_action_save") > 0.5 then
         setGlobalFloat("editor_action", 8.0)
         setGlobalFloat("editor_action_save", 0.0)
@@ -98,8 +114,6 @@ while true do
         setGlobalFloat("editor_action", 9.0)
         setGlobalFloat("editor_action_load", 0.0)
     end
-    imguiButton("Clear Track", "editor_clear")
-    
-    imguiEnd()
-    delay(16)
+
+    delay(1)
 end

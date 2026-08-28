@@ -351,6 +351,7 @@ public:
     bool record_hide_window = false;
 private:
     std::string active_window_title;
+    std::vector<ImGuiWidget> active_window_widgets;
     std::mutex imgui_mutex;
 
     static int lua_imguiBegin(lua_State* L);

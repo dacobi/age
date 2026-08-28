@@ -7,6 +7,7 @@ var built_nodes: Array = []
 var lua_manager = null
 
 func _ready():
+    Engine.max_fps = 60
     lua_manager = get_tree().root.get_node_or_null("LuaManager")
     if not lua_manager:
         lua_manager = get_node_or_null("/root/LuaManager")
