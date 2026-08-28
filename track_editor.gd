@@ -171,7 +171,7 @@ func rebuild_track():
                 var y = (R - R * cos(abs(theta))) * sign_pitch
                 var z = -R * sin(abs(theta))
                 end_transform = current_transform.translated_local(Vector3(0, y, z))
-                end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta * sign_pitch)
+                end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta)
             
         elif type == "curve":
             var raw_angle = float(piece.get("angle", 90.0))
@@ -222,7 +222,18 @@ func rebuild_track():
             ai_wall_r.material = null
             piece_node.add_child(ai_wall_r)
             
-            end_transform = end_transform.translated_local(Vector3(0, 0, -length))
+            var incline = float(piece.get("incline", 0.0))
+            if abs(incline) < 0.1:
+                end_transform = end_transform.translated_local(Vector3(0, 0, -length))
+            else:
+                piece_node.rotation_degrees.x = incline / 2.0
+                var theta = deg_to_rad(incline)
+                var R = length / abs(theta)
+                var sign_pitch = 1.0 if incline > 0 else -1.0
+                var y = (R - R * cos(abs(theta))) * sign_pitch
+                var z = -R * sin(abs(theta))
+                end_transform = current_transform.translated_local(Vector3(0, y, z))
+                end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta)
             
         elif type == "gate":
             var tw = float(piece.get("track_width", 104.0))
