@@ -159,6 +159,73 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
 	create_path_csg.call(ai_f, 128, null)
 
 
+static func _build_close_loop(root: Node3D, current_transform: Transform3D, width: float) -> Transform3D:
+	var end_pos_global = Vector3(0, 0, 0)
+	var end_dir_global = Vector3(0, 0, -1)
+	
+	var start_pos_local = Vector3.ZERO
+	var start_dir_local = Vector3(0, 0, -1)
+	var end_pos_local = current_transform.affine_inverse() * end_pos_global
+	var end_dir_local = current_transform.basis.inverse() * end_dir_global
+	
+	var dist = start_pos_local.distance_to(end_pos_local)
+	if dist < 0.1:
+		var ret = Transform3D()
+		ret.origin = end_pos_global
+		ret.basis = Basis()
+		return ret
+		
+	var handle_len = dist * 0.4
+	var path = Path3D.new()
+	path.curve = Curve3D.new()
+	path.curve.bake_interval = 0.01
+	path.curve.add_point(start_pos_local, Vector3.ZERO, start_dir_local * handle_len)
+	path.curve.add_point(end_pos_local, -end_dir_local * handle_len, Vector3.ZERO)
+	root.add_child(path)
+	
+	var create_path_csg = func(poly: PackedVector2Array, c_layer: int, mat: Material):
+		var csg = CSGPolygon3D.new()
+		path.add_child(csg)
+		csg.mode = CSGPolygon3D.MODE_PATH
+		csg.path_node = NodePath("..")
+		csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+		csg.path_local = true
+		csg.path_continuous_u = true
+		csg.path_u_distance = 16.0
+		csg.path_interval = 1.0
+		csg.path_rotation_accurate = true
+		csg.path_simplify_angle = 0.0
+		csg.path_interval_type = 1
+		csg.use_collision = true
+		csg.material = mat
+		if c_layer != 1:
+			csg.collision_layer = c_layer
+			csg.collision_mask = 0
+			csg.visible = false
+		csg.polygon = poly
+		
+	var hw = width / 2.0
+	var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
+	create_path_csg.call(road_poly, 1, get_road_mat())
+	
+	var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+	create_path_csg.call(c_line, 1, get_centerline_mat())
+	
+	var w = 2.0
+	var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
+	create_path_csg.call(ai_l, 128, null)
+	
+	var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
+	create_path_csg.call(ai_r, 128, null)
+	
+	var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -2.0)])
+	create_path_csg.call(ai_f, 128, null)
+	
+	var ret = Transform3D()
+	ret.origin = end_pos_global
+	ret.basis = Basis()
+	return ret
+
 static func generate(track_data: Array, root_node: Node3D):
 	for child in root_node.get_children():
 		child.queue_free()
@@ -311,5 +378,9 @@ static func generate(track_data: Array, root_node: Node3D):
 		elif piece["type"] == "drop":
 			var drop_d = piece["drop_distance"]
 			end_transform = current_transform.translated_local(Vector3(0, -drop_d, 0))
+			
+		elif piece["type"] == "close_loop":
+			var width = float(piece.get("width", 104.0))
+			end_transform = _build_close_loop(root, current_transform, width)
 			
 		current_transform = end_transform
