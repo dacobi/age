@@ -511,7 +511,7 @@ static func generate(track_data: Array, root_node: Node3D):
 				var y = (R - R * cos(abs(theta))) * sign_pitch
 				var z = -R * sin(abs(theta))
 				end_transform = current_transform.translated_local(Vector3(0, y, z))
-				end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta * sign_pitch)
+				end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta)
 			
 		elif piece["type"] == "curve":
 			var angle = piece["angle"]
@@ -540,7 +540,7 @@ static func generate(track_data: Array, root_node: Node3D):
 				var y = (R - R * cos(abs(theta))) * sign_pitch
 				var z = -R * sin(abs(theta))
 				end_transform = current_transform.translated_local(Vector3(0, y, z))
-				end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta * sign_pitch)
+				end_transform.basis = end_transform.basis.rotated(current_transform.basis.x, theta)
 			
 		elif piece["type"] == "gate":
 			var tw = float(piece.get("track_width", 104.0))
