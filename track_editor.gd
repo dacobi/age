@@ -1,6 +1,7 @@
 extends Node3D
 
 var track_data: Array = []
+var history_stack: Array = []
 var built_nodes: Array = []
 
 @onready var track_root = $TrackRoot
@@ -28,6 +29,9 @@ func _process(_delta):
 
     var action = lua_manager.get_global_float("editor_action")
     if action > 0.0:
+        if action >= 1.0 and action <= 7.0:
+            history_stack.append(track_data.duplicate(true))
+            
         var p1 = lua_manager.get_global_float("editor_param_1")
         var p2 = lua_manager.get_global_float("editor_param_2")
         var p3 = lua_manager.get_global_float("editor_param_3")
@@ -57,6 +61,9 @@ func _process(_delta):
             lua_manager.set_global_float("editor_action", 0.0)
             _show_file_dialog(true)
             return
+        elif action == 10.0:
+            if history_stack.size() > 0:
+                track_data = history_stack.pop_back()
             
         lua_manager.set_global_float("editor_action", 0.0)
         rebuild_track()
@@ -84,6 +91,7 @@ func _on_save_file(path: String):
         file.close()
 
 func _on_load_file(path: String):
+    history_stack.append(track_data.duplicate(true))
     var file = FileAccess.open(path, FileAccess.READ)
     if file:
         var text = file.get_as_text()
