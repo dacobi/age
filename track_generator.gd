@@ -225,27 +225,52 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     var slope = tan(pitch)
     var has_incline = abs(pitch) > 0.01
     
-    for i in range(num_points + 1):
-        var t = float(i) / num_points
-        var current_angle = t * angle_rad
-        var x = radius * (1.0 - cos(current_angle)) * sign_val
-        var z = -radius * sin(current_angle)
-        var y = radius * current_angle * slope
-        
-        var tan_x = radius * sin(current_angle) * sign_val
-        var tan_z = -radius * cos(current_angle)
-        var tan_y = radius * slope
-        var tangent = Vector3(tan_x, tan_y, tan_z)
-        
-        var handle = tangent * ((angle_rad / num_points) / 3.0)
-        curve.add_point(Vector3(x, y, z), -handle, handle)
-        
-        var global_t = lerp(start_t, end_t, t)
-        var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
-        
-        # Counteract helix torsion
-        var twist = -current_angle * sin(pitch) * sign_val
-        curve.set_point_tilt(i, (sin(global_t * PI) * max_tilt) + twist)
+    var expected_flat = Basis().rotated(Vector3.UP, angle_rad * -sign_val)
+    var expected_basis = expected_flat.rotated(expected_flat.x, pitch)
+    
+    var build_curve_points = func(c: Curve3D, torsion: float, apply_tilt: bool):
+        c.clear_points()
+        for i in range(num_points + 1):
+            var t = float(i) / num_points
+            var current_angle = t * angle_rad
+            var global_t = lerp(start_t, end_t, t)
+            var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
+            var nascar_tilt = sin(global_t * PI) * max_tilt
+            
+            var y_bump = (width / 2.0) * abs(sin(nascar_tilt))
+            
+            var x = radius * (1.0 - cos(current_angle)) * sign_val
+            var z = -radius * sin(current_angle)
+            var y = (radius * current_angle * slope) + y_bump
+            
+            var d_global_t_dt = end_t - start_t
+            var d_nascar_dt = cos(global_t * PI) * PI * max_tilt * d_global_t_dt
+            var d_ybump_dt = (width / 2.0) * sign(nascar_tilt) * cos(nascar_tilt) * d_nascar_dt if max_tilt != 0.0 else 0.0
+            
+            var tan_y = (radius * slope) + (d_ybump_dt / angle_rad)
+            var tan_x = radius * sin(current_angle) * sign_val
+            var tan_z = -radius * cos(current_angle)
+            var tangent = Vector3(tan_x, tan_y, tan_z)
+            
+            var handle = tangent * ((angle_rad / num_points) / 3.0)
+            
+            c.add_point(Vector3(x, y, z), -handle, handle)
+            if apply_tilt:
+                c.set_point_tilt(i, nascar_tilt + lerp(0.0, torsion, t))
+            else:
+                c.set_point_tilt(i, 0.0)
+
+    var temp_c = Curve3D.new()
+    temp_c.bake_interval = 0.01
+    temp_c.up_vector_enabled = true
+    build_curve_points.call(temp_c, 0.0, false)
+    
+    var tf1 = temp_c.sample_baked_with_rotation(temp_c.get_baked_length(), false, true)
+    var proj_x = tf1.basis.x.dot(expected_basis.x)
+    var proj_y = tf1.basis.x.dot(expected_basis.y)
+    var torsion_error = atan2(proj_y, proj_x)
+    
+    build_curve_points.call(curve, torsion_error, true)
         
     path.curve = curve
     root.add_child(path)
