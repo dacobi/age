@@ -31,7 +31,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
     if abs(incline) < 0.1:
         var road = CSGPolygon3D.new()
         road.mode = CSGPolygon3D.MODE_DEPTH
-        road.depth = length
+        road.depth = max(0.1, length)
         road.polygon = PackedVector2Array([
             Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5), Vector2(-hw, -0.5)
         ])
@@ -41,7 +41,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         
         var c_line = CSGPolygon3D.new()
         c_line.mode = CSGPolygon3D.MODE_DEPTH
-        c_line.depth = length
+        c_line.depth = max(0.1, length)
         c_line.polygon = PackedVector2Array([
             Vector2(-1.2, 0.25), Vector2(1.2, 0.25), Vector2(1.2, 0.15), Vector2(-1.2, 0.15)
         ])
@@ -52,7 +52,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         var w = 2.0
         var border_l = CSGPolygon3D.new()
         border_l.mode = CSGPolygon3D.MODE_DEPTH
-        border_l.depth = length
+        border_l.depth = max(0.1, length)
         border_l.polygon = PackedVector2Array([
             Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
         ])
@@ -62,7 +62,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
 
         var border_r = CSGPolygon3D.new()
         border_r.mode = CSGPolygon3D.MODE_DEPTH
-        border_r.depth = length
+        border_r.depth = max(0.1, length)
         border_r.polygon = PackedVector2Array([
             Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
         ])
@@ -241,7 +241,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
         curve.add_point(Vector3(x, y, z), -handle, handle)
         
         var global_t = lerp(start_t, end_t, t)
-        var max_tilt = 0.0 if has_incline else deg_to_rad(15.0)
+        var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
         
         # Counteract helix torsion
         var twist = -current_angle * sin(pitch) * sign_val
