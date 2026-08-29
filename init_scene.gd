@@ -9,7 +9,7 @@ func _ready():
 	
 	# Start loading cars.lua via the global LoadingScreen
 	if not FileAccess.file_exists("res://init.lua"):
-		get_node("/root/LoadingScreen").start_loading("track_editor.lua")
+		get_node("/root/LoadingScreen").start_loading("cars.lua")
 	else:
 		# Do not load cars.lua if init.lua is handling the boot process
 		pass
