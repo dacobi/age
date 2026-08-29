@@ -25,6 +25,81 @@ static func get_cyan_mat() -> Material:
     mat.emission = Color(0.0, 0.9, 0.9, 1.0)
     return mat
 
+
+static func _build_bank_transition(root: Node3D, length: float, width: float, start_tilt: float, end_tilt: float):
+    var path = Path3D.new()
+    var curve = Curve3D.new()
+    curve.bake_interval = 0.01
+    
+    var num_points = max(20, int(length / 2.0))
+    for i in range(num_points + 1):
+        var t = float(i) / num_points
+        var smooth_t = t * t * (3.0 - 2.0 * t)
+        var current_tilt = lerp(start_tilt, end_tilt, smooth_t)
+        
+        var y_bump = (width / 2.0) * abs(sin(current_tilt))
+        
+        var z = -length * t
+        var y = y_bump
+        
+        var d_smooth_dt = (6.0 * t - 6.0 * t * t) / length
+        var d_tilt_dt = (end_tilt - start_tilt) * d_smooth_dt
+        var d_ybump_dt = (width / 2.0) * sign(current_tilt) * cos(current_tilt) * d_tilt_dt if current_tilt != 0.0 else 0.0
+        
+        var tangent = Vector3(0, d_ybump_dt, -1)
+        var handle = tangent * (length / num_points / 3.0)
+        
+        curve.add_point(Vector3(0, y, z), -handle, handle)
+        curve.set_point_tilt(i, current_tilt)
+        
+    path.curve = curve
+    root.add_child(path)
+    
+    var create_path_csg = func(poly: PackedVector2Array, c_layer: int, mat: Material, use_col: bool = true):
+        var csg = CSGPolygon3D.new()
+        path.add_child(csg)
+        csg.mode = CSGPolygon3D.MODE_PATH
+        csg.path_node = NodePath("..")
+        csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+        csg.path_local = true
+        csg.path_continuous_u = true
+        csg.path_u_distance = 16.0
+        csg.path_interval = 0.25
+        csg.path_rotation_accurate = true
+        csg.path_simplify_angle = 0.0
+        csg.path_interval_type = 1
+        csg.use_collision = use_col
+        csg.material = mat
+        if c_layer != 1:
+            csg.collision_layer = c_layer
+            csg.collision_mask = 0
+            csg.visible = false
+        csg.polygon = poly
+        
+    var hw = width / 2.0
+    var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
+    create_path_csg.call(road_poly, 1, get_road_mat())
+    
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    create_path_csg.call(c_line, 1, get_centerline_mat(), false)
+    
+    var w = 2.0
+    var border_l = PackedVector2Array([
+        Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+    ])
+    create_path_csg.call(border_l, 1, get_cyan_mat())
+    
+    var border_r = PackedVector2Array([
+        Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+    ])
+    create_path_csg.call(border_r, 1, get_cyan_mat())
+    
+    var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
+    create_path_csg.call(ai_l, 128, null)
+    
+    var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
+    create_path_csg.call(ai_r, 128, null)
+
 static func _build_straight(root: Node3D, length: float, width: float, incline: float = 0.0):
     var hw = width / 2.0
     
@@ -220,7 +295,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     var curve = Curve3D.new()
     curve.bake_interval = 0.01
     
-    var num_points = 20
+    var num_points = max(32, int(abs(angle) * 1.5))
     var angle_rad = deg_to_rad(abs(angle))
     var sign_val = 1.0 if angle < 0 else -1.0 
     var slope = tan(pitch)
@@ -236,7 +311,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
             var current_angle = t * angle_rad
             var global_t = lerp(start_t, end_t, t)
             var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
-            var nascar_tilt = sin(global_t * PI) * max_tilt
+            var nascar_tilt = max_tilt
             
             var y_bump = (width / 2.0) * abs(sin(nascar_tilt))
             
@@ -245,7 +320,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
             var y = (radius * current_angle * slope) + y_bump
             
             var d_global_t_dt = end_t - start_t
-            var d_nascar_dt = cos(global_t * PI) * PI * max_tilt * d_global_t_dt
+            var d_nascar_dt = 0.0
             var d_ybump_dt = (width / 2.0) * sign(nascar_tilt) * cos(nascar_tilt) * d_nascar_dt if max_tilt != 0.0 else 0.0
             
             var tan_y = (radius * slope) + (d_ybump_dt / angle_rad)
@@ -443,7 +518,8 @@ static func generate(track_data: Array, root_node: Node3D):
             
     var current_transform = Transform3D()
     
-    for i in range(track_data.size()):
+    var i = 0
+    while i < track_data.size():
         var piece = track_data[i]
         var root = Node3D.new()
         root_node.add_child(root)
@@ -569,6 +645,52 @@ static func generate(track_data: Array, root_node: Node3D):
             
             end_transform = current_transform.translated_local(Vector3(0, 0, -length))
             
+        elif piece["type"] == "bank_transition":
+            var length = float(piece.get("length", 100.0))
+            var width = float(piece.get("width", 104.0))
+            
+            # Find next curve direction
+            var next_sign = 1.0
+            var found = false
+            for j in range(i + 1, track_data.size()):
+                var t = track_data[j].get("type", "")
+                if t == "curve":
+                    var raw_ang = float(track_data[j].get("angle", 90.0))
+                    next_sign = 1.0 if raw_ang < 0 else -1.0
+                    found = true
+                    break
+                elif t in ["straight", "bank_transition", "gap", "drop"]:
+                    break
+                    
+            # Check if we're *leaving* a curve
+            var prev_sign = 1.0
+            var prev_found = false
+            for j in range(i - 1, -1, -1):
+                var t = track_data[j].get("type", "")
+                if t == "curve":
+                    var raw_ang = float(track_data[j].get("angle", 90.0))
+                    prev_sign = 1.0 if raw_ang < 0 else -1.0
+                    prev_found = true
+                    break
+                elif t in ["straight", "bank_transition", "gap", "drop"]:
+                    break
+                    
+            var max_tilt = deg_to_rad(15.0)
+            
+            # Determine if entering or exiting
+            var start_tilt = 0.0
+            var end_tilt = 0.0
+            if found and not prev_found:
+                end_tilt = max_tilt * next_sign
+            elif prev_found and not found:
+                start_tilt = max_tilt * prev_sign
+            elif found and prev_found:
+                start_tilt = max_tilt * prev_sign
+                end_tilt = max_tilt * next_sign
+                
+            _build_bank_transition(root, length, width, start_tilt, end_tilt)
+            
+            end_transform = current_transform.translated_local(Vector3(0, 0, -length))
         elif piece["type"] == "gap":
             var length = piece["length"]
             var width = piece["width"]
@@ -586,3 +708,4 @@ static func generate(track_data: Array, root_node: Node3D):
             end_transform = _build_close_loop(root, current_transform, width)
             
         current_transform = end_transform
+        i += 1

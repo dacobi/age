@@ -48,6 +48,8 @@ function renderEditorUI()
     
     
     imguiButton("Add Transition", "editor_action_trans")
+    imguiSameLine()
+    imguiButton("Bank Trans", "editor_action_bank_trans")
     
     
     imguiSameLine()
@@ -102,6 +104,12 @@ while true do
         setGlobalFloat("editor_action_trans", 0.0)
     end
 
+    local btn_bank = getGlobalFloat("editor_action_bank_trans")
+    if btn_bank > 0.5 then
+        setGlobalFloat("editor_action", 9.0)
+        setGlobalFloat("editor_action_bank_trans", 0.0)
+    end
+
     local btn_gap = getGlobalFloat("editor_action_gap")
     if btn_gap > 0.5 then
         setGlobalFloat("editor_action", 6.0)
@@ -121,15 +129,15 @@ while true do
     end
 
     if getGlobalFloat("editor_action_save") > 0.5 then
-        setGlobalFloat("editor_action", 8.0)
+        setGlobalFloat("editor_action", 10.0)
         setGlobalFloat("editor_action_save", 0.0)
     end
     if getGlobalFloat("editor_action_load") > 0.5 then
-        setGlobalFloat("editor_action", 9.0)
+        setGlobalFloat("editor_action", 11.0)
         setGlobalFloat("editor_action_load", 0.0)
     end
     if getGlobalFloat("editor_action_undo") > 0.5 then
-        setGlobalFloat("editor_action", 10.0)
+        setGlobalFloat("editor_action", 12.0)
         setGlobalFloat("editor_action_undo", 0.0)
     end
 
