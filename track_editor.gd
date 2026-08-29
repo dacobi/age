@@ -65,11 +65,11 @@ func _process(_delta):
         elif action == 3.0:
             track_data.append({"type": "drop", "drop_distance": p4})
         elif action == 4.0:
-            track_data.append({"type": "transition", "length": p1, "start_width": p2, "end_width": p5, "incline": p4})
+            track_data.append({"type": "transition", "length": p1, "start_width": p2, "end_width": p5})
         elif action == 5.0:
             track_data.append({"type": "gate", "length": p1, "track_width": p2, "gate_width": p5})
         elif action == 6.0:
-            track_data.append({"type": "gap", "length": p1, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p1 * 0.2)})
+            track_data.append({"type": "gap", "length": p1, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p1 * 0.3)})
         elif action == 7.0:
             track_data.append({"type": "close_loop", "width": p2})
         elif action == 8.0:
@@ -106,7 +106,7 @@ func _show_file_dialog(is_load: bool):
 func _on_save_file(path: String):
     var file = FileAccess.open(path, FileAccess.WRITE)
     if file:
-        file.store_string(JSON.stringify(track_data, "	"))
+        file.store_string(JSON.stringify(track_data, "    "))
         file.close()
 
 func _on_load_file(path: String):
@@ -190,14 +190,27 @@ func rebuild_track():
             var radius = max(1.0, float(piece.get("radius", 100.0)))
             var width = float(piece.get("width", 104.0))
             
-            var curve_data = _create_curve_csg(angle, radius, width, piece_node)
+            var forward = -current_transform.basis.z
+            var pitch = atan2(forward.y, Vector2(forward.x, forward.z).length())
+            var flat_forward = Vector3(forward.x, 0, forward.z).normalized()
+            if flat_forward.length_squared() < 0.01: flat_forward = -current_transform.basis.y
+            var flat_right = flat_forward.cross(Vector3.UP).normalized()
+            var flat_basis = Basis(flat_right, Vector3.UP, -flat_forward)
+            var flat_transform = Transform3D(flat_basis, current_transform.origin)
             
-            var angle_rad = deg_to_rad(angle)
-            var sign = 1.0 if angle < 0 else -1.0
+            piece_node.global_transform = flat_transform
             
-            var end_pos = Vector3(radius * (1.0 - cos(angle_rad)) * sign, 0, -radius * sin(angle_rad))
-            end_transform = end_transform.translated_local(end_pos)
-            end_transform.basis = end_transform.basis.rotated(Vector3.UP, angle_rad * -sign)
+            var curve_data = _create_curve_csg(angle, radius, width, piece_node, pitch)
+            
+            var angle_rad = deg_to_rad(abs(angle))
+            var sign_val = 1.0 if angle < 0 else -1.0
+            var slope = tan(pitch)
+            
+            var end_pos = Vector3(radius * (1.0 - cos(angle_rad)) * sign_val, radius * angle_rad * slope, -radius * sin(angle_rad))
+            var end_flat_basis = flat_basis.rotated(Vector3.UP, angle_rad * -sign_val)
+            
+            end_transform.origin = flat_transform * end_pos
+            end_transform.basis = end_flat_basis.rotated(end_flat_basis.x, pitch)
             
         elif type == "transition":
             var length = float(piece.get("length", 100.0))
@@ -528,7 +541,7 @@ func _create_transition_border(length: float, start_x: float, end_x: float) -> C
     return csg
 
 
-func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D) -> Dictionary:
+func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D, pitch: float = 0.0) -> Dictionary:
     var path = Path3D.new()
     path.name = "Path3D"
     var curve = Curve3D.new()
@@ -536,28 +549,28 @@ func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D
     
     var num_points = 20
     var angle_rad = deg_to_rad(abs(angle))
-    var sign = 1.0 if angle < 0 else -1.0 
+    var sign_val = 1.0 if angle < 0 else -1.0 
+    var slope = tan(pitch)
     
     for i in range(num_points + 1):
         var t = float(i) / num_points
         var current_angle = t * angle_rad
-        var x = radius * (1.0 - cos(current_angle)) * sign
+        var x = radius * (1.0 - cos(current_angle)) * sign_val
         var z = -radius * sin(current_angle)
+        var y = radius * current_angle * slope
         
-        # Tangent vector for a circle:
-        # dx/d(theta) = radius * sin(current_angle) * sign
-        # dz/d(theta) = -radius * cos(current_angle)
-        var tan_x = radius * sin(current_angle) * sign
+        var tan_x = radius * sin(current_angle) * sign_val
         var tan_z = -radius * cos(current_angle)
-        var tangent = Vector3(tan_x, 0, tan_z)
+        var tan_y = radius * slope
+        var tangent = Vector3(tan_x, tan_y, tan_z)
         
-        # Arc length between points is roughly (angle_rad / num_points) * radius
-        # The bezier handle length should be scaled appropriately.
-        # A good approximation for small angles is handle_len = (arc_length) / 3.0
-        var handle_len = (angle_rad / num_points) * radius / 3.0
-        var handle = tangent.normalized() * handle_len
+        var handle = tangent * ((angle_rad / num_points) / 3.0)
         
-        curve.add_point(Vector3(x, 0, z), -handle, handle)
+        curve.add_point(Vector3(x, y, z), -handle, handle)
+        
+        # Counteract helix torsion so the track stays perfectly horizontal
+        var twist = -current_angle * sin(pitch) * sign_val
+        curve.set_point_tilt(i, twist)
         
     path.curve = curve
     var root = Node3D.new()
