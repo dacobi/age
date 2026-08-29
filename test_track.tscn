@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://cq1iqcx2ych0i"]
+
+[ext_resource type="Script" path="res://test_track.gd" id="1_track_script"]
+[ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="2_7dgu3"]
+[ext_resource type="PackedScene" path="res://lemans_car.tscn" id="2_supercar"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ouvil"]
+panorama = ExtResource("2_7dgu3")
+
+[sub_resource type="Sky" id="Sky_cyber"]
+sky_material = SubResource("PanoramaSkyMaterial_ouvil")
+
+[sub_resource type="Environment" id="Environment_cyber"]
+background_mode = 2
+sky = SubResource("Sky_cyber")
+ambient_light_source = 2
+ambient_light_color = Color(0.2, 0.1, 0.3, 1)
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.8
+glow_bloom = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Road"]
+albedo_color = Color(0.04, 0.04, 0.06, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_NeonCyan"]
+albedo_color = Color(0, 0.9, 0.9, 1)
+emission_enabled = true
+emission = Color(0, 0.9, 0.9, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_GridLine"]
+albedo_color = Color(0.8, 0.1, 0.8, 1)
+emission_enabled = true
+emission = Color(0.8, 0.1, 0.8, 1)
+emission_energy_multiplier = 3.0
+
+[node name="MegaRacerScene" type="Node3D" unique_id=462286288]
+script = ExtResource("1_track_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1631348011]
+environment = SubResource("Environment_cyber")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=648969383]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0.25, 0.933013, 0.25, -0.433013, 0.108253, 0.89481, 0, 10, 0)
+light_color = Color(1, 0.6, 0.8, 1)
+light_energy = 2.0
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=222230100]
+transform = Transform3D(1, 0, 0, 0, 0.939693, 0.34202, 0, -0.34202, 0.939693, 0, 28, 70)
+current = true
+fov = 60.0
+
+[node name="SuperCar" parent="." unique_id=603969191 instance=ExtResource("2_supercar")]
