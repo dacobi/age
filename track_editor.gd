@@ -132,6 +132,41 @@ func rebuild_track():
     clear_track()
     var current_transform = Transform3D.IDENTITY
     
+
+    var curve_start_t = []
+    var curve_end_t = []
+    curve_start_t.resize(track_data.size())
+    curve_end_t.resize(track_data.size())
+    
+    var i_idx = 0
+    while i_idx < track_data.size():
+        var piece = track_data[i_idx]
+        var type = piece.get("type", "straight")
+        if type == "curve":
+            var sign_dir = sign(float(piece.get("angle", 90.0)))
+            var block_end = i_idx
+            var total_angle = abs(float(piece.get("angle", 90.0)))
+            
+            for j in range(i_idx + 1, track_data.size()):
+                if track_data[j].get("type", "straight") == "curve" and sign(float(track_data[j].get("angle", 90.0))) == sign_dir:
+                    block_end = j
+                    total_angle += abs(float(track_data[j].get("angle", 90.0)))
+                else:
+                    break
+                    
+            var current_accum = 0.0
+            for j in range(i_idx, block_end + 1):
+                var p_ang = abs(float(track_data[j].get("angle", 90.0)))
+                curve_start_t[j] = current_accum / total_angle
+                current_accum += p_ang
+                curve_end_t[j] = current_accum / total_angle
+                
+            i_idx = block_end + 1
+        else:
+            curve_start_t[i_idx] = 0.0
+            curve_end_t[i_idx] = 1.0
+            i_idx += 1
+
     for i in range(track_data.size()):
         var piece = track_data[i]
         var type = piece.get("type", "straight")
@@ -157,7 +192,7 @@ func rebuild_track():
                 var sign_pitch = 1.0 if incline > 0 else -1.0
                 var y = (R - R * cos(abs(theta))) * sign_pitch
                 var z = -R * sin(abs(theta))
-                render_len = sqrt(y*y + z*z)
+                render_len = max(0.1, sqrt(y*y + z*z))
             
             var road = _create_straight_csg(render_len, width, 0.0)
             piece_node.add_child(road)
@@ -200,11 +235,12 @@ func rebuild_track():
             
             piece_node.global_transform = flat_transform
             
-            var curve_data = _create_curve_csg(angle, radius, width, piece_node, pitch)
+            var curve_data = _create_curve_csg(angle, radius, width, piece_node, curve_start_t[i], curve_end_t[i], pitch)
             
             var angle_rad = deg_to_rad(abs(angle))
             var sign_val = 1.0 if angle < 0 else -1.0
             var slope = tan(pitch)
+            var has_incline = abs(pitch) > 0.01
             
             var end_pos = Vector3(radius * (1.0 - cos(angle_rad)) * sign_val, radius * angle_rad * slope, -radius * sin(angle_rad))
             var end_flat_basis = flat_basis.rotated(Vector3.UP, angle_rad * -sign_val)
@@ -226,7 +262,7 @@ func rebuild_track():
                 var sign_pitch = 1.0 if incline > 0 else -1.0
                 var y = (R - R * cos(abs(theta))) * sign_pitch
                 var z = -R * sin(abs(theta))
-                render_len = sqrt(y*y + z*z)
+                render_len = max(0.1, sqrt(y*y + z*z))
             
             var road = _create_transition_csg(render_len, sw, ew, 0.0)
             piece_node.add_child(road)
@@ -424,7 +460,7 @@ func rebuild_track():
 func _create_straight_csg(length: float, width: float, y_offset: float, collision_layer: int = 1) -> CSGPolygon3D:
     var csg = CSGPolygon3D.new()
     csg.mode = CSGPolygon3D.MODE_DEPTH
-    csg.depth = length
+    csg.depth = max(0.1, length)
     
     var hw = width / 2.0
     csg.polygon = PackedVector2Array([
@@ -452,7 +488,7 @@ func _create_straight_csg(length: float, width: float, y_offset: float, collisio
 func _create_straight_border(length: float, x_offset: float) -> CSGPolygon3D:
     var csg = CSGPolygon3D.new()
     csg.mode = CSGPolygon3D.MODE_DEPTH
-    csg.depth = length
+    csg.depth = max(0.1, length)
     
     var w = 2.0
     csg.polygon = PackedVector2Array([
@@ -472,7 +508,7 @@ func _create_straight_border(length: float, x_offset: float) -> CSGPolygon3D:
 func _create_ai_sidewall(length: float, x_offset: float) -> CSGPolygon3D:
     var csg = CSGPolygon3D.new()
     csg.mode = CSGPolygon3D.MODE_DEPTH
-    csg.depth = length
+    csg.depth = max(0.1, length)
     
     var w = 2.0
     csg.polygon = PackedVector2Array([
@@ -541,7 +577,7 @@ func _create_transition_border(length: float, start_x: float, end_x: float) -> C
     return csg
 
 
-func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D, pitch: float = 0.0) -> Dictionary:
+func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D, start_t: float, end_t: float, pitch: float = 0.0) -> Dictionary:
     var path = Path3D.new()
     path.name = "Path3D"
     var curve = Curve3D.new()
@@ -551,6 +587,7 @@ func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D
     var angle_rad = deg_to_rad(abs(angle))
     var sign_val = 1.0 if angle < 0 else -1.0 
     var slope = tan(pitch)
+    var has_incline = abs(pitch) > 0.01
     
     for i in range(num_points + 1):
         var t = float(i) / num_points
@@ -568,9 +605,12 @@ func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D
         
         curve.add_point(Vector3(x, y, z), -handle, handle)
         
+        var global_t = lerp(start_t, end_t, t)
+        var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
+        
         # Counteract helix torsion so the track stays perfectly horizontal
         var twist = -current_angle * sin(pitch) * sign_val
-        curve.set_point_tilt(i, twist)
+        curve.set_point_tilt(i, (sin(global_t * PI) * max_tilt) + twist)
         
     path.curve = curve
     var root = Node3D.new()
