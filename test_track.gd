@@ -18,6 +18,7 @@ var mouse_wheel = 0.0
 var key_e_pressed = false
 var reset_car = false
 var reset_game = false
+var start_transform: Transform3D
 
 
 func _ready():
@@ -72,7 +73,7 @@ func _on_file_selected(path: String):
     preload("res://track_generator.gd").generate(data, track_root)
     
     # Find the gate or start position
-    var start_transform = Transform3D()
+    start_transform = Transform3D()
     var gate_found = false
     
     var children = track_root.get_children()
@@ -145,19 +146,10 @@ func _process(delta):
 
     if reset_car or (supercar and supercar.global_position.y < -150.0):
         reset_car = false
-        if supercar and track_root and track_root.get_child_count() > 0:
-            var closest_child = track_root.get_child(0)
-            var closest_dist = supercar.global_position.distance_to(closest_child.global_position)
-            for child in track_root.get_children():
-                if not (child is Node3D): continue
-                var dist = supercar.global_position.distance_to(child.global_position)
-                if dist < closest_dist:
-                    closest_dist = dist
-                    closest_child = child
-                    
-            var t_respawn = closest_child.global_transform
-            supercar.global_transform = t_respawn
-            supercar.global_position += t_respawn.basis.y * 2.0
+        if supercar:
+            supercar.global_transform = start_transform
+            var offset = start_transform.basis.z * 10.0 # Move 10m back from the start of the gate piece
+            supercar.global_position = supercar.global_position + offset + Vector3(0, 2.0, 0)
             
             if supercar is RigidBody3D:
                 supercar.linear_velocity = Vector3.ZERO
