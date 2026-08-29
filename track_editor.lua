@@ -1,10 +1,14 @@
 regGlobalFloat("editor_param_5", 80.0) -- End Width
 regGlobalFloat("editor_param_6", 15.0)  -- Ramp Angle
 regGlobalFloat("editor_action", 0.0)
-regGlobalFloat("editor_param_1", 90.0) -- Length or Angle
+
+regGlobalFloat("editor_param_length", 90.0)
+regGlobalFloat("editor_param_angle", 90.0)
 regGlobalFloat("editor_param_2", 80.0)  -- Width
 regGlobalFloat("editor_param_3", 100.0) -- Radius (for curves)
-regGlobalFloat("editor_param_4", 0.0)   -- Drop Distance / Incline
+regGlobalFloat("editor_param_incline", 0.0)
+regGlobalFloat("editor_param_drop", 0.0)
+
 regGlobalFloat("editor_clear", 0.0)
 regGlobalFloat("editor_show_final", 0.0)
 
@@ -18,11 +22,16 @@ function renderEditorUI()
     imguiSeparator()
     
     imguiText("Element Parameters:")
-    imguiSliderFloat("Length/Angle", "editor_param_1", -180.0, 500.0)
+    imguiSliderFloat("Length", "editor_param_length", 1.0, 500.0)
+    imguiSliderFloat("Angle", "editor_param_angle", -180.0, 180.0)
+    
     imguiSliderFloat("Width (Start)", "editor_param_2", 10.0, 200.0)
     imguiSliderFloat("Width (End)", "editor_param_5", 10.0, 200.0)
     imguiSliderFloat("Radius (Curve)", "editor_param_3", 10.0, 500.0)
-    imguiSliderFloat("Drop/Incline", "editor_param_4", -100.0, 100.0)
+    
+    imguiSliderFloat("Incline", "editor_param_incline", -90.0, 90.0)
+    imguiSliderFloat("Drop", "editor_param_drop", -100.0, 0.0)
+    
     imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 45.0)
     
     imguiSeparator()
@@ -65,7 +74,6 @@ function renderEditorUI()
     
     imguiEnd()
 end
-    -- body
 
 while true do
     renderEditorUI()

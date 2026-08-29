@@ -51,25 +51,27 @@ func _process(_delta):
         if action >= 1.0 and action <= 7.0:
             history_stack.append(track_data.duplicate(true))
             
-        var p1 = lua_manager.get_global_float("editor_param_1")
+        var p_length = lua_manager.get_global_float("editor_param_length")
+        var p_angle = lua_manager.get_global_float("editor_param_angle")
         var p2 = lua_manager.get_global_float("editor_param_2")
         var p3 = lua_manager.get_global_float("editor_param_3")
-        var p4 = lua_manager.get_global_float("editor_param_4")
+        var p_incline = lua_manager.get_global_float("editor_param_incline")
+        var p_drop = lua_manager.get_global_float("editor_param_drop")
         var p5 = lua_manager.get_global_float("editor_param_5")
         var p6 = lua_manager.get_global_float("editor_param_6")
         
         if action == 1.0:
-            track_data.append({"type": "straight", "length": p1, "width": p2, "incline": p4})
+            track_data.append({"type": "straight", "length": p_length, "width": p2, "incline": p_incline})
         elif action == 2.0:
-            track_data.append({"type": "curve", "angle": p1, "radius": p3, "width": p2})
+            track_data.append({"type": "curve", "angle": p_angle, "radius": p3, "width": p2})
         elif action == 3.0:
-            track_data.append({"type": "drop", "drop_distance": p4})
+            track_data.append({"type": "drop", "drop_distance": p_drop})
         elif action == 4.0:
-            track_data.append({"type": "transition", "length": p1, "start_width": p2, "end_width": p5})
+            track_data.append({"type": "transition", "length": p_length, "start_width": p2, "end_width": p5})
         elif action == 5.0:
-            track_data.append({"type": "gate", "length": p1, "track_width": p2, "gate_width": p5})
+            track_data.append({"type": "gate", "length": p_length, "track_width": p2, "gate_width": p5})
         elif action == 6.0:
-            track_data.append({"type": "gap", "length": p1, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p1 * 0.3)})
+            track_data.append({"type": "gap", "length": p_length, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p_length * 0.3)})
         elif action == 7.0:
             track_data.append({"type": "close_loop", "width": p2})
         elif action == 8.0:
