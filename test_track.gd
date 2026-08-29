@@ -142,6 +142,26 @@ func _spawn_nitros(data: Array, children: Array):
 
 
 func _process(delta):
+
+    if reset_car or (supercar and supercar.global_position.y < -150.0):
+        reset_car = false
+        if supercar and track_root and track_root.get_child_count() > 0:
+            var closest_child = track_root.get_child(0)
+            var closest_dist = supercar.global_position.distance_to(closest_child.global_position)
+            for child in track_root.get_children():
+                if not (child is Node3D): continue
+                var dist = supercar.global_position.distance_to(child.global_position)
+                if dist < closest_dist:
+                    closest_dist = dist
+                    closest_child = child
+                    
+            var t_respawn = closest_child.global_transform
+            supercar.global_transform = t_respawn
+            supercar.global_position += t_respawn.basis.y * 2.0
+            
+            if supercar is RigidBody3D:
+                supercar.linear_velocity = Vector3.ZERO
+                supercar.angular_velocity = Vector3.ZERO
     if key_e_pressed:
         is_paused = not is_paused
         
