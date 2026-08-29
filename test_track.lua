@@ -1,0 +1,136 @@
+ioWindowSetFullScreen(true)
+local is_fullscreen = true
+
+godotLoadScene("test_track.tscn")
+delay(200) -- give it a moment to load
+
+print("\n=== MegaRacer Synthwave Test Track ===")
+print("Controls: Up/Down arrow keys to Accelerate and Brake/Reverse.")
+print("          Left/Right arrow keys to Steer.")
+print("Press ESC to exit.\n")
+
+setAudioVolume(50)
+
+-- Get the supercar node pointer
+godotSelectRoot()
+local supercar = godotGetNodePointer("SuperCar")
+if supercar then
+	godotSetProperty("auto_reset_enabled", false, supercar)
+end
+
+print("SUPERCAR POINTER IS: ", supercar)
+
+-- Include shared car physics and controls
+dofile("car_common.lua")
+initCarPhysicsDefaults()
+
+local joy_handle = ioJoystickOpen(0)
+if joy_handle >= 0 then
+	print("Joystick 1 connected for driving!")
+end
+
+local is_paused = false
+local esc_held_state = false
+local orbit_yaw = 0.0
+local orbit_pitch = 0.5
+local orbit_dist = 12.0
+local last_mouse_dx = 0.0
+local last_mouse_dy = 0.0
+local last_mouse_wheel = 0.0
+
+local frame_count = 0
+local has_disabled_auto_reset = false
+
+while true do
+	-- Draw Car Physics dialog if show_car_physics_ui is enabled
+	renderCarPhysicsUI()
+
+	-- Handle Q to quit (moved from ESCAPE)
+	if ioKBClicked("SDLK_q") then
+		print("Exiting game logic...")
+		ioWindowSetFullScreen(false)
+		break
+	end
+
+	-- Handle F11 for fullscreen toggle
+	if ioKBClicked("SDLK_F11") then
+		is_fullscreen = not is_fullscreen
+		ioWindowSetFullScreen(is_fullscreen)
+	end
+
+	local track = godotGetNodePointer("MegaRacerScene")
+
+	if supercar and not has_disabled_auto_reset then
+		godotSetProperty("auto_reset_enabled", false, supercar)
+		has_disabled_auto_reset = true
+	end
+
+    if ioKBClicked("SDLK_e") then
+        godotSetProperty("key_e_pressed", true, track)
+        godotSetProperty("key_e_pressed", false, track)
+        ioMouseCapture()
+    end
+
+    if track then
+        local p = godotGetProperty("is_paused", track)
+        if p == "True" or p == "true" or p == 1.0 or p == true then
+            is_paused = true
+        else
+            is_paused = false
+        end
+    end
+    
+    if supercar then
+        if is_paused then
+            godotSetProperty("process_mode", 4, supercar) -- Disable car physics
+        else
+            godotSetProperty("process_mode", 0, supercar) -- Re-enable physics
+        end
+    end
+
+    if supercar then
+        if is_paused then
+            -- Globe camera controls
+            local dx = godotGetProperty("mouse_dx", track) or 0.0
+            local dy = godotGetProperty("mouse_dy", track) or 0.0
+            
+            local delta_dx = dx - (last_mouse_dx or 0.0)
+            local delta_dy = dy - (last_mouse_dy or 0.0)
+            last_mouse_dx = dx
+            last_mouse_dy = dy
+            
+            orbit_yaw = orbit_yaw - delta_dx * 0.005
+            orbit_pitch = orbit_pitch + delta_dy * 0.005
+            
+            if orbit_pitch > 1.5 then orbit_pitch = 1.5 end
+            if orbit_pitch < -1.5 then orbit_pitch = -1.5 end
+            
+            -- Process new Mouse Wheel input for zooming
+            local wheel = godotGetProperty("mouse_wheel", track) or 0.0
+            local delta_wheel = wheel - (last_mouse_wheel or 0.0)
+            last_mouse_wheel = wheel
+            if delta_wheel ~= 0.0 then
+                orbit_dist = orbit_dist - delta_wheel * 2.0
+            end
+            
+            -- Keep keyboard W/S fallbacks
+            if ioKBDown("w") then orbit_dist = orbit_dist - 0.5 end
+            if ioKBDown("s") then orbit_dist = orbit_dist + 0.5 end
+            
+            if orbit_dist < 3.0 then orbit_dist = 3.0 end
+            if orbit_dist > 50.0 then orbit_dist = 50.0 end
+            
+            godotSetProperty("orbit_yaw", orbit_yaw, track)
+            godotSetProperty("orbit_pitch", orbit_pitch, track)
+            godotSetProperty("orbit_dist", orbit_dist, track)
+        else
+            updateCarControlsAndPhysics(supercar, joy_handle, track, "reset_car")
+            frame_count = frame_count + 1
+            updateCarTelemetry(supercar, frame_count)
+        end
+    end
+
+	delay(1) -- High-frequency input update loop
+end
+
+appQuit()
