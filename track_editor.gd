@@ -48,7 +48,7 @@ func _process(_delta):
         
     var action = lua_manager.get_global_float("editor_action")
     if action > 0.0:
-        if action >= 1.0 and action <= 7.0:
+        if (action >= 1.0 and action <= 7.0) or action == 9.0 or action == 13.0 or action == 14.0:
             history_stack.append(track_data.duplicate(true))
             
         var p_length = lua_manager.get_global_float("editor_param_length")
@@ -89,6 +89,10 @@ func _process(_delta):
         elif action == 12.0:
             if history_stack.size() > 0:
                 track_data = history_stack.pop_back()
+        elif action == 13.0:
+            track_data.append({"type": "right_angle", "radius": p3, "width": p2, "is_left": true})
+        elif action == 14.0:
+            track_data.append({"type": "right_angle", "radius": p3, "width": p2, "is_left": false})
             
         lua_manager.set_global_float("editor_action", 0.0)
         rebuild_track()
@@ -141,8 +145,10 @@ func rebuild_track():
 
     var curve_start_t = []
     var curve_end_t = []
+    var curve_banked = []
     curve_start_t.resize(track_data.size())
     curve_end_t.resize(track_data.size())
+    curve_banked.resize(track_data.size())
     
     var i_idx = 0
     while i_idx < track_data.size():
@@ -160,8 +166,13 @@ func rebuild_track():
                 else:
                     break
                     
+            var is_banked = false
+            if i_idx > 0 and track_data[i_idx - 1].get("type", "") == "bank_transition":
+                is_banked = true
+                
             var current_accum = 0.0
             for j in range(i_idx, block_end + 1):
+                curve_banked[j] = is_banked
                 var p_ang = abs(float(track_data[j].get("angle", 90.0)))
                 curve_start_t[j] = current_accum / total_angle
                 current_accum += p_ang
@@ -171,6 +182,7 @@ func rebuild_track():
         else:
             curve_start_t[i_idx] = 0.0
             curve_end_t[i_idx] = 1.0
+            curve_banked[i_idx] = false
             i_idx += 1
 
     for i in range(track_data.size()):
@@ -241,7 +253,7 @@ func rebuild_track():
             
             piece_node.global_transform = flat_transform
             
-            var curve_data = _create_curve_csg(angle, radius, width, piece_node, curve_start_t[i], curve_end_t[i], pitch)
+            var curve_data = _create_curve_csg(angle, radius, width, piece_node, curve_start_t[i], curve_end_t[i], pitch, curve_banked[i])
             
             var angle_rad = deg_to_rad(abs(angle))
             var sign_val = 1.0 if angle < 0 else -1.0
@@ -424,6 +436,20 @@ func rebuild_track():
             
             # End transform does NOT account for y_bump because the curve piece natively adds it!
             end_transform = end_transform.translated_local(Vector3(0, 0, -length))
+        elif type == "right_angle":
+            var radius = piece.get("radius", 20.0)
+            var width = piece.get("width", 10.0)
+            var is_left = piece.get("is_left", true)
+            
+            var csg_node = _create_right_angle_csg(radius, width, is_left)
+            piece_node.add_child(csg_node)
+            
+            var end_pos = Vector3(-radius if is_left else radius, 0, -radius)
+            end_transform.origin = current_transform * end_pos
+            
+            var angle_rad = deg_to_rad(90.0 if is_left else -90.0)
+            end_transform.basis = current_transform.basis.rotated(Vector3.UP, angle_rad)
+            
         elif type == "gap":
             var length = float(piece.get("length", 100.0))
             var width = float(piece.get("width", 104.0))
@@ -509,6 +535,97 @@ func rebuild_track():
             
         current_transform = end_transform
 
+
+
+func _create_right_angle_csg(radius: float, width: float, is_left: bool) -> Node3D:
+    var node = Node3D.new()
+    var hw = width / 2.0
+    
+    # Road
+    var road = CSGPolygon3D.new()
+    road.mode = CSGPolygon3D.MODE_DEPTH
+    road.depth = 0.5
+    var pts = PackedVector2Array()
+    if is_left:
+        pts.push_back(Vector2(hw, 0))
+        pts.push_back(Vector2(hw, radius + hw))
+        pts.push_back(Vector2(-radius, radius + hw))
+        pts.push_back(Vector2(-radius, radius - hw))
+        pts.push_back(Vector2(-hw, radius - hw))
+        pts.push_back(Vector2(-hw, 0))
+    else:
+        pts.push_back(Vector2(-hw, 0))
+        pts.push_back(Vector2(-hw, radius + hw))
+        pts.push_back(Vector2(radius, radius + hw))
+        pts.push_back(Vector2(radius, radius - hw))
+        pts.push_back(Vector2(hw, radius - hw))
+        pts.push_back(Vector2(hw, 0))
+    road.polygon = pts
+    road.use_collision = true
+    var mat = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
+    if mat:
+        mat = mat.duplicate()
+        mat.uv1_triplanar = true
+        road.material = mat
+    road.rotation_degrees = Vector3(-90, 0, 0)
+    node.add_child(road)
+    
+    # Borders
+    var bw = 1.0
+    var bh = 4.0
+    var b_mat = load("res://materials/neon_cyan_transparent.tres")
+    
+    var ob = CSGPolygon3D.new()
+    ob.mode = CSGPolygon3D.MODE_DEPTH
+    ob.depth = bh
+    var opts = PackedVector2Array()
+    if is_left:
+        opts.push_back(Vector2(hw - bw, 0))
+        opts.push_back(Vector2(hw + bw, 0))
+        opts.push_back(Vector2(hw + bw, radius + hw + bw))
+        opts.push_back(Vector2(-radius, radius + hw + bw))
+        opts.push_back(Vector2(-radius, radius + hw - bw))
+        opts.push_back(Vector2(hw - bw, radius + hw - bw))
+    else:
+        opts.push_back(Vector2(-hw + bw, 0))
+        opts.push_back(Vector2(-hw - bw, 0))
+        opts.push_back(Vector2(-hw - bw, radius + hw + bw))
+        opts.push_back(Vector2(radius, radius + hw + bw))
+        opts.push_back(Vector2(radius, radius + hw - bw))
+        opts.push_back(Vector2(-hw + bw, radius + hw - bw))
+    ob.polygon = opts
+    ob.use_collision = true
+    ob.material = b_mat
+    ob.rotation_degrees = Vector3(-90, 0, 0)
+    ob.position = Vector3(0, 4.0, 0)
+    node.add_child(ob)
+    
+    var ib = CSGPolygon3D.new()
+    ib.mode = CSGPolygon3D.MODE_DEPTH
+    ib.depth = bh
+    var ipts = PackedVector2Array()
+    if is_left:
+        ipts.push_back(Vector2(-hw - bw, 0))
+        ipts.push_back(Vector2(-hw + bw, 0))
+        ipts.push_back(Vector2(-hw + bw, radius - hw + bw))
+        ipts.push_back(Vector2(-radius, radius - hw + bw))
+        ipts.push_back(Vector2(-radius, radius - hw - bw))
+        ipts.push_back(Vector2(-hw - bw, radius - hw - bw))
+    else:
+        ipts.push_back(Vector2(hw + bw, 0))
+        ipts.push_back(Vector2(hw - bw, 0))
+        ipts.push_back(Vector2(hw - bw, radius - hw + bw))
+        ipts.push_back(Vector2(radius, radius - hw + bw))
+        ipts.push_back(Vector2(radius, radius - hw - bw))
+        ipts.push_back(Vector2(hw + bw, radius - hw - bw))
+    ib.polygon = ipts
+    ib.use_collision = true
+    ib.material = b_mat
+    ib.rotation_degrees = Vector3(-90, 0, 0)
+    ib.position = Vector3(0, 4.0, 0)
+    node.add_child(ib)
+    
+    return node
 
 func _create_straight_csg(length: float, width: float, y_offset: float, collision_layer: int = 1) -> CSGPolygon3D:
     var csg = CSGPolygon3D.new()
@@ -630,7 +747,7 @@ func _create_transition_border(length: float, start_x: float, end_x: float) -> C
     return csg
 
 
-func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D, start_t: float, end_t: float, pitch: float = 0.0) -> Dictionary:
+func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D, start_t: float, end_t: float, pitch: float = 0.0, banked: bool = true) -> Dictionary:
     var path = Path3D.new()
     path.name = "Path3D"
     var curve = Curve3D.new()
@@ -651,7 +768,7 @@ func _create_curve_csg(angle: float, radius: float, width: float, parent: Node3D
             var t = float(i) / num_points
             var current_angle = t * angle_rad
             var global_t = lerp(start_t, end_t, t)
-            var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
+            var max_tilt = (0.0 if (has_incline or not banked) else deg_to_rad(15.0)) * sign_val
             var nascar_tilt = max_tilt
             
             var y_bump = (width / 2.0) * abs(sin(nascar_tilt))
