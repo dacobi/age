@@ -120,13 +120,20 @@ func _on_save_file(path: String):
         file.close()
 
 func _on_load_file(path: String):
-    history_stack.append(track_data.duplicate(true))
     var file = FileAccess.open(path, FileAccess.READ)
     if file:
         var text = file.get_as_text()
         var data = JSON.parse_string(text)
         if typeof(data) == TYPE_ARRAY:
             track_data = data
+            
+            # Setup history stack so user can step-by-step undo the loaded track
+            history_stack.clear()
+            var temp_data = []
+            for piece in data:
+                history_stack.append(temp_data.duplicate(true))
+                temp_data.append(piece)
+                
             rebuild_track()
         file.close()
 
