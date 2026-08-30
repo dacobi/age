@@ -1033,6 +1033,8 @@ CURR: %s" % [display_lap, final_laps, format_time(race_time), format_time(p_stat
 				var t_respawn = path_node.global_transform * path_node.curve.sample_baked_with_rotation(closest_prog, true, true)
 				if t_respawn:
 					supercar.global_transform = t_respawn
+					if start_flipped:
+						supercar.global_transform = supercar.global_transform.rotated_local(Vector3.UP, PI)
 					supercar.global_position += t_respawn.basis.y * 1.5
 			supercar.linear_velocity = Vector3.ZERO
 			supercar.angular_velocity = Vector3.ZERO

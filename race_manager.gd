@@ -90,6 +90,10 @@ func _on_checkpoint_body_entered(body: Node3D, cp_index: int) -> void:
 		if driver.car == body:
 			var target = driver.checkpoints_passed % 100
 			var diff = (cp_index - target + 100) % 100
+			if is_reverse_race:
+				target = 99 - (driver.checkpoints_passed % 100)
+				diff = (target - cp_index + 100) % 100
+				
 			if diff == 0:
 				driver.checkpoints_passed += 1
 				driver.time_since_last_checkpoint = 0.0
@@ -99,7 +103,11 @@ func _on_checkpoint_body_entered(body: Node3D, cp_index: int) -> void:
 				var track_len = track_path.curve.get_baked_length()
 				var offset_target = (float(target) / 100.0) * track_len
 				var safe_offset = fmod(offset_target - 20.0 + track_len, track_len)
+				if is_reverse_race:
+					safe_offset = fmod(offset_target + 20.0 + track_len, track_len)
 				var t = track_path.global_transform * track_path.curve.sample_baked_with_rotation(safe_offset, true, true)
+				if is_reverse_race:
+					t = t.rotated_local(Vector3.UP, PI)
 				t.origin.y += 1.0
 				driver.car.global_transform = t
 				driver.car.linear_velocity = Vector3.ZERO
@@ -141,6 +149,8 @@ func update_checkpoint_visuals() -> void:
 	for driver in active_drivers:
 		if not driver.crashed:
 			var cp_index = driver.checkpoints_passed % 100
+			if is_reverse_race:
+				cp_index = 99 - cp_index
 			if cp_index < checkpoint_materials.size():
 				var mat = checkpoint_materials[cp_index]
 				mat.albedo_color = Color(0.0, 1.0, 1.0, 0.4)
@@ -208,6 +218,9 @@ func spawn_car(brain_weights, index: int) -> void:
 			horiz_offset = 37.5
 		spawn_t.origin += right_vec * horiz_offset
 		
+		if is_reverse_race:
+			spawn_t = spawn_t.rotated_local(Vector3.UP, PI)
+			
 		car.global_transform = spawn_t
 		car.global_position.y += 0.5 # Drop slightly
 		
@@ -229,7 +242,7 @@ func spawn_car(brain_weights, index: int) -> void:
 		track_len = track_path.curve.get_baked_length()
 		# Since we moved the AI cars 25 meters back (from offset 15 to -10),
 		# they now start BEFORE the finish line (Checkpoint 99).
-		driver.checkpoints_passed = 99
+		driver.checkpoints_passed = 99 if not is_reverse_race else 0
 		driver.accumulated_progress = -10.0
 		
 	car.add_child(driver)

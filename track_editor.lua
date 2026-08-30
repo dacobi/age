@@ -59,6 +59,8 @@ function renderEditorUI()
     imguiSameLine()
     imguiButton("Add Gate", "editor_action_gate")
     imguiSameLine()
+    imguiButton("Flip Gate", "editor_action_flip_gate")
+    imguiSameLine()
     imguiButton("Add Gap", "editor_action_gap")
     
     imguiSameLine()
@@ -130,6 +132,11 @@ while true do
     if btn_gate > 0.5 then
         setGlobalFloat("editor_action", 5.0)
         setGlobalFloat("editor_action_gate", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_flip_gate") > 0.5 then
+        setGlobalFloat("editor_action", 15.0)
+        setGlobalFloat("editor_action_flip_gate", 0.0)
     end
 
     if getGlobalFloat("editor_action_save") > 0.5 then
