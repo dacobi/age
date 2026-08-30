@@ -68,6 +68,7 @@ var slip_RL: float = 0.0
 var slip_RR: float = 0.0
 
 var engine_rpm: float = 1000.0
+var flipped_label: Label3D = null
 
 var fmod_event = null
 var tire_fmod_event = null
@@ -525,7 +526,20 @@ func reset_to_track() -> void:
 		steer_dampening_timer = 0.0
 		reset_stuck_timer = 0.0
 		reset_fall_timer = 0.0
-		print("Car ", name, " was reset to the track!")
+		print("Car ", name, " was reset to the track!"); print("Path exists, resetting!")
+	else:
+		print("reset_to_track fallback triggered!")
+		if parent and "reset_car" in parent:
+			print("Setting parent.reset_car = true")
+			parent.reset_car = true
+			reset_stuck_timer = 0.0
+			reset_fall_timer = 0.0
+		elif parent and parent.get_parent() and "reset_car" in parent.get_parent():
+			parent.get_parent().reset_car = true
+			reset_stuck_timer = 0.0
+			reset_fall_timer = 0.0
+		else:
+			print("parent is missing reset_car. parent is ", parent)
 
 
 func _physics_process(delta: float) -> void:
@@ -553,12 +567,31 @@ func _physics_process(delta: float) -> void:
 		
 	# 2. Stuck / Stalled / Flipped detection (5 seconds)
 	var auto_reset_speed = linear_velocity.length()
-	var is_flipped = global_transform.basis.y.dot(Vector3.UP) < 0.2
+	var is_flipped = global_transform.basis.y.dot(Vector3.UP) < 0.2 and get_contact_count() > 0
+	
+	if Input.is_key_pressed(KEY_O):
+		print("DEBUG: speed=", auto_reset_speed, " dot=", global_transform.basis.y.dot(Vector3.UP), " is_flipped=", is_flipped, " timer=", reset_stuck_timer, " ai=", is_ai_controlled)
 	
 	if (auto_reset_speed < 2.0 and not in_countdown and is_ai_controlled) or is_flipped:
 		reset_stuck_timer += delta
 	else:
 		reset_stuck_timer = 0.0
+		
+	if not flipped_label:
+		flipped_label = Label3D.new()
+		flipped_label.text = "FLIPPED!"
+		flipped_label.pixel_size = 0.05
+		flipped_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		flipped_label.no_depth_test = true
+		flipped_label.modulate = Color(1.0, 0.2, 0.2)
+		flipped_label.position = Vector3(0, 2.5, 0)
+		flipped_label.visible = false
+		add_child(flipped_label)
+		
+	if reset_stuck_timer > 0.1 and is_flipped:
+		flipped_label.visible = int(reset_stuck_timer * 10) % 2 == 0
+	else:
+		flipped_label.visible = false
 		
 	if reset_stuck_timer >= 2.0 and auto_reset_enabled:
 		reset_to_track()

@@ -15,7 +15,6 @@ setAudioVolume(50)
 godotSelectRoot()
 local supercar = godotGetNodePointer("SuperCar")
 if supercar then
-	godotSetProperty("auto_reset_enabled", false, supercar)
 end
 
 print("SUPERCAR POINTER IS: ", supercar)
@@ -41,6 +40,9 @@ local last_mouse_wheel = 0.0
 local frame_count = 0
 local has_disabled_auto_reset = false
 
+--godotSetProperty("auto_reset_enabled", true, supercar)
+
+
 while true do
 	-- Draw Car Physics dialog if show_car_physics_ui is enabled
 	renderCarPhysicsUI()
@@ -60,10 +62,7 @@ while true do
 
 	local track = godotGetNodePointer("MegaRacerScene")
 
-	if supercar and not has_disabled_auto_reset then
-		godotSetProperty("auto_reset_enabled", false, supercar)
-		has_disabled_auto_reset = true
-	end
+	
 
     if ioKBClicked("SDLK_e") then
         godotSetProperty("key_e_pressed", true, track)
