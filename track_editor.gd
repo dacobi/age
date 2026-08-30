@@ -578,6 +578,39 @@ func _create_right_angle_csg(radius: float, width: float, is_left: bool) -> Node
     road.rotation_degrees = Vector3(-90, 0, 0)
     node.add_child(road)
     
+    # Centerline
+    var cline = CSGPolygon3D.new()
+    cline.mode = CSGPolygon3D.MODE_DEPTH
+    cline.depth = 0.1
+    var cw = 1.2
+    var cpts = PackedVector2Array()
+    if is_left:
+        cpts.push_back(Vector2(cw, 0))
+        cpts.push_back(Vector2(cw, radius + cw))
+        cpts.push_back(Vector2(-radius, radius + cw))
+        cpts.push_back(Vector2(-radius, radius - cw))
+        cpts.push_back(Vector2(-cw, radius - cw))
+        cpts.push_back(Vector2(-cw, 0))
+    else:
+        cpts.push_back(Vector2(-cw, 0))
+        cpts.push_back(Vector2(-cw, radius + cw))
+        cpts.push_back(Vector2(radius, radius + cw))
+        cpts.push_back(Vector2(radius, radius - cw))
+        cpts.push_back(Vector2(cw, radius - cw))
+        cpts.push_back(Vector2(cw, 0))
+    cline.polygon = cpts
+    cline.use_collision = false
+    
+    var cmat = StandardMaterial3D.new()
+    cmat.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
+    cmat.emission_enabled = true
+    cmat.emission = Color(1.0, 0.0, 1.0, 1.0)
+    cline.material = cmat
+    
+    cline.rotation_degrees = Vector3(-90, 0, 0)
+    cline.position = Vector3(0, 0.35, 0)
+    node.add_child(cline)
+    
     # Borders
     var bw = 1.0
     var bh = 4.0
