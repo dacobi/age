@@ -67,7 +67,7 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
         csg.path_interval = 0.25
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 1
+        csg.path_interval_type = 0
         csg.use_collision = use_col
         csg.material = mat
         if c_layer != 1:
@@ -184,7 +184,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
             csg.path_interval = 0.25
             csg.path_rotation_accurate = true
             csg.path_simplify_angle = 0.0
-            csg.path_interval_type = 1
+            csg.path_interval_type = 0
             csg.use_collision = use_col
             csg.material = mat
             if c_layer != 1:
@@ -363,7 +363,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
         csg.path_interval = 0.25
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 1
+        csg.path_interval_type = 0
         csg.use_collision = use_col
         csg.material = mat
         if c_layer != 1:
@@ -561,7 +561,7 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
         csg.path_interval = 0.25
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 1
+        csg.path_interval_type = 0
         csg.use_collision = use_col
         csg.material = mat
         if c_layer != 1:

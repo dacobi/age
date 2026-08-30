@@ -836,10 +836,10 @@ func _build_path_csg_elements(root: Node3D, path: Path3D, width: float, path_loc
         csg.path_local = path_local
         csg.path_continuous_u = true
         csg.path_u_distance = 16.0
-        csg.path_interval = 1.0
+        csg.path_interval = 0.5
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 1
+        csg.path_interval_type = 0
 
         csg.use_collision = true
         
@@ -948,7 +948,7 @@ func _build_bank_transition(root: Node3D, length: float, width: float, start_til
     csg.path_interval = 0.25
     csg.path_rotation_accurate = true
     csg.path_simplify_angle = 0.0
-    csg.path_interval_type = 1
+    csg.path_interval_type = 0
     csg.use_collision = true
     csg.material = mat
     csg.polygon = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
