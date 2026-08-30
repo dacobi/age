@@ -145,7 +145,7 @@ func _spawn_nitros(data: Array, children: Array):
 
 func _process(delta):
 
-    if reset_car or (supercar and supercar.global_position.y < -150.0):
+    if reset_car or (supercar and supercar.global_position.y < -3000.0):
         reset_car = false
         if supercar:
             supercar.global_transform = start_transform

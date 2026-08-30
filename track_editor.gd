@@ -505,12 +505,13 @@ func rebuild_track():
                 current_transform.basis = Basis()
                 continue
                 
-            var handle_len = dist * 0.4
+            var handle_len = max(dist * 0.4, width * 0.8)
             
             var path = Path3D.new()
             path.name = "Path3D"
             path.curve = Curve3D.new()
             path.curve.bake_interval = 0.01
+            
             # In Godot 4 Curve3D, handles are relative to the point.
             # Handle out is the forward direction.
             path.curve.add_point(start_pos_local, Vector3.ZERO, start_dir_local * handle_len)
@@ -859,11 +860,29 @@ func _build_path_csg_elements(root: Node3D, path: Path3D, width: float, path_loc
     create_path_csg.call(road_poly, 1, false)
     
     var w = 2.0
-    var left_b = PackedVector2Array([Vector2(-hw - w/2.0, 0.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw - w/2.0, 4.0)])
+    # Clockwise winding for borders
+    var left_b = PackedVector2Array([Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)])
     create_path_csg.call(left_b, 1, true)
     
-    var right_b = PackedVector2Array([Vector2(hw - w/2.0, 0.0), Vector2(hw + w/2.0, 0.0), Vector2(hw + w/2.0, 4.0), Vector2(hw - w/2.0, 4.0)])
+    var right_b = PackedVector2Array([Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)])
     create_path_csg.call(right_b, 1, true)
+    
+    # Centerline
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    var cline_csg = CSGPolygon3D.new()
+    path.add_child(cline_csg)
+    cline_csg.mode = CSGPolygon3D.MODE_PATH
+    cline_csg.path_node = NodePath("..")
+    cline_csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+    cline_csg.path_local = path_local
+    cline_csg.path_continuous_u = true
+    cline_csg.use_collision = false
+    var cmat = StandardMaterial3D.new()
+    cmat.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
+    cmat.emission_enabled = true
+    cmat.emission = Color(1.0, 0.0, 1.0, 1.0)
+    cline_csg.material = cmat
+    cline_csg.polygon = c_line
     
     var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
     create_path_csg.call(ai_l, 128, false)

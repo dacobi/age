@@ -85,12 +85,12 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
     
     var w = 2.0
     var border_l = PackedVector2Array([
-        Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+        Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)
     ])
     create_path_csg.call(border_l, 1, get_cyan_mat())
     
     var border_r = PackedVector2Array([
-        Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+        Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)
     ])
     create_path_csg.call(border_r, 1, get_cyan_mat())
     
@@ -382,12 +382,12 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     var w = 2.0
 
     var border_l = PackedVector2Array([
-        Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+        Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)
     ])
     create_path_csg.call(border_l, 1, get_cyan_mat())
     
     var border_r = PackedVector2Array([
-        Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+        Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)
     ])
     create_path_csg.call(border_r, 1, get_cyan_mat())
     
@@ -540,12 +540,13 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
         ret.basis = Basis()
         return ret
         
-    var handle_len = dist * 0.4
+    var handle_len = max(dist * 0.4, width * 0.8)
     var path = Path3D.new()
     path.curve = Curve3D.new()
     path.curve.bake_interval = 0.01
     path.curve.add_point(start_pos_local, Vector3.ZERO, start_dir_local * handle_len)
     path.curve.add_point(end_pos_local, -end_dir_local * handle_len, Vector3.ZERO)
+    
     root.add_child(path)
     
     var create_path_csg = func(poly: PackedVector2Array, c_layer: int, mat: Material, use_col: bool = true):
@@ -579,12 +580,12 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
     var w = 2.0
 
     var border_l = PackedVector2Array([
-        Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0), Vector2(-hw - w/2.0, 0.0)
+        Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)
     ])
     create_path_csg.call(border_l, 1, get_cyan_mat())
     
     var border_r = PackedVector2Array([
-        Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)
+        Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)
     ])
     create_path_csg.call(border_r, 1, get_cyan_mat())
     
