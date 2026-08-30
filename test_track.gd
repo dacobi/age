@@ -19,6 +19,7 @@ var key_e_pressed = false
 var reset_car = false
 var reset_game = false
 var start_transform: Transform3D
+var is_crash_cam_active = false
 
 
 func _ready():
@@ -174,14 +175,40 @@ func _physics_process(delta):
         current_cam_yaw = lerp(current_cam_yaw, -cam_rx * 2.0, 5.0 * delta)
         current_cam_pitch = lerp(current_cam_pitch, cam_ry * 1.0, 5.0 * delta)
         
+        var is_grounded = true
+        if supercar.has_method("is_grounded"):
+            is_grounded = supercar.is_grounded()
+            
+        var is_flipped = supercar.global_transform.basis.y.dot(Vector3.UP) < 0.4
+        var is_falling = supercar.linear_velocity.y < -15.0
+        
+        if reset_car:
+            is_crash_cam_active = false
+        elif not is_grounded and (is_flipped or is_falling):
+            is_crash_cam_active = true
+        elif is_grounded:
+            is_crash_cam_active = false
+        
         var forward = supercar.global_transform.basis.z.normalized()
         var up = Vector3.UP
         
         var rotated_forward = forward.rotated(up, current_cam_yaw)
-        var offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
+        var offset: Vector3
+        var pos_lerp_speed = 10.0
+        
+        if is_crash_cam_active:
+            # Zoom out and up
+            offset = rotated_forward * 40.0 + Vector3(0, 20.0, 0)
+            pos_lerp_speed = 2.0 # Slower, more cinematic follow
+        else:
+            offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
+            
         var target_pos = supercar.global_position + offset
         
-        camera_node.global_position = camera_node.global_position.lerp(target_pos, 10.0 * delta)
-        var look_target = supercar.global_position + Vector3(0, 1.5, 0) + supercar.linear_velocity * 0.1
+        camera_node.global_position = camera_node.global_position.lerp(target_pos, pos_lerp_speed * delta)
+        var look_target = supercar.global_position + Vector3(0, 1.5, 0)
+        if not is_crash_cam_active:
+            look_target += supercar.linear_velocity * 0.1
+            
         var target_transform = camera_node.global_transform.looking_at(look_target, Vector3.UP)
         camera_node.global_transform = camera_node.global_transform.interpolate_with(target_transform, 10.0 * delta)
