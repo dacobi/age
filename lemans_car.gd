@@ -544,20 +544,17 @@ func reset_to_track() -> void:
 
 func _physics_process(delta: float) -> void:
 	# --- AUTO-RESET LOGIC ---
-	var track = get_parent().get_parent()
-	var path: Path3D = null
-	if track and track.has_node("Path3D"):
-		path = track.get_node("Path3D")
-	elif get_parent() is Path3D:
-		path = get_parent()
-		
-	var track_y = global_position.y
-	if path and path.curve:
-		var offset = path.curve.get_closest_offset(global_position)
-		track_y = (path.global_transform * path.curve.sample_baked_with_rotation(offset, false, false)).origin.y
-		
-	# 1. Fall detection (3 seconds)
-	if global_position.y < (track_y - 8.0) or (not is_grounded_state and global_position.y < (track_y - 2.0)):
+	var is_falling_out = false
+	if get_contact_count() == 0:
+		var space_state = get_world_3d().direct_space_state
+		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 200.0)
+		query.exclude = [self.get_rid()]
+		query.collision_mask = 1
+		var result = space_state.intersect_ray(query)
+		if result.is_empty():
+			is_falling_out = true
+			
+	if is_falling_out:
 		reset_fall_timer += delta
 	else:
 		reset_fall_timer = 0.0
@@ -589,7 +586,11 @@ func _physics_process(delta: float) -> void:
 		add_child(flipped_label)
 		
 	if reset_stuck_timer > 0.1 and is_flipped:
+		flipped_label.text = "FLIPPED!"
 		flipped_label.visible = int(reset_stuck_timer * 10) % 2 == 0
+	elif reset_fall_timer > 0.1 and is_falling_out:
+		flipped_label.text = "FALLING!"
+		flipped_label.visible = int(reset_fall_timer * 10) % 2 == 0
 	else:
 		flipped_label.visible = false
 		
