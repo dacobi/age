@@ -289,7 +289,7 @@ static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: fl
     root.add_child(land)
     _build_transition(land, ramp_length, width, width)
 
-static func _build_curve(root: Node3D, angle: float, radius: float, width: float, start_t: float, end_t: float, pitch: float = 0.0):
+static func _build_curve(root: Node3D, angle: float, radius: float, width: float, start_t: float, end_t: float, pitch: float = 0.0, banked: bool = true):
     var path = Path3D.new()
     path.name = "Path3D"
     var curve = Curve3D.new()
@@ -310,7 +310,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
             var t = float(i) / num_points
             var current_angle = t * angle_rad
             var global_t = lerp(start_t, end_t, t)
-            var max_tilt = (0.0 if has_incline else deg_to_rad(15.0)) * sign_val
+            var max_tilt = (0.0 if (has_incline or not banked) else deg_to_rad(15.0)) * sign_val
             var nascar_tilt = max_tilt
             
             var y_bump = (width / 2.0) * abs(sin(nascar_tilt))
@@ -401,6 +401,129 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     create_path_csg.call(ai_f, 128, null)
 
 
+
+static func _build_right_angle(root: Node3D, radius: float, width: float, is_left: bool):
+    var hw = width / 2.0
+    
+    var road = CSGPolygon3D.new()
+    road.mode = CSGPolygon3D.MODE_DEPTH
+    road.depth = 0.5
+    var pts = PackedVector2Array()
+    if is_left:
+        pts.push_back(Vector2(hw, 0))
+        pts.push_back(Vector2(hw, radius + hw))
+        pts.push_back(Vector2(-radius, radius + hw))
+        pts.push_back(Vector2(-radius, radius - hw))
+        pts.push_back(Vector2(-hw, radius - hw))
+        pts.push_back(Vector2(-hw, 0))
+    else:
+        pts.push_back(Vector2(-hw, 0))
+        pts.push_back(Vector2(-hw, radius + hw))
+        pts.push_back(Vector2(radius, radius + hw))
+        pts.push_back(Vector2(radius, radius - hw))
+        pts.push_back(Vector2(hw, radius - hw))
+        pts.push_back(Vector2(hw, 0))
+    road.polygon = pts
+    road.use_collision = true
+    road.material = get_road_mat()
+    road.rotation_degrees = Vector3(-90, 0, 0)
+    root.add_child(road)
+    
+    var cline = CSGPolygon3D.new()
+    cline.mode = CSGPolygon3D.MODE_DEPTH
+    cline.depth = 0.1
+    var cw = 1.2
+    var cpts = PackedVector2Array()
+    if is_left:
+        cpts.push_back(Vector2(cw, 0))
+        cpts.push_back(Vector2(cw, radius + cw))
+        cpts.push_back(Vector2(-radius, radius + cw))
+        cpts.push_back(Vector2(-radius, radius - cw))
+        cpts.push_back(Vector2(-cw, radius - cw))
+        cpts.push_back(Vector2(-cw, 0))
+    else:
+        cpts.push_back(Vector2(-cw, 0))
+        cpts.push_back(Vector2(-cw, radius + cw))
+        cpts.push_back(Vector2(radius, radius + cw))
+        cpts.push_back(Vector2(radius, radius - cw))
+        cpts.push_back(Vector2(cw, radius - cw))
+        cpts.push_back(Vector2(cw, 0))
+    cline.polygon = cpts
+    cline.use_collision = false
+    cline.material = get_centerline_mat()
+    cline.rotation_degrees = Vector3(-90, 0, 0)
+    cline.position = Vector3(0, 0.25, 0)
+    root.add_child(cline)
+    
+    var bw = 1.0 # Half width of border
+    var bh = 4.0
+    # Outer border
+    var ob = CSGPolygon3D.new()
+    ob.mode = CSGPolygon3D.MODE_DEPTH
+    ob.depth = bh
+    var opts = PackedVector2Array()
+    if is_left:
+        opts.push_back(Vector2(hw - bw, 0))
+        opts.push_back(Vector2(hw + bw, 0))
+        opts.push_back(Vector2(hw + bw, radius + hw + bw))
+        opts.push_back(Vector2(-radius, radius + hw + bw))
+        opts.push_back(Vector2(-radius, radius + hw - bw))
+        opts.push_back(Vector2(hw - bw, radius + hw - bw))
+    else:
+        opts.push_back(Vector2(-hw + bw, 0))
+        opts.push_back(Vector2(-hw - bw, 0))
+        opts.push_back(Vector2(-hw - bw, radius + hw + bw))
+        opts.push_back(Vector2(radius, radius + hw + bw))
+        opts.push_back(Vector2(radius, radius + hw - bw))
+        opts.push_back(Vector2(-hw + bw, radius + hw - bw))
+    ob.polygon = opts
+    ob.use_collision = true
+    ob.material = get_cyan_mat()
+    ob.rotation_degrees = Vector3(-90, 0, 0)
+    ob.position = Vector3(0, 4.0, 0)
+    root.add_child(ob)
+    
+    # Inner border
+    var ib = CSGPolygon3D.new()
+    ib.mode = CSGPolygon3D.MODE_DEPTH
+    ib.depth = bh
+    var ipts = PackedVector2Array()
+    if is_left:
+        ipts.push_back(Vector2(-hw - bw, 0))
+        ipts.push_back(Vector2(-hw + bw, 0))
+        ipts.push_back(Vector2(-hw + bw, radius - hw + bw))
+        ipts.push_back(Vector2(-radius, radius - hw + bw))
+        ipts.push_back(Vector2(-radius, radius - hw - bw))
+        ipts.push_back(Vector2(-hw - bw, radius - hw - bw))
+    else:
+        ipts.push_back(Vector2(hw + bw, 0))
+        ipts.push_back(Vector2(hw - bw, 0))
+        ipts.push_back(Vector2(hw - bw, radius - hw + bw))
+        ipts.push_back(Vector2(radius, radius - hw + bw))
+        ipts.push_back(Vector2(radius, radius - hw - bw))
+        ipts.push_back(Vector2(hw + bw, radius - hw - bw))
+    ib.polygon = ipts
+    ib.use_collision = true
+    ib.material = get_cyan_mat()
+    ib.rotation_degrees = Vector3(-90, 0, 0)
+    ib.position = Vector3(0, 4.0, 0)
+    root.add_child(ib)
+
+    var path = Path3D.new()
+    var curve = Curve3D.new()
+    curve.bake_interval = 0.01
+    
+    var h_len = radius * 0.552 # Approx circle bezier
+    if is_left:
+        curve.add_point(Vector3(0, 0, 0), Vector3(0, 0, h_len), Vector3(0, 0, -h_len))
+        curve.add_point(Vector3(-radius, 0, -radius), Vector3(h_len, 0, 0), Vector3(-h_len, 0, 0))
+    else:
+        curve.add_point(Vector3(0, 0, 0), Vector3(0, 0, h_len), Vector3(0, 0, -h_len))
+        curve.add_point(Vector3(radius, 0, -radius), Vector3(-h_len, 0, 0), Vector3(h_len, 0, 0))
+        
+    path.curve = curve
+    root.add_child(path)
+
 static func _build_close_loop(root: Node3D, current_transform: Transform3D, width: float) -> Transform3D:
     var end_pos_global = Vector3(0, 0, 0)
     var end_dir_global = Vector3(0, 0, -1)
@@ -485,8 +608,10 @@ static func generate(track_data: Array, root_node: Node3D):
         
     var curve_start_t = []
     var curve_end_t = []
+    var curve_banked = []
     curve_start_t.resize(track_data.size())
     curve_end_t.resize(track_data.size())
+    curve_banked.resize(track_data.size())
     
     var i_idx = 0
     while i_idx < track_data.size():
@@ -503,8 +628,13 @@ static func generate(track_data: Array, root_node: Node3D):
                 else:
                     break
             
+            var is_banked = false
+            if i_idx > 0 and track_data[i_idx - 1].get("type", "") == "bank_transition":
+                is_banked = true
+                
             var current_accum = 0.0
             for j in range(i_idx, block_end + 1):
+                curve_banked[j] = is_banked
                 var p_ang = abs(float(track_data[j]["angle"]))
                 curve_start_t[j] = current_accum / total_angle
                 current_accum += p_ang
@@ -514,6 +644,7 @@ static func generate(track_data: Array, root_node: Node3D):
         else:
             curve_start_t[i_idx] = 0.0
             curve_end_t[i_idx] = 1.0
+            curve_banked[i_idx] = false
             i_idx += 1
             
     var current_transform = Transform3D()
@@ -557,7 +688,7 @@ static func generate(track_data: Array, root_node: Node3D):
             
             var flat_transform = Transform3D(flat_basis, current_transform.origin)
             root.global_transform = flat_transform
-            _build_curve(root, angle, radius, width, curve_start_t[i], curve_end_t[i], pitch)
+            _build_curve(root, angle, radius, width, curve_start_t[i], curve_end_t[i], pitch, curve_banked[i])
             
             var angle_rad = deg_to_rad(abs(angle))
             var sign_val = 1.0 if angle < 0 else -1.0
@@ -691,6 +822,20 @@ static func generate(track_data: Array, root_node: Node3D):
             _build_bank_transition(root, length, width, start_tilt, end_tilt)
             
             end_transform = current_transform.translated_local(Vector3(0, 0, -length))
+        elif piece["type"] == "right_angle":
+            var radius = piece["radius"]
+            var width = piece["width"]
+            var is_left = piece.get("is_left", true)
+            
+            _build_right_angle(root, radius, width, is_left)
+            
+            var end_pos = Vector3(-radius if is_left else radius, 0, -radius)
+            end_transform.origin = current_transform * end_pos
+            
+            # Rotate by 90 (left) or -90 (right) around Y
+            var angle_rad = deg_to_rad(90.0 if is_left else -90.0)
+            end_transform.basis = current_transform.basis.rotated(Vector3.UP, angle_rad)
+            
         elif piece["type"] == "gap":
             var length = piece["length"]
             var width = piece["width"]

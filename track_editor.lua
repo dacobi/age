@@ -43,6 +43,10 @@ function renderEditorUI()
     
     imguiButton("Add Curve", "editor_action_curve")
     
+    imguiButton("Right Angle Left", "editor_action_ral")
+    imguiSameLine()
+    imguiButton("Right Angle Right", "editor_action_rar")
+    
     imguiSameLine()
     imguiButton("Add Drop", "editor_action_drop")
     
@@ -139,6 +143,16 @@ while true do
     if getGlobalFloat("editor_action_undo") > 0.5 then
         setGlobalFloat("editor_action", 12.0)
         setGlobalFloat("editor_action_undo", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_ral") > 0.5 then
+        setGlobalFloat("editor_action", 13.0)
+        setGlobalFloat("editor_action_ral", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_rar") > 0.5 then
+        setGlobalFloat("editor_action", 14.0)
+        setGlobalFloat("editor_action_rar", 0.0)
     end
 
     delay(1)
