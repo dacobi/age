@@ -872,16 +872,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		air_time = 0.0
 
-	if grounded:
-		center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-		center_of_mass = Vector3(0, center_of_mass_y, center_of_mass_z)
-	else:
-		center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-		center_of_mass = Vector3.DOWN*0.5
+	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
+	center_of_mass = Vector3(0, center_of_mass_y, center_of_mass_z)
 		
 	# Downforce and Aerodynamic Drag
 	var current_speed_for_aero = linear_velocity.length()
-	apply_central_force(-global_transform.basis.y * (current_speed_for_aero * downforce_multiplier))
+	if grounded:
+		apply_central_force(-global_transform.basis.y * (current_speed_for_aero * downforce_multiplier))
 	
 	if current_speed_for_aero > 0.1:
 		var drag_force = -linear_velocity.normalized() * (current_speed_for_aero * current_speed_for_aero * aero_drag_coeff)

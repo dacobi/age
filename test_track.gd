@@ -189,7 +189,16 @@ func _physics_process(delta):
         elif is_grounded:
             is_crash_cam_active = false
         
-        var forward = supercar.global_transform.basis.z.normalized()
+        var forward: Vector3
+        if is_crash_cam_active and supercar.linear_velocity.length_squared() > 1.0:
+            forward = -supercar.linear_velocity
+            forward.y = 0.0
+            if forward.length_squared() < 0.01:
+                forward = supercar.global_transform.basis.z
+            forward = forward.normalized()
+        else:
+            forward = supercar.global_transform.basis.z.normalized()
+            
         var up = Vector3.UP
         
         var rotated_forward = forward.rotated(up, current_cam_yaw)
@@ -198,7 +207,7 @@ func _physics_process(delta):
         
         if is_crash_cam_active:
             # Zoom out and up
-            offset = rotated_forward * 40.0 + Vector3(0, 20.0, 0)
+            offset = rotated_forward * 80.0 + Vector3(0, 40.0, 0)
             pos_lerp_speed = 2.0 # Slower, more cinematic follow
         else:
             offset = rotated_forward * 12.0 + Vector3(0, 4.0 + current_cam_pitch * 4.0, 0)
