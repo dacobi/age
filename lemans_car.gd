@@ -852,23 +852,24 @@ func _physics_process(delta: float) -> void:
 	if not grounded:
 		air_time += delta
 		
-		# Sim-based Reaction Torque
-		# Engine applies torque to the driven wheels (Force * Radius), which applies an equal opposite torque to the chassis.
-		# Because the wheels are in the air and have low mass, they hit max RPM almost instantly.
-		# We approximate this short burst of angular momentum transfer with a continuous 0.04 multiplier.
-		var sim_air_factor = 0.04
-		var engine_pitch_torque = motor_input * acceleration * radius_rear * 2.0 * sim_air_factor
+		# Manual Air Controls (Pitch and Roll)
+		var air_is_flipped = global_transform.basis.y.dot(Vector3.UP) < 0.4
+		var is_falling = linear_velocity.y < -15.0
+		var is_crashing = air_is_flipped or is_falling
 		
-		# Brake calipers apply torque to stop the wheels. 
-		var brake_pitch_torque = 0.0
-		if wheels[2].is_braking or wheels[3].is_braking:
-			brake_pitch_torque = -final_brake * 15000.0 * sim_air_factor
+		if not is_crashing:
+			var pitch_input = final_accel - final_brake
 			
-		var pitch_torque_val = engine_pitch_torque + brake_pitch_torque
-		if pitch_torque_val != 0.0:
-			# Local X is the pitch axis (right vector)
-			var local_right = global_transform.basis.x
-			apply_torque(local_right * pitch_torque_val)
+			var local_angular = global_transform.basis.inverse() * angular_velocity
+			
+			# ~22.5 deg/sec = PI / 8.0 radians
+			var target_pitch_rate = pitch_input * (PI / 8.0)
+			var target_roll_rate = -float(steer_input) * (PI / 8.0)
+			
+			local_angular.x = lerpf(local_angular.x, target_pitch_rate, 4.0 * delta)
+			local_angular.z = lerpf(local_angular.z, target_roll_rate, 4.0 * delta)
+			
+			angular_velocity = global_transform.basis * local_angular
 	else:
 		air_time = 0.0
 
