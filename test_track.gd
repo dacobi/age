@@ -179,14 +179,14 @@ func _physics_process(delta):
         if supercar.has_method("is_grounded"):
             is_grounded = supercar.is_grounded()
             
-        var is_flipped = supercar.global_transform.basis.y.dot(Vector3.UP) < 0.4
+        var air_is_flipped = supercar.global_transform.basis.y.dot(Vector3.UP) < 0.4
         var is_falling = supercar.linear_velocity.y < -15.0
         
         if reset_car:
             is_crash_cam_active = false
-        elif not is_grounded and (is_flipped or is_falling):
+        elif air_is_flipped or (not is_grounded and is_falling):
             is_crash_cam_active = true
-        elif is_grounded:
+        elif is_grounded and not air_is_flipped:
             is_crash_cam_active = false
         
         var forward: Vector3

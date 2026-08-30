@@ -17,7 +17,6 @@ setAudioVolume(50)
 godotSelectRoot()
 local supercar = godotGetNodePointer("SuperCar")
 if supercar then
-	godotSetProperty("auto_reset_enabled", false, supercar)
 end
 
 print("SUPERCAR POINTER IS: ", supercar)
@@ -67,7 +66,6 @@ while true do
 	local track = godotGetNodePointer("MegaRacerScene")
 
 	if supercar and not has_disabled_auto_reset then
-		godotSetProperty("auto_reset_enabled", false, supercar)
 		has_disabled_auto_reset = true
 	end
 
