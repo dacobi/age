@@ -19,6 +19,8 @@ var key_e_pressed = false
 var reset_car = false
 var reset_game = false
 var start_transform: Transform3D
+var start_flipped: bool = false
+var gate_length: float = 90.0
 var is_crash_cam_active = false
 
 
@@ -76,11 +78,15 @@ func _on_file_selected(path: String):
     # Find the gate or start position
     start_transform = Transform3D()
     var gate_found = false
+    start_flipped = false
+    gate_length = 90.0
     
     var children = track_root.get_children()
     for i in range(data.size()):
         if data[i].get("type") == "gate":
             start_transform = children[i].global_transform
+            start_flipped = data[i].get("start_flipped", false)
+            gate_length = data[i].get("length", 90.0)
             gate_found = true
             break
             
@@ -90,8 +96,14 @@ func _on_file_selected(path: String):
     # Position Supercar (slightly raised so it drops nicely)
     if supercar:
         var offset = start_transform.basis.z * 10.0 # Move 10m back from the start of the gate piece
+        if start_flipped:
+            offset = start_transform.basis.z * (-gate_length - 10.0)
+            
         supercar.global_transform = start_transform
-        supercar.global_position = supercar.global_position + offset + Vector3(0, 2.0, 0)
+        if start_flipped:
+            supercar.global_transform = supercar.global_transform.rotated_local(Vector3.UP, PI)
+            
+        supercar.global_position = start_transform.origin + offset + Vector3(0, 2.0, 0)
         
         # Reset car physics velocities
         if supercar is RigidBody3D:
@@ -148,9 +160,15 @@ func _process(delta):
     if reset_car or (supercar and supercar.global_position.y < -3000.0):
         reset_car = false
         if supercar:
-            supercar.global_transform = start_transform
             var offset = start_transform.basis.z * 10.0 # Move 10m back from the start of the gate piece
-            supercar.global_position = supercar.global_position + offset + Vector3(0, 2.0, 0)
+            if start_flipped:
+                offset = start_transform.basis.z * (-gate_length - 10.0)
+                
+            supercar.global_transform = start_transform
+            if start_flipped:
+                supercar.global_transform = supercar.global_transform.rotated_local(Vector3.UP, PI)
+                
+            supercar.global_position = start_transform.origin + offset + Vector3(0, 2.0, 0)
             
             if supercar is RigidBody3D:
                 supercar.linear_velocity = Vector3.ZERO
