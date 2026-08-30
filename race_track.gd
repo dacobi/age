@@ -912,7 +912,7 @@ func _process(delta):
 				p.collision_layer = 4
 				p.set("respawn_timer", 0.0)
 
-	elif reset_car or (supercar and supercar.global_position.y < -150.0):
+	elif reset_car or (supercar and supercar.global_position.y < -3000.0):
 		reset_car = false
 		if supercar:
 			if is_square:
