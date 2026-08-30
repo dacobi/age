@@ -573,7 +573,10 @@ func _create_right_angle_csg(radius: float, width: float, is_left: bool) -> Node
     # Borders
     var bw = 1.0
     var bh = 4.0
-    var b_mat = load("res://materials/neon_cyan_transparent.tres")
+    var b_mat = StandardMaterial3D.new()
+    b_mat.albedo_color = Color(0, 0.9, 0.9, 1)
+    b_mat.emission_enabled = true
+    b_mat.emission = Color(0, 0.9, 0.9, 1)
     
     var ob = CSGPolygon3D.new()
     ob.mode = CSGPolygon3D.MODE_DEPTH
