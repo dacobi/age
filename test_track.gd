@@ -17,6 +17,7 @@ var mouse_dy = 0.0
 var mouse_wheel = 0.0
 var key_e_pressed = false
 var reset_car = false
+var reset_y_threshold: float = -3000.0
 var reset_game = false
 var start_transform: Transform3D
 var start_flipped: bool = false
@@ -74,6 +75,7 @@ func _on_file_selected(path: String):
         
     # Generate the track
     preload("res://track_generator.gd").generate(data, track_root)
+    reset_y_threshold = get_min_track_y(track_root) - 150.0
     
     # Find the gate or start position
     start_transform = Transform3D()
@@ -157,7 +159,7 @@ func _spawn_nitros(data: Array, children: Array):
 
 func _process(delta):
 
-    if reset_car or (supercar and supercar.global_position.y < -3000.0):
+    if reset_car or (supercar and supercar.global_position.y < reset_y_threshold):
         reset_car = false
         if supercar:
             var offset = start_transform.basis.z * 10.0 # Move 10m back from the start of the gate piece
@@ -239,3 +241,17 @@ func _physics_process(delta):
             
         var target_transform = camera_node.global_transform.looking_at(look_target, Vector3.UP)
         camera_node.global_transform = camera_node.global_transform.interpolate_with(target_transform, 10.0 * delta)
+
+func get_min_track_y(node: Node) -> float:
+    var min_y = 0.0
+    for child in node.get_children():
+        if child is Node3D:
+            min_y = min(min_y, child.global_position.y)
+        if child is Path3D:
+            var curve = child.curve
+            if curve:
+                for i in range(curve.get_baked_points().size()):
+                    var pt = child.global_transform * curve.get_baked_points()[i]
+                    min_y = min(min_y, pt.y)
+        min_y = min(min_y, get_min_track_y(child))
+    return min_y

@@ -22,6 +22,7 @@ var mouse_wheel = 0.0
 
 var reset_game = false
 var reset_car = false
+var reset_y_threshold: float = -3000.0
 var powerup_nodes: Array = []
 
 var current_lap: int = 0
@@ -940,7 +941,7 @@ func _process(delta):
 				p.collision_layer = 4
 				p.set("respawn_timer", 0.0)
 
-	elif reset_car or (supercar and supercar.global_position.y < -3000.0):
+	elif reset_car or (supercar and supercar.global_position.y < reset_y_threshold):
 		reset_car = false
 		if supercar:
 			if is_square:
@@ -1423,3 +1424,17 @@ func setup_ui():
 		if jingle_res:
 			victory_jingle_player.stream = jingle_res
 	add_child(victory_jingle_player)
+
+func get_min_track_y(node: Node) -> float:
+    var min_y = 0.0
+    for child in node.get_children():
+        if child is Node3D:
+            min_y = min(min_y, child.global_position.y)
+        if child is Path3D:
+            var curve = child.curve
+            if curve:
+                for i in range(curve.get_baked_points().size()):
+                    var pt = child.global_transform * curve.get_baked_points()[i]
+                    min_y = min(min_y, pt.y)
+        min_y = min(min_y, get_min_track_y(child))
+    return min_y
