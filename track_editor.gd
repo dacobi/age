@@ -333,6 +333,7 @@ func rebuild_track():
         piece_index += 1
         track_root.add_child(piece_node)
         built_nodes.append(piece_node)
+        piece_node.set_meta("piece_idx", i)
         
         piece_node.global_transform = current_transform
         var end_transform = current_transform
@@ -636,6 +637,13 @@ func rebuild_track():
             _create_curved_ramp_editor(land_node, width, ramp_angle, ramp_len)
             
             end_transform = end_transform.translated_local(Vector3(0, 0, -length))
+            
+        elif type == "spline_transition":
+            var spline_node = _create_spline_transition(piece, current_transform)
+            piece_node.add_child(spline_node)
+            var target_pos = Vector3(piece.get("target_pos_x", 0.0), piece.get("target_pos_y", 0.0), piece.get("target_pos_z", 0.0))
+            var target_rot = Vector3(piece.get("target_rot_x", 0.0), piece.get("target_rot_y", 0.0), piece.get("target_rot_z", 0.0))
+            end_transform = Transform3D(Basis.from_euler(target_rot), target_pos)
             
         elif type == "close_loop":
             var width = float(piece.get("width", 104.0))
@@ -1354,8 +1362,8 @@ func _handle_raycast():
         var col = result.collider
         var n = col
         while n and n != get_tree().root:
-            if n.name.begins_with("Piece_"):
-                new_hover = n.name.trim_prefix("Piece_").to_int()
+            if n.has_meta("piece_idx"):
+                new_hover = n.get_meta("piece_idx")
                 break
             n = n.get_parent()
             
@@ -1368,7 +1376,7 @@ func _delete_piece(idx: int):
     history_stack.append(track_data.duplicate(true))
     
     if idx + 1 < built_nodes.size():
-        hole_anchor_transform = built_nodes[idx + 1].transform
+        hole_anchor_transform = built_nodes[idx + 1].global_transform
     else:
         hole_anchor_transform = Transform3D.IDENTITY
     
