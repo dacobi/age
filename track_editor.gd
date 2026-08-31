@@ -3,6 +3,12 @@ extends Node3D
 var track_data: Array = []
 var history_stack: Array = []
 var last_params = {}
+var track_after_hole: Array = []
+var hole_anchor_transform: Transform3D = Transform3D.IDENTITY
+var is_hole_mode: bool = false
+var build_direction: int = 1
+var hovered_piece_index: int = -1
+
 var built_nodes: Array = []
 var is_showing_final = false
 var final_parent: Node3D
@@ -114,29 +120,35 @@ func _process(_delta):
         rebuild_track()
 
     if action > 0.0:
-        if (action >= 1.0 and action <= 7.0) or action == 9.0 or action == 13.0 or action == 14.0:
-            history_stack.append(track_data.duplicate(true))
-            
 
         
+        var piece_to_add = {}
         if action == 1.0:
-            track_data.append({"type": "straight", "length": p_length, "width": p2, "incline": p_incline})
+            piece_to_add = {"type": "straight", "length": p_length, "width": p2, "incline": p_incline}
         elif action == 2.0:
-            track_data.append({"type": "curve", "angle": p_angle, "radius": p3, "width": p2})
+            piece_to_add = {"type": "curve", "angle": p_angle, "radius": p3, "width": p2}
         elif action == 3.0:
-            track_data.append({"type": "drop", "drop_distance": p_drop})
+            piece_to_add = {"type": "drop", "drop_distance": p_drop}
         elif action == 4.0:
-            track_data.append({"type": "transition", "length": p_length, "start_width": p2, "end_width": p5})
+            piece_to_add = {"type": "transition", "length": p_length, "start_width": p2, "end_width": p5}
         elif action == 5.0:
-            track_data.append({"type": "gate", "length": p_length, "track_width": p2, "gate_width": p5})
+            piece_to_add = {"type": "gate", "length": p_length, "track_width": p2, "gate_width": p5}
         elif action == 6.0:
-            track_data.append({"type": "gap", "gap_length": p_gap_length, "ramp_size": p_ramp_size, "width": p2, "ramp_angle": p6})
+            piece_to_add = {"type": "gap", "gap_length": p_gap_length, "ramp_size": p_ramp_size, "width": p2, "ramp_angle": p6}
         elif action == 7.0:
-            track_data.append({"type": "close_loop", "width": p2})
-        elif action == 8.0:
-            lua_manager.set_global_float("editor_action", 0.0)
+            piece_to_add = {"type": "close_loop", "width": p2}
         elif action == 9.0:
-            track_data.append({"type": "bank_transition", "length": p_length, "width": p2})
+            piece_to_add = {"type": "bank_transition", "length": p_length, "width": p2}
+        elif action == 13.0:
+            piece_to_add = {"type": "right_angle", "radius": p3, "width": p2, "is_left": true}
+        elif action == 14.0:
+            piece_to_add = {"type": "right_angle", "radius": p3, "width": p2, "is_left": false}
+            
+        if piece_to_add.size() > 0:
+            _add_new_piece(piece_to_add)
+            
+        if action == 8.0:
+            pass # clear track is handled elsewhere? Actually clear is handled directly in lua? No, 8 is clear track!
         elif action == 10.0:
             lua_manager.set_global_float("editor_action", 0.0)
             _show_file_dialog(false)
@@ -147,14 +159,51 @@ func _process(_delta):
             return
         elif action == 12.0:
             if history_stack.size() > 0:
-                track_data = history_stack.pop_back()
-        elif action == 13.0:
-            track_data.append({"type": "right_angle", "radius": p3, "width": p2, "is_left": true})
-        elif action == 14.0:
-            track_data.append({"type": "right_angle", "radius": p3, "width": p2, "is_left": false})
-            
+                var state = history_stack.pop_back()
+                if typeof(state) == TYPE_DICTIONARY and state.has("d"):
+                    track_data = state["d"].duplicate(true)
+                    track_after_hole = state["a"].duplicate(true)
+                    hole_anchor_transform = state["anc"]
+                    is_hole_mode = state["hole"]
+                    build_direction = state["dir"]
+                elif typeof(state) == TYPE_ARRAY:
+                    track_data = state.duplicate(true)
+                    track_after_hole = []
+                    is_hole_mode = false
+                    build_direction = 1
+        elif action == 15.0:
+            if is_hole_mode:
+                build_direction = -build_direction
+                hovered_piece_index = -1
+        elif action == 16.0:
+            if is_hole_mode:
+                var p = {"type": "spline_transition", "width": p2}
+                p["target_pos_x"] = hole_anchor_transform.origin.x
+                p["target_pos_y"] = hole_anchor_transform.origin.y
+                p["target_pos_z"] = hole_anchor_transform.origin.z
+                var rot = hole_anchor_transform.basis.get_euler()
+                p["target_rot_x"] = rot.x
+                p["target_rot_y"] = rot.y
+                p["target_rot_z"] = rot.z
+                history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
+                track_data.append(p)
+                track_data.append_array(track_after_hole)
+                track_after_hole = []
+                is_hole_mode = false
+                build_direction = 1
+                hovered_piece_index = -1
+                
         lua_manager.set_global_float("editor_action", 0.0)
         rebuild_track()
+
+
+    var select_undo_mode = lua_manager.get_global_float("editor_select_undo_mode") > 0.5
+    if select_undo_mode:
+        _handle_raycast()
+    else:
+        if hovered_piece_index != -1:
+            hovered_piece_index = -1
+            rebuild_track()
 
 func _show_file_dialog(is_load: bool):
     var fd = FileDialog.new()
@@ -209,37 +258,42 @@ func rebuild_track():
     var current_transform = Transform3D.IDENTITY
     
 
+    var render_data = track_data.duplicate(true)
+    if is_hole_mode:
+        render_data.append({"type": "teleport", "transform": hole_anchor_transform})
+        render_data.append_array(track_after_hole)
+
     var curve_start_t = []
     var curve_end_t = []
     var curve_banked = []
-    curve_start_t.resize(track_data.size())
-    curve_end_t.resize(track_data.size())
-    curve_banked.resize(track_data.size())
+    curve_start_t.resize(render_data.size())
+    curve_end_t.resize(render_data.size())
+    curve_banked.resize(render_data.size())
     
     var i_idx = 0
-    while i_idx < track_data.size():
-        var piece = track_data[i_idx]
+    while i_idx < render_data.size():
+        var piece = render_data[i_idx]
         var type = piece.get("type", "straight")
         if type == "curve":
             var sign_dir = sign(float(piece.get("angle", 90.0)))
             var block_end = i_idx
             var total_angle = abs(float(piece.get("angle", 90.0)))
             
-            for j in range(i_idx + 1, track_data.size()):
-                if track_data[j].get("type", "straight") == "curve" and sign(float(track_data[j].get("angle", 90.0))) == sign_dir:
+            for j in range(i_idx + 1, render_data.size()):
+                if render_data[j].get("type", "straight") == "curve" and sign(float(render_data[j].get("angle", 90.0))) == sign_dir:
                     block_end = j
-                    total_angle += abs(float(track_data[j].get("angle", 90.0)))
+                    total_angle += abs(float(render_data[j].get("angle", 90.0)))
                 else:
                     break
                     
             var is_banked = false
-            if i_idx > 0 and track_data[i_idx - 1].get("type", "") == "bank_transition":
+            if i_idx > 0 and render_data[i_idx - 1].get("type", "") == "bank_transition":
                 is_banked = true
                 
             var current_accum = 0.0
             for j in range(i_idx, block_end + 1):
                 curve_banked[j] = is_banked
-                var p_ang = abs(float(track_data[j].get("angle", 90.0)))
+                var p_ang = abs(float(render_data[j].get("angle", 90.0)))
                 curve_start_t[j] = current_accum / total_angle
                 current_accum += p_ang
                 curve_end_t[j] = current_accum / total_angle
@@ -251,12 +305,18 @@ func rebuild_track():
             curve_banked[i_idx] = false
             i_idx += 1
 
-    for i in range(track_data.size()):
-        var piece = track_data[i]
+    var piece_index = 0
+    for i in range(render_data.size()):
+        var piece = render_data[i]
         var type = piece.get("type", "straight")
         
+        if type == "teleport":
+            current_transform = piece["transform"]
+            continue
+            
         var piece_node = Node3D.new()
-        piece_node.name = "Piece_" + str(i)
+        piece_node.name = "Piece_" + str(piece_index)
+        piece_index += 1
         track_root.add_child(piece_node)
         built_nodes.append(piece_node)
         
@@ -462,10 +522,10 @@ func rebuild_track():
             # Find next curve direction
             var next_sign = 1.0
             var found = false
-            for j in range(i + 1, track_data.size()):
-                var t = track_data[j].get("type", "")
+            for j in range(i + 1, render_data.size()):
+                var t = render_data[j].get("type", "")
                 if t == "curve":
-                    var raw_ang = float(track_data[j].get("angle", 90.0))
+                    var raw_ang = float(render_data[j].get("angle", 90.0))
                     next_sign = 1.0 if raw_ang < 0 else -1.0
                     found = true
                     break
@@ -476,9 +536,9 @@ func rebuild_track():
             var prev_sign = 1.0
             var prev_found = false
             for j in range(i - 1, -1, -1):
-                var t = track_data[j].get("type", "")
+                var t = render_data[j].get("type", "")
                 if t == "curve":
-                    var raw_ang = float(track_data[j].get("angle", 90.0))
+                    var raw_ang = float(render_data[j].get("angle", 90.0))
                     prev_sign = 1.0 if raw_ang < 0 else -1.0
                     prev_found = true
                     break
@@ -613,9 +673,7 @@ func rebuild_track():
         current_transform = end_transform
 
 
-    if built_nodes.size() > 0 and track_data.size() > 0:
-        var last_child = built_nodes[built_nodes.size() - 1]
-        _add_selection_indicator(last_child, track_data[track_data.size() - 1])
+    _update_selection_indicators()
 
 
 func _create_right_angle_csg(radius: float, width: float, is_left: bool) -> Node3D:
@@ -1157,7 +1215,7 @@ func _create_curved_ramp_editor(root: Node3D, width: float, ramp_angle: float, r
 
 
 
-func _add_selection_indicator(piece_node: Node3D, piece: Dictionary):
+func _add_selection_indicator(piece_node: Node3D, piece: Dictionary, is_red: bool = false):
     var type = piece.get("type", "")
     var w = piece.get("width", 104.0)
     var aabb = AABB()
@@ -1196,7 +1254,7 @@ func _add_selection_indicator(piece_node: Node3D, piece: Dictionary):
     var mesh = ImmediateMesh.new()
     var mat = StandardMaterial3D.new()
     mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-    mat.albedo_color = Color(1.0, 1.0, 1.0, 1.0)
+    mat.albedo_color = Color(1.0, 0.0, 0.0, 1.0) if is_red else Color(1.0, 1.0, 1.0, 1.0)
     
     mesh.surface_begin(Mesh.PRIMITIVE_LINES, mat)
     var p0 = aabb.position
@@ -1227,4 +1285,184 @@ func _add_selection_indicator(piece_node: Node3D, piece: Dictionary):
     var mi = MeshInstance3D.new()
     mi.mesh = mesh
     piece_node.add_child(mi)
+
+
+func _update_selection_indicators():
+    for child in built_nodes:
+        if is_instance_valid(child):
+            for grandchild in child.get_children():
+                if grandchild is MeshInstance3D and grandchild.mesh is ImmediateMesh:
+                    grandchild.queue_free()
+                    
+    if built_nodes.size() > 0:
+        if not is_hole_mode:
+            if track_data.size() > 0:
+                _add_selection_indicator(built_nodes.back(), track_data.back(), false)
+        else:
+            if build_direction == 1 and track_data.size() > 0:
+                _add_selection_indicator(built_nodes[track_data.size() - 1], track_data.back(), false)
+            elif build_direction == -1 and track_after_hole.size() > 0:
+                _add_selection_indicator(built_nodes[track_data.size()], track_after_hole[0], false)
+                
+        var select_undo_mode = lua_manager.get_global_float("editor_select_undo_mode") > 0.5
+        if select_undo_mode and hovered_piece_index >= 0 and hovered_piece_index < built_nodes.size():
+            var hover_child = built_nodes[hovered_piece_index]
+            var piece_data = {}
+            if hovered_piece_index < track_data.size():
+                piece_data = track_data[hovered_piece_index]
+            else:
+                var offset_idx = hovered_piece_index - track_data.size()
+                if offset_idx < track_after_hole.size():
+                    piece_data = track_after_hole[offset_idx]
+            if piece_data.size() > 0:
+                _add_selection_indicator(hover_child, piece_data, true)
+
+func _unhandled_input(event):
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+        var select_undo_mode = lua_manager.get_global_float("editor_select_undo_mode") > 0.5
+        if select_undo_mode and not is_hole_mode and hovered_piece_index != -1:
+            _delete_piece(hovered_piece_index)
+
+func _handle_raycast():
+    if is_hole_mode: return
+    var cam = get_viewport().get_camera_3d()
+    if not cam: return
+    var mouse_pos = get_viewport().get_mouse_position()
+    var ray_length = 1000.0
+    var from = cam.project_ray_origin(mouse_pos)
+    var to = from + cam.project_ray_normal(mouse_pos) * ray_length
+    var space = get_world_3d().direct_space_state
+    var query = PhysicsRayQueryParameters3D.create(from, to)
+    var result = space.intersect_ray(query)
+    
+    var new_hover = -1
+    if result:
+        var col = result.collider
+        var n = col
+        while n and n != get_tree().root:
+            if n.name.begins_with("Piece_"):
+                new_hover = n.name.trim_prefix("Piece_").to_int()
+                break
+            n = n.get_parent()
+            
+    if new_hover != hovered_piece_index:
+        hovered_piece_index = new_hover
+        rebuild_track()
+
+func _delete_piece(idx: int):
+    if idx < 0 or idx >= track_data.size(): return
+    history_stack.append(track_data.duplicate(true))
+    
+    if idx + 1 < built_nodes.size():
+        hole_anchor_transform = built_nodes[idx + 1].global_transform
+    else:
+        hole_anchor_transform = Transform3D.IDENTITY
+    
+    var new_data = []
+    track_after_hole = []
+    
+    for i in range(track_data.size()):
+        if i < idx:
+            new_data.append(track_data[i])
+        elif i > idx:
+            track_after_hole.append(track_data[i])
+            
+    track_data = new_data
+    is_hole_mode = track_after_hole.size() > 0
+    build_direction = 1
+    hovered_piece_index = -1
+    lua_manager.set_global_float("editor_select_undo_mode", 0.0)
+    rebuild_track()
+
+
+func _get_piece_offset(piece: Dictionary) -> Transform3D:
+    var t = Transform3D.IDENTITY
+    var type = piece.get("type", "straight")
+    if type == "straight" or type == "transition" or type == "gate" or type == "bank_transition":
+        var l = float(piece.get("length", 100.0))
+        var incline = float(piece.get("incline", 0.0))
+        if abs(incline) >= 0.1:
+            var theta = deg_to_rad(incline)
+            var R = l / abs(theta)
+            var sign_pitch = 1.0 if incline > 0 else -1.0
+            var y = (R - R * cos(abs(theta))) * sign_pitch
+            var z = -R * sin(abs(theta))
+            t = t.translated_local(Vector3(0, y, z))
+            t = t.rotated_local(Vector3.RIGHT, theta)
+        else:
+            t = t.translated_local(Vector3(0, 0, -l))
+    elif type == "curve":
+        var radius = float(piece.get("radius", 100.0))
+        var angle = float(piece.get("angle", 90.0))
+        var is_left = angle > 0
+        var theta = deg_to_rad(abs(angle))
+        var sign_x = -1.0 if is_left else 1.0
+        var x = (radius - radius * cos(theta)) * sign_x
+        var z = -radius * sin(theta)
+        t = t.translated_local(Vector3(x, 0, z))
+        t = t.rotated_local(Vector3.UP, theta * (1.0 if is_left else -1.0))
+    elif type == "gap":
+        var gap_len = float(piece.get("gap_length", 50.0))
+        var ramp_size = float(piece.get("ramp_size", 20.0))
+        var ramp_angle = float(piece.get("ramp_angle", 45.0))
+        var theta = deg_to_rad(ramp_angle)
+        var R = (ramp_size * 0.75) / theta
+        var z_curve = R * sin(theta)
+        var z_straight = (ramp_size * 0.25) * cos(theta)
+        var total_z = gap_len + 2.0 * (z_curve + z_straight)
+        t = t.translated_local(Vector3(0, 0, -total_z))
+    elif type == "drop":
+        var drop = float(piece.get("drop_distance", 20.0))
+        t = t.translated_local(Vector3(0, -drop, 0))
+    elif type == "right_angle":
+        var radius = float(piece.get("radius", 20.0))
+        var is_left = piece.get("is_left", true)
+        var sign_x = -1.0 if is_left else 1.0
+        t = t.translated_local(Vector3(radius * sign_x, 0, -radius))
+        t = t.rotated_local(Vector3.UP, (PI/2.0) * (1.0 if is_left else -1.0))
+    return t
+
+func _add_new_piece(piece: Dictionary):
+    history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
+    if not is_hole_mode or build_direction == 1:
+        track_data.append(piece)
+    else:
+        var offset = _get_piece_offset(piece)
+        hole_anchor_transform = hole_anchor_transform * offset.affine_inverse()
+        track_after_hole.insert(0, piece)
+
+
+func _create_spline_transition(piece: Dictionary, current_transform: Transform3D) -> Node3D:
+    var width = float(piece.get("width", 104.0))
+    var target_pos = Vector3(piece.get("target_pos_x", 0.0), piece.get("target_pos_y", 0.0), piece.get("target_pos_z", 0.0))
+    var target_rot = Vector3(piece.get("target_rot_x", 0.0), piece.get("target_rot_y", 0.0), piece.get("target_rot_z", 0.0))
+    var target_transform = Transform3D(Basis.from_euler(target_rot), target_pos)
+    
+    var root = Node3D.new()
+    var path = Path3D.new()
+    var curve = Curve3D.new()
+    
+    var start_pos = current_transform.origin
+    var start_dir = -current_transform.basis.z
+    var end_dir = -target_transform.basis.z
+    var dist = start_pos.distance_to(target_pos)
+    var c_len = dist * 0.5
+    
+    curve.add_point(start_pos, Vector3.ZERO, start_dir * c_len)
+    curve.add_point(target_pos, -end_dir * c_len, Vector3.ZERO)
+    path.curve = curve
+    root.add_child(path)
+    
+    _build_path_csg_elements(root, path, width, false)
+    
+    var res = Node3D.new()
+    res.add_child(root)
+    
+    # Store end transform in a metadata node or return it
+    var end_node = Node3D.new()
+    end_node.name = "EndTransform"
+    end_node.transform = target_transform
+    res.add_child(end_node)
+    
+    return res
 
