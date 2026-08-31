@@ -87,9 +87,24 @@ func _process(_delta):
                 
     last_params = current_params.duplicate()
     
-    if param_changed and track_data.size() > 0 and action == 0.0:
-        var last_idx = track_data.size() - 1
-        var p = track_data[last_idx]
+    var p = null
+    var update_anchor_for_p = false
+    var fixed_end_transform = Transform3D.IDENTITY
+    if param_changed and action == 0.0:
+        if is_hole_mode and build_direction == -1:
+            if track_after_hole.size() > 0:
+                p = track_after_hole[0]
+                update_anchor_for_p = true
+                var next_idx = track_data.size() + 1
+                if next_idx < built_nodes.size():
+                    fixed_end_transform = built_nodes[next_idx].global_transform
+                else:
+                    fixed_end_transform = hole_anchor_transform * _get_piece_offset(p)
+        else:
+            if track_data.size() > 0:
+                p = track_data.back()
+                
+    if p != null:
         var t = p.get("type", "")
         if t == "straight":
             p["length"] = p_length
@@ -116,6 +131,9 @@ func _process(_delta):
             p["ramp_angle"] = p6
         elif t == "close_loop":
             p["width"] = p2
+            
+        if update_anchor_for_p:
+            hole_anchor_transform = fixed_end_transform * _get_piece_offset(p).affine_inverse()
             
         rebuild_track()
 
@@ -170,6 +188,9 @@ func _process(_delta):
                     if build_direction == 1 and track_data.size() > 0:
                         track_data.pop_back()
                     elif build_direction == -1 and track_after_hole.size() > 0:
+                        var idx_of_next = track_data.size() + 1
+                        if idx_of_next < built_nodes.size():
+                            hole_anchor_transform = built_nodes[idx_of_next].global_transform
                         track_after_hole.pop_front()
             else:
                 if history_stack.size() > 0:
@@ -191,16 +212,16 @@ func _process(_delta):
                 hovered_piece_index = -1
         elif action == 16.0:
             if is_hole_mode:
-                var p = {"type": "spline_transition", "width": p2}
-                p["target_pos_x"] = hole_anchor_transform.origin.x
-                p["target_pos_y"] = hole_anchor_transform.origin.y
-                p["target_pos_z"] = hole_anchor_transform.origin.z
+                var sp = {"type": "spline_transition", "width": p2}
+                sp["target_pos_x"] = hole_anchor_transform.origin.x
+                sp["target_pos_y"] = hole_anchor_transform.origin.y
+                sp["target_pos_z"] = hole_anchor_transform.origin.z
                 var rot = hole_anchor_transform.basis.get_euler()
-                p["target_rot_x"] = rot.x
-                p["target_rot_y"] = rot.y
-                p["target_rot_z"] = rot.z
+                sp["target_rot_x"] = rot.x
+                sp["target_rot_y"] = rot.y
+                sp["target_rot_z"] = rot.z
                 history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
-                track_data.append(p)
+                track_data.append(sp)
                 track_data.append_array(track_after_hole)
                 track_after_hole = []
                 is_hole_mode = false
