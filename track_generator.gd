@@ -938,11 +938,13 @@ static func generate(track_data: Array, root_node: Node3D):
         elif piece["type"] == "close_loop":
             var width = float(piece.get("width", 104.0))
             end_transform = _build_close_loop(root, current_transform, width)
+        elif piece["type"] == "spline_transition":
+            end_transform = _build_spline_transition(piece, current_transform, root)
             
         current_transform = end_transform
         i += 1
 
-func _build_spline_transition(piece: Dictionary, current_transform: Transform3D, parent: Node3D) -> Transform3D:
+static func _build_spline_transition(piece: Dictionary, current_transform: Transform3D, parent: Node3D) -> Transform3D:
     var width = float(piece.get("width", 104.0))
     var target_pos = Vector3(piece.get("target_pos_x", 0.0), piece.get("target_pos_y", 0.0), piece.get("target_pos_z", 0.0))
     var target_rot = Vector3(piece.get("target_rot_x", 0.0), piece.get("target_rot_y", 0.0), piece.get("target_rot_z", 0.0))
@@ -952,14 +954,16 @@ func _build_spline_transition(piece: Dictionary, current_transform: Transform3D,
     var path = Path3D.new()
     var curve = Curve3D.new()
     
-    var start_pos = current_transform.origin
-    var start_dir = -current_transform.basis.z
-    var end_dir = -target_transform.basis.z
-    var dist = start_pos.distance_to(target_pos)
+    var local_target = current_transform.affine_inverse() * target_transform
+    
+    var start_pos = Vector3.ZERO
+    var start_dir = Vector3(0, 0, -1)
+    var end_dir = -local_target.basis.z
+    var dist = start_pos.distance_to(local_target.origin)
     var c_len = dist * 0.5
     
     curve.add_point(start_pos, Vector3.ZERO, start_dir * c_len)
-    curve.add_point(target_pos, -end_dir * c_len, Vector3.ZERO)
+    curve.add_point(local_target.origin, -end_dir * c_len, Vector3.ZERO)
     path.curve = curve
     root.add_child(path)
     
@@ -981,17 +985,18 @@ func _build_spline_transition(piece: Dictionary, current_transform: Transform3D,
         return csg
         
     var hw = width / 2.0
-    var pts = PackedVector2Array([Vector2(-hw, -0.5), Vector2(hw, -0.5), Vector2(hw, 0), Vector2(-hw, 0)])
-    create_csg.call(pts, 1, get_road_mat())
+    var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
+    create_csg.call(road_poly, 1, get_road_mat())
     
-    var pts_cline = PackedVector2Array([Vector2(-0.5, 0.0), Vector2(0.5, 0.0), Vector2(0.5, 0.1), Vector2(-0.5, 0.1)])
-    create_csg.call(pts_cline, 1, get_centerline_mat(), false)
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    create_csg.call(c_line, 1, get_centerline_mat(), false)
     
-    var pts_bl = PackedVector2Array([Vector2(-hw - 4.0, 0), Vector2(-hw, 0), Vector2(-hw, 4.0), Vector2(-hw - 4.0, 4.0)])
-    create_csg.call(pts_bl, 1, get_cyan_mat())
+    var w = 2.0
+    var left_b = PackedVector2Array([Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)])
+    create_csg.call(left_b, 1, get_cyan_mat())
     
-    var pts_br = PackedVector2Array([Vector2(hw, 0), Vector2(hw + 4.0, 0), Vector2(hw + 4.0, 4.0), Vector2(hw, 4.0)])
-    create_csg.call(pts_br, 1, get_cyan_mat())
+    var right_b = PackedVector2Array([Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)])
+    create_csg.call(right_b, 1, get_cyan_mat())
     
     parent.add_child(root)
     return target_transform

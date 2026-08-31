@@ -158,19 +158,33 @@ func _process(_delta):
             _show_file_dialog(true)
             return
         elif action == 12.0:
-            if history_stack.size() > 0:
-                var state = history_stack.pop_back()
-                if typeof(state) == TYPE_DICTIONARY and state.has("d"):
+            if is_hole_mode:
+                if history_stack.size() > 0 and typeof(history_stack.back()) == TYPE_DICTIONARY:
+                    var state = history_stack.pop_back()
                     track_data = state["d"].duplicate(true)
                     track_after_hole = state["a"].duplicate(true)
                     hole_anchor_transform = state["anc"]
                     is_hole_mode = state["hole"]
                     build_direction = state["dir"]
-                elif typeof(state) == TYPE_ARRAY:
-                    track_data = state.duplicate(true)
-                    track_after_hole = []
-                    is_hole_mode = false
-                    build_direction = 1
+                else:
+                    if build_direction == 1 and track_data.size() > 0:
+                        track_data.pop_back()
+                    elif build_direction == -1 and track_after_hole.size() > 0:
+                        track_after_hole.pop_front()
+            else:
+                if history_stack.size() > 0:
+                    var state = history_stack.pop_back()
+                    if typeof(state) == TYPE_DICTIONARY and state.has("d"):
+                        track_data = state["d"].duplicate(true)
+                        track_after_hole = state["a"].duplicate(true)
+                        hole_anchor_transform = state["anc"]
+                        is_hole_mode = state["hole"]
+                        build_direction = state["dir"]
+                    elif typeof(state) == TYPE_ARRAY:
+                        track_data = state.duplicate(true)
+                        track_after_hole = []
+                        is_hole_mode = false
+                        build_direction = 1
         elif action == 15.0:
             if is_hole_mode:
                 build_direction = -build_direction
@@ -1354,7 +1368,7 @@ func _delete_piece(idx: int):
     history_stack.append(track_data.duplicate(true))
     
     if idx + 1 < built_nodes.size():
-        hole_anchor_transform = built_nodes[idx + 1].global_transform
+        hole_anchor_transform = built_nodes[idx + 1].transform
     else:
         hole_anchor_transform = Transform3D.IDENTITY
     
@@ -1442,18 +1456,20 @@ func _create_spline_transition(piece: Dictionary, current_transform: Transform3D
     var path = Path3D.new()
     var curve = Curve3D.new()
     
-    var start_pos = current_transform.origin
-    var start_dir = -current_transform.basis.z
-    var end_dir = -target_transform.basis.z
-    var dist = start_pos.distance_to(target_pos)
+    var local_target = current_transform.affine_inverse() * target_transform
+    
+    var start_pos = Vector3.ZERO
+    var start_dir = Vector3(0, 0, -1)
+    var end_dir = -local_target.basis.z
+    var dist = start_pos.distance_to(local_target.origin)
     var c_len = dist * 0.5
     
     curve.add_point(start_pos, Vector3.ZERO, start_dir * c_len)
-    curve.add_point(target_pos, -end_dir * c_len, Vector3.ZERO)
+    curve.add_point(local_target.origin, -end_dir * c_len, Vector3.ZERO)
     path.curve = curve
     root.add_child(path)
     
-    _build_path_csg_elements(root, path, width, false)
+    _build_path_csg_elements(root, path, width, true)
     
     var res = Node3D.new()
     res.add_child(root)
