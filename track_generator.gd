@@ -270,24 +270,87 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
     border_r.material = get_cyan_mat()
     root.add_child(border_r)
 
-static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: float, ramp_length: float):
-    var hw = width / 2.0
-    var angle_rad = deg_to_rad(ramp_angle)
-    var ramp_y = sin(angle_rad) * ramp_length
-    var ramp_z = cos(angle_rad) * ramp_length
+static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ramp_length: float) -> Vector3:
+    var path = Path3D.new()
+    var curve = Curve3D.new()
+    curve.bake_interval = 0.5
     
+    var Lc = ramp_length * 0.75
+    var Ls = ramp_length * 0.25
+    var theta = deg_to_rad(abs(ramp_angle))
+    var R = Lc / theta if theta > 0.001 else 0.0
+    var sign_a = sign(ramp_angle) if ramp_angle != 0.0 else 1.0
+    
+    var num_curve_points = max(10, int(Lc / 2.0))
+    var current_pos = Vector3.ZERO
+    
+    for i in range(num_curve_points + 1):
+        var phi = (float(i) / num_curve_points) * theta
+        var y = R * (1 - cos(phi)) * sign_a if R > 0 else 0.0
+        var z = -R * sin(phi) if R > 0 else -Lc * (float(i)/num_curve_points)
+        var pos = Vector3(0, y, z)
+        
+        var tangent = Vector3(0, R * sin(phi) * sign_a, -R * cos(phi)).normalized() if R > 0 else Vector3(0, 0, -1)
+        var handle = tangent * (Lc / num_curve_points / 3.0)
+        
+        curve.add_point(pos, -handle, handle)
+        current_pos = pos
+        
+    var end_pos = current_pos + Vector3(0, Ls * sin(theta) * sign_a, -Ls * cos(theta))
+    curve.add_point(end_pos)
+    
+    path.curve = curve
+    root.add_child(path)
+    
+    var create_csg = func(poly: PackedVector2Array, c_layer: int, mat: Material, use_col: bool = true):
+        var csg = CSGPolygon3D.new()
+        path.add_child(csg)
+        csg.mode = CSGPolygon3D.MODE_PATH
+        csg.path_node = NodePath("..")
+        csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+        csg.path_interval = 2.0
+        csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+        csg.path_local = true
+        csg.path_continuous_u = true
+        csg.path_u_distance = 16.0
+        csg.polygon = poly
+        if mat: csg.material = mat
+        csg.use_collision = use_col
+        if use_col: csg.collision_layer = c_layer
+        return csg
+        
+    var hw = width / 2.0
+    var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
+    create_csg.call(road_poly, 1, get_road_mat())
+    
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    create_csg.call(c_line, 1, get_centerline_mat(), false)
+    
+    var w = 2.0
+    var border_l = PackedVector2Array([
+        Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)
+    ])
+    create_csg.call(border_l, 1, get_cyan_mat())
+    
+    var border_r = PackedVector2Array([
+        Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)
+    ])
+    create_csg.call(border_r, 1, get_cyan_mat())
+    
+    return end_pos
+
+static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: float, ramp_length: float):
     # Start Ramp
     var launch = Node3D.new()
-    launch.rotation_degrees.x = ramp_angle
     root.add_child(launch)
-    _build_transition(launch, ramp_length, width, width)
+    var end_pos = _build_curved_ramp(launch, width, ramp_angle, ramp_length)
     
-    # End Ramp
+    # End Ramp (faces backwards from the end of the gap)
     var land = Node3D.new()
-    land.position = Vector3(0, ramp_y, -length + ramp_z)
-    land.rotation_degrees.x = -ramp_angle
+    land.position = Vector3(0, 0, -length)
+    land.rotation_degrees.y = 180
     root.add_child(land)
-    _build_transition(land, ramp_length, width, width)
+    _build_curved_ramp(land, width, ramp_angle, ramp_length)
 
 static func _build_curve(root: Node3D, angle: float, radius: float, width: float, start_t: float, end_t: float, pitch: float = 0.0, banked: bool = true):
     var path = Path3D.new()

@@ -71,7 +71,7 @@ func _process(_delta):
         elif action == 5.0:
             track_data.append({"type": "gate", "length": p_length, "track_width": p2, "gate_width": p5})
         elif action == 6.0:
-            track_data.append({"type": "gap", "length": p_length, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p_length * 0.3)})
+            track_data.append({"type": "gap", "length": p_length, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p_length * 0.225)})
         elif action == 7.0:
             track_data.append({"type": "close_loop", "width": p2})
         elif action == 8.0:
@@ -470,27 +470,13 @@ func rebuild_track():
             
             var launch_node = Node3D.new()
             piece_node.add_child(launch_node)
-            launch_node.rotation_degrees.x = ramp_angle
-            
-            var road_up = _create_transition_csg(ramp_len, width, width, 0.0)
-            launch_node.add_child(road_up)
-            var bl_up = _create_transition_border(ramp_len, -width/2.0, -width/2.0)
-            launch_node.add_child(bl_up)
-            var br_up = _create_transition_border(ramp_len, width/2.0, width/2.0)
-            launch_node.add_child(br_up)
+            _create_curved_ramp_editor(launch_node, width, ramp_angle, ramp_len)
             
             var land_node = Node3D.new()
             piece_node.add_child(land_node)
             land_node.position = Vector3(0, 0, -length)
             land_node.rotation_degrees.y = 180
-            land_node.rotation_degrees.x = ramp_angle
-            
-            var road_down = _create_transition_csg(ramp_len, width, width, 0.0)
-            land_node.add_child(road_down)
-            var bl_down = _create_transition_border(ramp_len, -width/2.0, -width/2.0)
-            land_node.add_child(bl_down)
-            var br_down = _create_transition_border(ramp_len, width/2.0, width/2.0)
-            land_node.add_child(br_down)
+            _create_curved_ramp_editor(land_node, width, ramp_angle, ramp_len)
             
             end_transform = end_transform.translated_local(Vector3(0, 0, -length))
             
@@ -997,3 +983,89 @@ func _build_bank_transition(root: Node3D, length: float, width: float, start_til
     path.add_child(r_border)
     r_border.material = bmat
     r_border.polygon = PackedVector2Array([Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0), Vector2(hw - w/2.0, 0.0)])
+
+func _create_curved_ramp_editor(root: Node3D, width: float, ramp_angle: float, ramp_length: float):
+    var path = Path3D.new()
+    var curve = Curve3D.new()
+    curve.bake_interval = 0.5
+    
+    var Lc = ramp_length * 0.75
+    var Ls = ramp_length * 0.25
+    var theta = deg_to_rad(abs(ramp_angle))
+    var R = Lc / theta if theta > 0.001 else 0.0
+    var sign_a = sign(ramp_angle) if ramp_angle != 0.0 else 1.0
+    
+    var num_curve_points = max(10, int(Lc / 2.0))
+    var current_pos = Vector3.ZERO
+    
+    for i in range(num_curve_points + 1):
+        var phi = (float(i) / num_curve_points) * theta
+        var y = R * (1 - cos(phi)) * sign_a if R > 0 else 0.0
+        var z = -R * sin(phi) if R > 0 else -Lc * (float(i)/num_curve_points)
+        var pos = Vector3(0, y, z)
+        
+        var tangent = Vector3(0, R * sin(phi) * sign_a, -R * cos(phi)).normalized() if R > 0 else Vector3(0, 0, -1)
+        var handle = tangent * (Lc / num_curve_points / 3.0)
+        
+        curve.add_point(pos, -handle, handle)
+        current_pos = pos
+        
+    var end_pos = current_pos + Vector3(0, Ls * sin(theta) * sign_a, -Ls * cos(theta))
+    curve.add_point(end_pos)
+    
+    path.curve = curve
+    root.add_child(path)
+    
+    var create_csg = func(poly: PackedVector2Array, mat: Material):
+        var csg = CSGPolygon3D.new()
+        path.add_child(csg)
+        csg.mode = CSGPolygon3D.MODE_PATH
+        csg.path_node = NodePath("..")
+        csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+        csg.path_interval = 2.0
+        csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+        csg.path_local = true
+        csg.path_continuous_u = true
+        csg.path_u_distance = 16.0
+        csg.polygon = poly
+        if mat: csg.material = mat
+        csg.use_collision = false
+        return csg
+        
+    var mat_asphalt = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
+    if mat_asphalt:
+        mat_asphalt = mat_asphalt.duplicate()
+        mat_asphalt.uv1_triplanar = true
+        mat_asphalt.uv1_world_triplanar = true
+        mat_asphalt.uv1_scale = Vector3(0.05, 0.05, 0.05)
+    
+    var cmat = StandardMaterial3D.new()
+    cmat.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
+    cmat.emission_enabled = true
+    cmat.emission = Color(1.0, 0.0, 1.0, 1.0)
+    
+    var bmat = StandardMaterial3D.new()
+    bmat.albedo_color = Color(0.0, 1.0, 1.0, 1.0)
+    bmat.emission_enabled = true
+    bmat.emission = Color(0.0, 1.0, 1.0, 1.0)
+    
+    var hw = width / 2.0
+    var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
+    create_csg.call(road_poly, mat_asphalt)
+    
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    create_csg.call(c_line, cmat)
+    
+    var w = 2.0
+    var border_l = PackedVector2Array([
+        Vector2(-hw - w/2.0, 0.0), Vector2(-hw - w/2.0, 4.0), Vector2(-hw + w/2.0, 4.0), Vector2(-hw + w/2.0, 0.0)
+    ])
+    create_csg.call(border_l, bmat)
+    
+    var border_r = PackedVector2Array([
+        Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)
+    ])
+    create_csg.call(border_r, bmat)
+
+
+

@@ -1,5 +1,5 @@
 regGlobalFloat("editor_param_5", 80.0) -- End Width
-regGlobalFloat("editor_param_6", 15.0)  -- Ramp Angle
+regGlobalFloat("editor_param_6", 45.0)  -- Ramp Angle
 regGlobalFloat("editor_action", 0.0)
 
 regGlobalFloat("editor_param_length", 90.0)
@@ -32,7 +32,7 @@ function renderEditorUI()
     imguiSliderFloat("Incline", "editor_param_incline", -90.0, 90.0)
     imguiSliderFloat("Drop", "editor_param_drop", -100.0, 0.0)
     
-    imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 45.0)
+    imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 60.0)
     
     imguiSeparator()
     imguiText("Add Elements:")
