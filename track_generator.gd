@@ -941,3 +941,58 @@ static func generate(track_data: Array, root_node: Node3D):
             
         current_transform = end_transform
         i += 1
+
+func _build_spline_transition(piece: Dictionary, current_transform: Transform3D, parent: Node3D) -> Transform3D:
+    var width = float(piece.get("width", 104.0))
+    var target_pos = Vector3(piece.get("target_pos_x", 0.0), piece.get("target_pos_y", 0.0), piece.get("target_pos_z", 0.0))
+    var target_rot = Vector3(piece.get("target_rot_x", 0.0), piece.get("target_rot_y", 0.0), piece.get("target_rot_z", 0.0))
+    var target_transform = Transform3D(Basis.from_euler(target_rot), target_pos)
+    
+    var root = Node3D.new()
+    var path = Path3D.new()
+    var curve = Curve3D.new()
+    
+    var start_pos = current_transform.origin
+    var start_dir = -current_transform.basis.z
+    var end_dir = -target_transform.basis.z
+    var dist = start_pos.distance_to(target_pos)
+    var c_len = dist * 0.5
+    
+    curve.add_point(start_pos, Vector3.ZERO, start_dir * c_len)
+    curve.add_point(target_pos, -end_dir * c_len, Vector3.ZERO)
+    path.curve = curve
+    root.add_child(path)
+    
+    var create_csg = func(poly: PackedVector2Array, c_layer: int, mat: Material, use_col: bool = true):
+        var csg = CSGPolygon3D.new()
+        path.add_child(csg)
+        csg.mode = CSGPolygon3D.MODE_PATH
+        csg.path_node = NodePath("..")
+        csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+        csg.path_interval = 2.0
+        csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
+        csg.path_local = true
+        csg.path_continuous_u = true
+        csg.path_u_distance = 16.0
+        csg.polygon = poly
+        if mat: csg.material = mat
+        csg.use_collision = use_col
+        if use_col: csg.collision_layer = c_layer
+        return csg
+        
+    var hw = width / 2.0
+    var pts = PackedVector2Array([Vector2(-hw, -0.5), Vector2(hw, -0.5), Vector2(hw, 0), Vector2(-hw, 0)])
+    create_csg.call(pts, 1, get_road_mat())
+    
+    var pts_cline = PackedVector2Array([Vector2(-0.5, 0.0), Vector2(0.5, 0.0), Vector2(0.5, 0.1), Vector2(-0.5, 0.1)])
+    create_csg.call(pts_cline, 1, get_centerline_mat(), false)
+    
+    var pts_bl = PackedVector2Array([Vector2(-hw - 4.0, 0), Vector2(-hw, 0), Vector2(-hw, 4.0), Vector2(-hw - 4.0, 4.0)])
+    create_csg.call(pts_bl, 1, get_cyan_mat())
+    
+    var pts_br = PackedVector2Array([Vector2(hw, 0), Vector2(hw + 4.0, 0), Vector2(hw + 4.0, 4.0), Vector2(hw, 4.0)])
+    create_csg.call(pts_br, 1, get_cyan_mat())
+    
+    parent.add_child(root)
+    return target_transform
+
