@@ -2,6 +2,7 @@ extends Node3D
 
 var track_data: Array = []
 var history_stack: Array = []
+var last_params = {}
 var built_nodes: Array = []
 var is_showing_final = false
 var final_parent: Node3D
@@ -47,21 +48,76 @@ func _process(_delta):
         return
         
     var action = lua_manager.get_global_float("editor_action")
+    var p_length = lua_manager.get_global_float("editor_param_length")
+    var p_angle = lua_manager.get_global_float("editor_param_angle")
+    var p2 = lua_manager.get_global_float("editor_param_2")
+    var p3 = lua_manager.get_global_float("editor_param_3")
+    var p_incline = lua_manager.get_global_float("editor_param_incline")
+    var p_drop = lua_manager.get_global_float("editor_param_drop")
+    var p5 = lua_manager.get_global_float("editor_param_5")
+    var p6 = lua_manager.get_global_float("editor_param_6")
+    var p_gap_length = lua_manager.get_global_float("editor_param_gap_length")
+    var p_ramp_size = lua_manager.get_global_float("editor_param_ramp_size")
+    
+    var current_params = {
+        "length": p_length,
+        "angle": p_angle,
+        "width_start": p2,
+        "width_end": p5,
+        "radius": p3,
+        "incline": p_incline,
+        "drop": p_drop,
+        "ramp_angle": p6,
+        "gap_length": p_gap_length,
+        "ramp_size": p_ramp_size
+    }
+    
+    var param_changed = false
+    if last_params.size() > 0:
+        for k in current_params.keys():
+            if abs(current_params[k] - last_params[k]) > 0.001:
+                param_changed = true
+                break
+                
+    last_params = current_params.duplicate()
+    
+    if param_changed and track_data.size() > 0 and action == 0.0:
+        var last_idx = track_data.size() - 1
+        var p = track_data[last_idx]
+        var t = p.get("type", "")
+        if t == "straight":
+            p["length"] = p_length
+            p["width"] = p2
+            p["incline"] = p_incline
+        elif t == "curve":
+            p["angle"] = p_angle
+            p["radius"] = p3
+            p["width"] = p2
+        elif t == "drop":
+            p["drop_distance"] = p_drop
+        elif t == "transition":
+            p["length"] = p_length
+            p["start_width"] = p2
+            p["end_width"] = p5
+        elif t == "gate":
+            p["length"] = p_length
+            p["track_width"] = p2
+            p["gate_width"] = p5
+        elif t == "gap":
+            p["gap_length"] = p_gap_length
+            p["ramp_size"] = p_ramp_size
+            p["width"] = p2
+            p["ramp_angle"] = p6
+        elif t == "close_loop":
+            p["width"] = p2
+            
+        rebuild_track()
+
     if action > 0.0:
         if (action >= 1.0 and action <= 7.0) or action == 9.0 or action == 13.0 or action == 14.0:
             history_stack.append(track_data.duplicate(true))
             
-        var p_length = lua_manager.get_global_float("editor_param_length")
-        var p_angle = lua_manager.get_global_float("editor_param_angle")
-        var p2 = lua_manager.get_global_float("editor_param_2")
-        var p3 = lua_manager.get_global_float("editor_param_3")
-        var p_incline = lua_manager.get_global_float("editor_param_incline")
-        var p_drop = lua_manager.get_global_float("editor_param_drop")
-        var p5 = lua_manager.get_global_float("editor_param_5")
-        var p6 = lua_manager.get_global_float("editor_param_6")
-        
-        var p_gap_length = lua_manager.get_global_float("editor_param_gap_length")
-        var p_ramp_size = lua_manager.get_global_float("editor_param_ramp_size")
+
         
         if action == 1.0:
             track_data.append({"type": "straight", "length": p_length, "width": p2, "incline": p_incline})
@@ -556,6 +612,10 @@ func rebuild_track():
             
         current_transform = end_transform
 
+
+    if built_nodes.size() > 0 and track_data.size() > 0:
+        var last_child = built_nodes[built_nodes.size() - 1]
+        _add_selection_indicator(last_child, track_data[track_data.size() - 1])
 
 
 func _create_right_angle_csg(radius: float, width: float, is_left: bool) -> Node3D:
@@ -1095,4 +1155,76 @@ func _create_curved_ramp_editor(root: Node3D, width: float, ramp_angle: float, r
     create_csg.call(border_r, bmat)
 
 
+
+
+func _add_selection_indicator(piece_node: Node3D, piece: Dictionary):
+    var type = piece.get("type", "")
+    var w = piece.get("width", 104.0)
+    var aabb = AABB()
+    
+    if type == "straight":
+        var l = piece.get("length", 100.0)
+        aabb = AABB(Vector3(-w/2.0 - 5.0, -10.0, -l - 5.0), Vector3(w + 10.0, 20.0, l + 10.0))
+    elif type == "curve":
+        var r = piece.get("radius", 100.0)
+        var a = piece.get("angle", 90.0)
+        var is_left = a > 0
+        var theta = deg_to_rad(abs(a))
+        var z_max = r * sin(theta)
+        var x_max = r * (1.0 - cos(theta))
+        if abs(a) > 90.0:
+            z_max = r
+            if abs(a) > 180.0:
+                x_max = r * 2.0
+            
+        if is_left:
+            aabb = AABB(Vector3(-x_max - w/2.0 - 5.0, -10.0, -z_max - 5.0), Vector3(x_max + w + 10.0, 20.0, z_max + 10.0))
+        else:
+            aabb = AABB(Vector3(-w/2.0 - 5.0, -10.0, -z_max - 5.0), Vector3(x_max + w + 10.0, 20.0, z_max + 10.0))
+    elif type == "gap":
+        var gap_len = piece.get("gap_length", 50.0)
+        var ramp_size = piece.get("ramp_size", 20.0)
+        var total_len = gap_len + 2.0 * ramp_size
+        aabb = AABB(Vector3(-w/2.0 - 5.0, -40.0, -total_len - 5.0), Vector3(w + 10.0, 60.0, total_len + 10.0))
+    elif type == "drop":
+        var drop = piece.get("drop_distance", 20.0)
+        aabb = AABB(Vector3(-w/2.0 - 5.0, min(-drop - 5.0, -5.0), -5.0), Vector3(w + 10.0, abs(drop) + 10.0, 10.0))
+    else:
+        var l = piece.get("length", 100.0)
+        aabb = AABB(Vector3(-w/2.0 - 5.0, -10.0, -l - 5.0), Vector3(w + 10.0, 20.0, l + 10.0))
+        
+    var mesh = ImmediateMesh.new()
+    var mat = StandardMaterial3D.new()
+    mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    mat.albedo_color = Color(1.0, 1.0, 1.0, 1.0)
+    
+    mesh.surface_begin(Mesh.PRIMITIVE_LINES, mat)
+    var p0 = aabb.position
+    var p1 = p0 + Vector3(aabb.size.x, 0, 0)
+    var p2 = p0 + Vector3(aabb.size.x, aabb.size.y, 0)
+    var p3 = p0 + Vector3(0, aabb.size.y, 0)
+    var p4 = p0 + Vector3(0, 0, aabb.size.z)
+    var p5 = p0 + Vector3(aabb.size.x, 0, aabb.size.z)
+    var p6 = p0 + Vector3(aabb.size.x, aabb.size.y, aabb.size.z)
+    var p7 = p0 + Vector3(0, aabb.size.y, aabb.size.z)
+    
+    mesh.surface_add_vertex(p0); mesh.surface_add_vertex(p1)
+    mesh.surface_add_vertex(p1); mesh.surface_add_vertex(p2)
+    mesh.surface_add_vertex(p2); mesh.surface_add_vertex(p3)
+    mesh.surface_add_vertex(p3); mesh.surface_add_vertex(p0)
+    
+    mesh.surface_add_vertex(p4); mesh.surface_add_vertex(p5)
+    mesh.surface_add_vertex(p5); mesh.surface_add_vertex(p6)
+    mesh.surface_add_vertex(p6); mesh.surface_add_vertex(p7)
+    mesh.surface_add_vertex(p7); mesh.surface_add_vertex(p4)
+    
+    mesh.surface_add_vertex(p0); mesh.surface_add_vertex(p4)
+    mesh.surface_add_vertex(p1); mesh.surface_add_vertex(p5)
+    mesh.surface_add_vertex(p2); mesh.surface_add_vertex(p6)
+    mesh.surface_add_vertex(p3); mesh.surface_add_vertex(p7)
+    mesh.surface_end()
+    
+    var mi = MeshInstance3D.new()
+    mi.mesh = mesh
+    piece_node.add_child(mi)
 
