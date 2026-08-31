@@ -72,6 +72,13 @@ function renderEditorUI()
         
     imguiSeparator()
     imguiSeparator()
+    imguiSeparator()
+    imguiText("Hole Mode Controls:")
+    imguiCheckbox("Select Undo Mode", "editor_select_undo_mode")
+    imguiSameLine()
+    imguiButton("Flip Build Dir", "editor_action_flip_dir")
+    imguiButton("Add Spline Trans", "editor_action_spline_trans")
+    imguiSeparator()
     imguiButton("Save JSON", "editor_action_save")
     imguiSameLine()
     imguiButton("Load JSON", "editor_action_load")
@@ -89,6 +96,19 @@ end
 
 while true do
     renderEditorUI()
+
+
+    local btn_flip = getGlobalFloat("editor_action_flip_dir")
+    if btn_flip > 0.5 then
+        setGlobalFloat("editor_action", 15.0)
+        setGlobalFloat("editor_action_flip_dir", 0.0)
+    end
+
+    local btn_spline = getGlobalFloat("editor_action_spline_trans")
+    if btn_spline > 0.5 then
+        setGlobalFloat("editor_action", 16.0)
+        setGlobalFloat("editor_action_spline_trans", 0.0)
+    end
 
     local btn_straight = getGlobalFloat("editor_action_straight")
     if btn_straight > 0.5 then
