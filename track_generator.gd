@@ -901,10 +901,33 @@ static func generate(track_data: Array, root_node: Node3D):
             end_transform.basis = current_transform.basis.rotated(Vector3.UP, angle_rad)
             
         elif piece["type"] == "gap":
-            var length = piece["length"]
-            var width = piece["width"]
-            var r_angle = piece["ramp_angle"]
-            var r_len = piece["ramp_length"]
+            var width = piece.get("width", 104.0)
+            var r_angle = piece.get("ramp_angle", 45.0)
+            var gap_length = piece.get("gap_length", 50.0)
+            var ramp_size = piece.get("ramp_size", 20.0)
+            
+            if piece.has("length") and piece.has("ramp_length"):
+                var old_length = float(piece.get("length"))
+                ramp_size = float(piece.get("ramp_length"))
+                var old_theta = deg_to_rad(abs(r_angle))
+                var old_R = (ramp_size * 0.75) / old_theta if old_theta > 0.001 else 0.0
+                var old_z_curve = old_R * sin(old_theta) if old_theta > 0.001 else 0.0
+                var old_z_straight = (ramp_size * 0.25) * cos(old_theta) if old_theta > 0.001 else ramp_size
+                gap_length = old_length - 2.0 * (old_z_curve + old_z_straight)
+                if gap_length < 0: gap_length = 0.0
+                
+            var r_len = ramp_size
+            
+            var theta = deg_to_rad(abs(r_angle))
+            var Lc = ramp_size * 0.75
+            var Ls = ramp_size * 0.25
+            var R = Lc / theta if theta > 0.001 else 0.0
+            var z_curve = R * sin(theta) if theta > 0.001 else 0.0
+            var z_straight = Ls * cos(theta) if theta > 0.001 else ramp_size
+            var ramp_z = z_curve + z_straight
+            
+            var length = gap_length + 2.0 * ramp_z
+            
             _build_gap(root, length, width, r_angle, r_len)
             end_transform = current_transform.translated_local(Vector3(0, 0, -length))
             
