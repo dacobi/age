@@ -60,6 +60,9 @@ func _process(_delta):
         var p5 = lua_manager.get_global_float("editor_param_5")
         var p6 = lua_manager.get_global_float("editor_param_6")
         
+        var p_gap_length = lua_manager.get_global_float("editor_param_gap_length")
+        var p_ramp_size = lua_manager.get_global_float("editor_param_ramp_size")
+        
         if action == 1.0:
             track_data.append({"type": "straight", "length": p_length, "width": p2, "incline": p_incline})
         elif action == 2.0:
@@ -71,7 +74,7 @@ func _process(_delta):
         elif action == 5.0:
             track_data.append({"type": "gate", "length": p_length, "track_width": p2, "gate_width": p5})
         elif action == 6.0:
-            track_data.append({"type": "gap", "length": p_length, "width": p2, "ramp_angle": p6, "ramp_length": max(5.0, p_length * 0.225)})
+            track_data.append({"type": "gap", "gap_length": p_gap_length, "ramp_size": p_ramp_size, "width": p2, "ramp_angle": p6})
         elif action == 7.0:
             track_data.append({"type": "close_loop", "width": p2})
         elif action == 8.0:
@@ -458,10 +461,34 @@ func rebuild_track():
             end_transform.basis = current_transform.basis.rotated(Vector3.UP, angle_rad)
             
         elif type == "gap":
-            var length = float(piece.get("length", 100.0))
             var width = float(piece.get("width", 104.0))
-            var ramp_angle = float(piece.get("ramp_angle", 15.0))
-            var ramp_len = float(piece.get("ramp_length", 20.0))
+            var ramp_angle = float(piece.get("ramp_angle", 45.0))
+            var gap_length = float(piece.get("gap_length", 50.0))
+            var ramp_size = float(piece.get("ramp_size", 20.0))
+            
+            # Legacy fallback if they DO have length and ramp_length
+            if piece.has("length") and piece.has("ramp_length"):
+                var old_length = float(piece.get("length"))
+                ramp_size = float(piece.get("ramp_length"))
+                var old_theta = deg_to_rad(abs(ramp_angle))
+                var old_R = (ramp_size * 0.75) / old_theta if old_theta > 0.001 else 0.0
+                var old_z_curve = old_R * sin(old_theta) if old_theta > 0.001 else 0.0
+                var old_z_straight = (ramp_size * 0.25) * cos(old_theta) if old_theta > 0.001 else ramp_size
+                gap_length = old_length - 2.0 * (old_z_curve + old_z_straight)
+                if gap_length < 0: gap_length = 0.0
+                
+            var ramp_len = ramp_size
+            
+            var theta = deg_to_rad(abs(ramp_angle))
+            var Lc = ramp_size * 0.75
+            var Ls = ramp_size * 0.25
+            var R = Lc / theta if theta > 0.001 else 0.0
+            var z_curve = R * sin(theta) if theta > 0.001 else 0.0
+            var z_straight = Ls * cos(theta) if theta > 0.001 else ramp_size
+            var ramp_z = z_curve + z_straight
+            
+            var length = gap_length + 2.0 * ramp_z
+
             
             var ai_vision = _create_transition_csg(length, width, width, -20.0, 128)
             piece_node.add_child(ai_vision)
