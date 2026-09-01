@@ -1,0 +1,99 @@
+[
+    {
+        "gate_width": 80.0,
+        "length": 90.0,
+        "track_width": 80.0,
+        "type": "gate",
+        "start_flipped": false
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "length": 90.0,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "length": 90.0,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "length": 90.0,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "length": 90.0,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "type": "close_loop",
+        "width": 80.0
+    }
+]
