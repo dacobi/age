@@ -2,6 +2,7 @@ extends Node3D
 
 var track_data: Array = []
 var history_stack: Array = []
+var redo_state: Dictionary = {}
 var last_params = {}
 var track_after_hole: Array = []
 var hole_anchor_transform: Transform3D = Transform3D.IDENTITY
@@ -17,7 +18,6 @@ var final_parent: Node3D
 var lua_manager = null
 
 func _ready():
-    Engine.max_fps = 60
     final_parent = Node3D.new()
     add_child(final_parent)
     final_parent.visible = false
@@ -38,6 +38,7 @@ func _process(_delta):
         track_data.clear()
         track_after_hole.clear()
         history_stack.clear()
+        redo_state.clear()
         is_hole_mode = false
         build_direction = 1
         hovered_piece_index = -1
@@ -96,6 +97,7 @@ func _process(_delta):
     var update_anchor_for_p = false
     var fixed_end_transform = Transform3D.IDENTITY
     if param_changed and action == 0.0:
+        redo_state.clear()
         if is_hole_mode and build_direction == -1:
             if track_after_hole.size() > 0:
                 p = track_after_hole[0]
@@ -143,7 +145,8 @@ func _process(_delta):
         rebuild_track()
 
     if action > 0.0:
-
+        if action != 12.0 and action != 17.0 and action != 10.0 and action != 11.0 and action != 8.0:
+            redo_state.clear()
         
         var piece_to_add = {}
         if action == 1.0:
@@ -180,25 +183,27 @@ func _process(_delta):
             lua_manager.set_global_float("editor_action", 0.0)
             _show_file_dialog(true)
             return
+        elif action == 17.0:
+            if redo_state.size() > 0:
+                track_data = redo_state["d"].duplicate(true)
+                track_after_hole = redo_state["a"].duplicate(true)
+                hole_anchor_transform = redo_state["anc"]
+                is_hole_mode = redo_state["hole"]
+                build_direction = redo_state["dir"]
+                redo_state.clear()
         elif action == 12.0:
             if is_hole_mode:
-                if history_stack.size() > 0 and typeof(history_stack.back()) == TYPE_DICTIONARY:
-                    var state = history_stack.pop_back()
-                    track_data = state["d"].duplicate(true)
-                    track_after_hole = state["a"].duplicate(true)
-                    hole_anchor_transform = state["anc"]
-                    is_hole_mode = state["hole"]
-                    build_direction = state["dir"]
-                else:
-                    if build_direction == 1 and track_data.size() > 0:
-                        track_data.pop_back()
-                    elif build_direction == -1 and track_after_hole.size() > 0:
-                        var idx_of_next = track_data.size() + 1
-                        if idx_of_next < built_nodes.size():
-                            hole_anchor_transform = built_nodes[idx_of_next].global_transform
-                        track_after_hole.pop_front()
+                redo_state = {"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction}
+                if build_direction == 1 and track_data.size() > 0:
+                    track_data.pop_back()
+                elif build_direction == -1 and track_after_hole.size() > 0:
+                    var idx_of_next = track_data.size() + 1
+                    if idx_of_next < built_nodes.size():
+                        hole_anchor_transform = built_nodes[idx_of_next].global_transform
+                    track_after_hole.pop_front()
             else:
                 if history_stack.size() > 0:
+                    redo_state = {"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction}
                     var state = history_stack.pop_back()
                     if typeof(state) == TYPE_DICTIONARY and state.has("d"):
                         track_data = state["d"].duplicate(true)
@@ -217,6 +222,7 @@ func _process(_delta):
                 hovered_piece_index = -1
         elif action == 16.0:
             if is_hole_mode:
+                redo_state.clear()
                 var smart_closed = false
                 var piece_before = track_data.back() if track_data.size() > 0 else null
                 var piece_after = track_after_hole[0] if track_after_hole.size() > 0 else null
@@ -274,6 +280,7 @@ func _process(_delta):
                                     hovered_piece_index = -1
                                     smart_closed = true
                 
+                
                 if not smart_closed:
                     var sp = {"type": "spline_transition", "width": p2}
                     sp["target_pos_x"] = hole_anchor_transform.origin.x
@@ -283,13 +290,19 @@ func _process(_delta):
                     sp["target_rot_x"] = rot.x
                     sp["target_rot_y"] = rot.y
                     sp["target_rot_z"] = rot.z
-                    history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
                     track_data.append(sp)
                     track_data.append_array(track_after_hole)
                     track_after_hole = []
                     is_hole_mode = false
                     build_direction = 1
                     hovered_piece_index = -1
+                
+                history_stack.clear()
+                redo_state.clear()
+                var temp = []
+                for _p in track_data:
+                    history_stack.append({"d": temp.duplicate(true), "a": [], "anc": Transform3D.IDENTITY, "hole": false, "dir": 1})
+                    temp.append(_p)
                 
         lua_manager.set_global_float("editor_action", 0.0)
         rebuild_track()
@@ -1462,6 +1475,7 @@ func _handle_raycast():
 func _delete_piece(idx: int):
     if idx < 0 or idx >= track_data.size(): return
     history_stack.append(track_data.duplicate(true))
+    redo_state = {"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction}
     
     if idx + 1 < built_nodes.size():
         hole_anchor_transform = built_nodes[idx + 1].global_transform
@@ -1533,7 +1547,8 @@ func _get_piece_offset(piece: Dictionary) -> Transform3D:
     return t
 
 func _add_new_piece(piece: Dictionary):
-    history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
+    if not is_hole_mode:
+        history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
     if not is_hole_mode or build_direction == 1:
         track_data.append(piece)
     else:
