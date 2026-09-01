@@ -15,6 +15,7 @@ regGlobalFloat("editor_param_drop", 0.0)
 
 regGlobalFloat("editor_clear", 0.0)
 regGlobalFloat("editor_show_final", 0.0)
+regGlobalFloat("editor_show_ai_wall", 0.0)
 
 print("Starting Track Editor UI...")
 godotLoadScene("track_editor.tscn")
@@ -98,6 +99,10 @@ function renderEditorUI()
     
     imguiSeparator()
     imguiCheckbox("Show Final", "editor_show_final")
+    imguiSameLine()
+    if getGlobalFloat("editor_show_final") > 0.5 then
+        imguiCheckbox("Show AI Wall", "editor_show_ai_wall")
+    end
     
     imguiEnd()
 end

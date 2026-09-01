@@ -12,6 +12,7 @@ var hovered_piece_index: int = -1
 
 var built_nodes: Array = []
 var is_showing_final = false
+var is_showing_ai_wall = false
 var final_parent: Node3D
 
 @onready var track_root = $TrackRoot
@@ -46,16 +47,24 @@ func _process(_delta):
         return
 
     var show_final = lua_manager.get_global_float("editor_show_final") > 0.5
+    var show_ai = lua_manager.get_global_float("editor_show_ai_wall") > 0.5
+    var needs_regen = false
     if show_final != is_showing_final:
         is_showing_final = show_final
+        needs_regen = true
         if is_showing_final:
             track_root.visible = false
             final_parent.visible = true
-            preload("res://track_generator.gd").generate(track_data, final_parent)
         else:
             track_root.visible = true
             final_parent.visible = false
-            
+    if show_ai != is_showing_ai_wall:
+        is_showing_ai_wall = show_ai
+        needs_regen = true
+    if is_showing_final and needs_regen:
+        var tg = preload("res://track_generator.gd")
+        tg.show_ai_walls = is_showing_ai_wall
+        tg.generate(track_data, final_parent)
     if is_showing_final:
         return
         
@@ -367,7 +376,9 @@ func clear_track():
 
 func rebuild_track():
     if is_showing_final:
-        preload("res://track_generator.gd").generate(track_data, final_parent)
+        var tg = preload("res://track_generator.gd")
+        tg.show_ai_walls = is_showing_ai_wall
+        tg.generate(track_data, final_parent)
 
     clear_track()
     var current_transform = Transform3D.IDENTITY
