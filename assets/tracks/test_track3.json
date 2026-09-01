@@ -1,0 +1,244 @@
+[
+    {
+        "gate_width": 80.0,
+        "length": 90.0,
+        "start_flipped": true,
+        "track_width": 80.0,
+        "type": "gate"
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "is_left": true,
+        "radius": 100.0,
+        "type": "right_angle",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "length": 179.999984741211,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 50.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 50.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "length": 180.000015258789,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "is_left": false,
+        "radius": 50.0,
+        "type": "right_angle",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": -15.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": -15.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 15.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "incline": 15.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 15.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": -15.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 90.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "gap_length": 106.172996520996,
+        "ramp_angle": 21.2759990692139,
+        "ramp_size": 50.5610008239746,
+        "type": "gap",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 156.159057617188,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "length": 90.0,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 100.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "length": 100.0,
+        "type": "bank_transition",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 25.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 15.0,
+        "length": 25.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 15.0,
+        "length": 25.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": -15.0,
+        "length": 25.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "angle": 90.0,
+        "radius": 60.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "angle": -90.0,
+        "radius": 60.0,
+        "type": "curve",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 25.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "incline": 0.0,
+        "length": 25.0,
+        "type": "straight",
+        "width": 80.0
+    },
+    {
+        "type": "close_loop",
+        "width": 80.0
+    }
+]
