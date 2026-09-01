@@ -212,21 +212,71 @@ func _process(_delta):
                 hovered_piece_index = -1
         elif action == 16.0:
             if is_hole_mode:
-                var sp = {"type": "spline_transition", "width": p2}
-                sp["target_pos_x"] = hole_anchor_transform.origin.x
-                sp["target_pos_y"] = hole_anchor_transform.origin.y
-                sp["target_pos_z"] = hole_anchor_transform.origin.z
-                var rot = hole_anchor_transform.basis.get_euler()
-                sp["target_rot_x"] = rot.x
-                sp["target_rot_y"] = rot.y
-                sp["target_rot_z"] = rot.z
-                history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
-                track_data.append(sp)
-                track_data.append_array(track_after_hole)
-                track_after_hole = []
-                is_hole_mode = false
-                build_direction = 1
-                hovered_piece_index = -1
+                var smart_closed = false
+                var piece_before = track_data.back() if track_data.size() > 0 else null
+                var piece_after = track_after_hole[0] if track_after_hole.size() > 0 else null
+                
+                if piece_before != null and piece_after != null:
+                    var type_b = piece_before.get("type", "")
+                    var type_a = piece_after.get("type", "")
+                    var valid_types = ["straight", "bank_transition"]
+                    
+                    if type_b in valid_types and type_a in valid_types:
+                        var is_b_straight = type_b == "straight" and float(piece_before.get("incline", 0.0)) == 0.0
+                        var is_a_straight = type_a == "straight" and float(piece_after.get("incline", 0.0)) == 0.0
+                        
+                        if is_b_straight or is_a_straight:
+                            var start_before = Transform3D.IDENTITY
+                            if track_data.size() > 0:
+                                start_before = built_nodes[track_data.size() - 1].global_transform
+                                
+                            var end_before = start_before * _get_piece_offset(piece_before)
+                            var start_after = hole_anchor_transform
+                            
+                            var b_quat = end_before.basis.get_rotation_quaternion()
+                            var a_quat = start_after.basis.get_rotation_quaternion()
+                            var basis_equal = b_quat.is_equal_approx(a_quat) or b_quat.is_equal_approx(-a_quat)
+                            
+                            if basis_equal:
+                                var local_diff = end_before.affine_inverse() * start_after.origin
+                                if is_zero_approx(local_diff.x) and is_zero_approx(local_diff.y) and local_diff.z <= 0.0:
+                                    var gap_dist = -local_diff.z
+                                    var width_b = float(piece_before.get("width", 104.0))
+                                    var width_a = float(piece_after.get("width", 104.0))
+                                    
+                                    if is_equal_approx(width_b, width_a):
+                                        history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
+                                        
+                                        if is_b_straight and is_a_straight:
+                                            piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
+                                        elif type_a == "bank_transition":
+                                            piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
+                                        elif type_b == "bank_transition":
+                                            piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
+                                            
+                                        track_data.append_array(track_after_hole)
+                                        track_after_hole = []
+                                        is_hole_mode = false
+                                        build_direction = 1
+                                        hovered_piece_index = -1
+                                        smart_closed = true
+                
+                if not smart_closed:
+                    var sp = {"type": "spline_transition", "width": p2}
+                    sp["target_pos_x"] = hole_anchor_transform.origin.x
+                    sp["target_pos_y"] = hole_anchor_transform.origin.y
+                    sp["target_pos_z"] = hole_anchor_transform.origin.z
+                    var rot = hole_anchor_transform.basis.get_euler()
+                    sp["target_rot_x"] = rot.x
+                    sp["target_rot_y"] = rot.y
+                    sp["target_rot_z"] = rot.z
+                    history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
+                    track_data.append(sp)
+                    track_data.append_array(track_after_hole)
+                    track_after_hole = []
+                    is_hole_mode = false
+                    build_direction = 1
+                    hovered_piece_index = -1
                 
         lua_manager.set_global_float("editor_action", 0.0)
         rebuild_track()
