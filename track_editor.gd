@@ -36,6 +36,11 @@ func _process(_delta):
     if clear_btn > 0.5:
         lua_manager.set_global_float("editor_clear", 0.0)
         track_data.clear()
+        track_after_hole.clear()
+        history_stack.clear()
+        is_hole_mode = false
+        build_direction = 1
+        hovered_piece_index = -1
         rebuild_track()
         return
 
@@ -296,7 +301,7 @@ func _process(_delta):
     else:
         if hovered_piece_index != -1:
             hovered_piece_index = -1
-            rebuild_track()
+            _update_selection_indicators()
 
 func _show_file_dialog(is_load: bool):
     var fd = FileDialog.new()
@@ -327,6 +332,10 @@ func _on_load_file(path: String):
         var data = JSON.parse_string(text)
         if typeof(data) == TYPE_ARRAY:
             track_data = data
+            track_after_hole.clear()
+            is_hole_mode = false
+            build_direction = 1
+            hovered_piece_index = -1
             
             # Setup history stack so user can step-by-step undo the loaded track
             history_stack.clear()
@@ -1448,7 +1457,7 @@ func _handle_raycast():
             
     if new_hover != hovered_piece_index:
         hovered_piece_index = new_hover
-        rebuild_track()
+        _update_selection_indicators()
 
 func _delete_piece(idx: int):
     if idx < 0 or idx >= track_data.size(): return
