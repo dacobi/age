@@ -222,44 +222,52 @@ func _process(_delta):
                     
                     var is_b_straight = type_b == "straight" and float(piece_before.get("incline", 0.0)) == 0.0
                     var is_a_straight = type_a == "straight" and float(piece_after.get("incline", 0.0)) == 0.0
+                    var is_b_bank = type_b == "bank_transition"
+                    var is_a_bank = type_a == "bank_transition"
                     
-                    if is_b_straight or is_a_straight:
-                            var start_before = Transform3D.IDENTITY
-                            if track_data.size() > 0:
-                                start_before = built_nodes[track_data.size() - 1].global_transform
+                    var can_smart_close = false
+                    if (is_b_straight or is_b_bank) or (is_a_straight or is_a_bank):
+                        can_smart_close = true
+                    if is_b_bank and is_a_bank:
+                        can_smart_close = false
+                        
+                    if can_smart_close:
+                        var start_before = Transform3D.IDENTITY
+                        if track_data.size() > 0:
+                            start_before = built_nodes[track_data.size() - 1].global_transform
                                 
-                            var end_before = start_before * _get_piece_offset(piece_before)
-                            var start_after = hole_anchor_transform
-                            
-                            var b_quat = end_before.basis.get_rotation_quaternion()
-                            var a_quat = start_after.basis.get_rotation_quaternion()
-                            var basis_equal = b_quat.is_equal_approx(a_quat) or b_quat.is_equal_approx(-a_quat)
-                            
-                            if basis_equal:
-                                var local_diff = end_before.affine_inverse() * start_after.origin
-                                if is_zero_approx(local_diff.x) and is_zero_approx(local_diff.y) and local_diff.z <= 0.0:
-                                    var gap_dist = -local_diff.z
-                                    var width_b = float(piece_before.get("width", 104.0))
-                                    var width_a = float(piece_after.get("width", 104.0))
+                        var end_before = start_before * _get_piece_offset(piece_before)
+                        var start_after = hole_anchor_transform
+                        
+                        var b_quat = end_before.basis.get_rotation_quaternion()
+                        var a_quat = start_after.basis.get_rotation_quaternion()
+                        var basis_equal = b_quat.is_equal_approx(a_quat) or b_quat.is_equal_approx(-a_quat)
+                        
+                        if basis_equal:
+                            var local_diff = end_before.affine_inverse() * start_after.origin
+                            if is_zero_approx(local_diff.x) and is_zero_approx(local_diff.y) and local_diff.z <= 0.0:
+                                var gap_dist = -local_diff.z
+                                var width_b = float(piece_before.get("width", 104.0))
+                                var width_a = float(piece_after.get("width", 104.0))
+                                
+                                if is_equal_approx(width_b, width_a):
+                                    history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
                                     
-                                    if is_equal_approx(width_b, width_a):
-                                        history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
+                                    if type_a == "bank_transition":
+                                        piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
+                                    elif type_b == "bank_transition":
+                                        piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
+                                    elif is_b_straight:
+                                        piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
+                                    elif is_a_straight:
+                                        piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
                                         
-                                        if type_a == "bank_transition":
-                                            piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
-                                        elif type_b == "bank_transition":
-                                            piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
-                                        elif is_b_straight:
-                                            piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
-                                        elif is_a_straight:
-                                            piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
-                                            
-                                        track_data.append_array(track_after_hole)
-                                        track_after_hole = []
-                                        is_hole_mode = false
-                                        build_direction = 1
-                                        hovered_piece_index = -1
-                                        smart_closed = true
+                                    track_data.append_array(track_after_hole)
+                                    track_after_hole = []
+                                    is_hole_mode = false
+                                    build_direction = 1
+                                    hovered_piece_index = -1
+                                    smart_closed = true
                 
                 if not smart_closed:
                     var sp = {"type": "spline_transition", "width": p2}
