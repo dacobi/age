@@ -9,6 +9,8 @@ regGlobalFloat("editor_param_angle", 90.0)
 regGlobalFloat("editor_param_2", 80.0)  -- Width
 regGlobalFloat("editor_param_3", 100.0) -- Radius (for curves)
 regGlobalFloat("editor_param_incline", 0.0)
+regGlobalFloat("editor_swap_angle", 0.0)
+regGlobalFloat("editor_swap_incline", 0.0)
 regGlobalFloat("editor_param_drop", 0.0)
 
 regGlobalFloat("editor_clear", 0.0)
@@ -26,12 +28,16 @@ function renderEditorUI()
     imguiText("Element Parameters:")
     imguiSliderFloat("Length", "editor_param_length", 1.0, 500.0)
     imguiSliderFloat("Angle", "editor_param_angle", -180.0, 180.0)
+    imguiSameLine()
+    imguiButton("Swap Angle", "editor_swap_angle")
     
     imguiSliderFloat("Width (Start)", "editor_param_2", 10.0, 200.0)
     imguiSliderFloat("Width (End)", "editor_param_5", 10.0, 200.0)
     imguiSliderFloat("Radius (Curve)", "editor_param_3", 10.0, 500.0)
     
     imguiSliderFloat("Incline", "editor_param_incline", -90.0, 90.0)
+    imguiSameLine()
+    imguiButton("Swap Incline", "editor_swap_incline")
     imguiSliderFloat("Drop", "editor_param_drop", -100.0, 0.0)
     
     imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 60.0)
@@ -87,6 +93,8 @@ function renderEditorUI()
     imguiButton("Clear Track", "editor_clear")
     imguiSameLine()
     imguiButton("Undo", "editor_action_undo")
+    imguiSameLine()
+    imguiButton("Redo", "editor_action_redo")
     
     imguiSeparator()
     imguiCheckbox("Show Final", "editor_show_final")
@@ -114,6 +122,18 @@ while true do
     if btn_straight > 0.5 then
         setGlobalFloat("editor_action", 1.0)
         setGlobalFloat("editor_action_straight", 0.0)
+    end
+
+    local swap_a = getGlobalFloat("editor_swap_angle")
+    if swap_a > 0.5 then
+        setGlobalFloat("editor_param_angle", -getGlobalFloat("editor_param_angle"))
+        setGlobalFloat("editor_swap_angle", 0.0)
+    end
+
+    local swap_i = getGlobalFloat("editor_swap_incline")
+    if swap_i > 0.5 then
+        setGlobalFloat("editor_param_incline", -getGlobalFloat("editor_param_incline"))
+        setGlobalFloat("editor_swap_incline", 0.0)
     end
 
     local btn_curve = getGlobalFloat("editor_action_curve")
@@ -174,6 +194,10 @@ while true do
     if getGlobalFloat("editor_action_undo") > 0.5 then
         setGlobalFloat("editor_action", 12.0)
         setGlobalFloat("editor_action_undo", 0.0)
+    end
+    if getGlobalFloat("editor_action_redo") > 0.5 then
+        setGlobalFloat("editor_action", 17.0)
+        setGlobalFloat("editor_action_redo", 0.0)
     end
 
     if getGlobalFloat("editor_action_ral") > 0.5 then
