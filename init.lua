@@ -1,135 +1,219 @@
-ioWindowSetFullScreen(true)
-local is_fullscreen = true
+regGlobalFloat("editor_param_5", 80.0) -- End Width
+regGlobalFloat("editor_param_6", 45.0)  -- Ramp Angle
+regGlobalFloat("editor_param_gap_length", 50.0) -- Gap Length
+regGlobalFloat("editor_param_ramp_size", 20.0) -- Ramp Size
+regGlobalFloat("editor_action", 0.0)
 
-godotLoadScene("test_track.tscn")
-delay(200) -- give it a moment to load
+regGlobalFloat("editor_param_length", 90.0)
+regGlobalFloat("editor_param_angle", 90.0)
+regGlobalFloat("editor_param_2", 80.0)  -- Width
+regGlobalFloat("editor_param_3", 100.0) -- Radius (for curves)
+regGlobalFloat("editor_param_incline", 0.0)
+regGlobalFloat("editor_swap_angle", 0.0)
+regGlobalFloat("editor_swap_incline", 0.0)
+regGlobalFloat("editor_param_drop", 0.0)
 
-print("\n=== MegaRacer Synthwave Test Track ===")
-print("Controls: Up/Down arrow keys to Accelerate and Brake/Reverse.")
-print("          Left/Right arrow keys to Steer.")
-print("Press ESC to exit.\n")
+regGlobalFloat("editor_clear", 0.0)
+regGlobalFloat("editor_show_final", 0.0)
+regGlobalFloat("editor_show_ai_wall", 0.0)
 
-setAudioVolume(50)
+print("Starting Track Editor UI...")
+godotLoadScene("track_editor.tscn")
 
--- Get the supercar node pointer
-godotSelectRoot()
-local supercar = godotGetNodePointer("SuperCar")
-if supercar then
-end
-
-print("SUPERCAR POINTER IS: ", supercar)
-
--- Include shared car physics and controls
-dofile("car_common.lua")
-initCarPhysicsDefaults()
-
-local joy_handle = ioJoystickOpen(0)
-if joy_handle >= 0 then
-	print("Joystick 1 connected for driving!")
-end
-
-local is_paused = false
-local esc_held_state = false
-local orbit_yaw = 0.0
-local orbit_pitch = 0.5
-local orbit_dist = 12.0
-local last_mouse_dx = 0.0
-local last_mouse_dy = 0.0
-local last_mouse_wheel = 0.0
-
-local frame_count = 0
-local has_disabled_auto_reset = false
-
---godotSetProperty("auto_reset_enabled", true, supercar)
-
-
-while true do
-	-- Draw Car Physics dialog if show_car_physics_ui is enabled
-	renderCarPhysicsUI()
-
-	-- Handle Q to quit (moved from ESCAPE)
-	if ioKBClicked("SDLK_q") then
-		print("Exiting game logic...")
-		ioWindowSetFullScreen(false)
-		break
-	end
-
-	-- Handle F11 for fullscreen toggle
-	if ioKBClicked("SDLK_F11") then
-		is_fullscreen = not is_fullscreen
-		ioWindowSetFullScreen(is_fullscreen)
-	end
-
-	local track = godotGetNodePointer("MegaRacerScene")
-
-	
-
-    if ioKBClicked("SDLK_e") then
-        godotSetProperty("key_e_pressed", true, track)
-        godotSetProperty("key_e_pressed", false, track)
-        ioMouseCapture()
-    end
-
-    if track then
-        local p = godotGetProperty("is_paused", track)
-        if p == "True" or p == "true" or p == 1.0 or p == true then
-            is_paused = true
-        else
-            is_paused = false
-        end
+function renderEditorUI()
+    imguiBegin("Track Editor")
+    
+    imguiText("Procedural Track Builder")
+    imguiSeparator()
+    
+    imguiText("Element Parameters:")
+    imguiSliderFloat("Length", "editor_param_length", 1.0, 500.0)
+    imguiSliderFloat("Angle", "editor_param_angle", -180.0, 180.0)
+    imguiSameLine()
+    imguiButton("Swap Angle", "editor_swap_angle")
+    
+    imguiSliderFloat("Width (Start)", "editor_param_2", 10.0, 200.0)
+    imguiSliderFloat("Width (End)", "editor_param_5", 10.0, 200.0)
+    imguiSliderFloat("Radius (Curve)", "editor_param_3", 10.0, 500.0)
+    
+    imguiSliderFloat("Incline", "editor_param_incline", -90.0, 90.0)
+    imguiSameLine()
+    imguiButton("Swap Incline", "editor_swap_incline")
+    imguiSliderFloat("Drop", "editor_param_drop", -100.0, 0.0)
+    
+    imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 60.0)
+    imguiSliderFloat("Gap Length", "editor_param_gap_length", 10.0, 300.0)
+    imguiSliderFloat("Ramp Size", "editor_param_ramp_size", 5.0, 100.0)
+    
+    imguiSeparator()
+    imguiText("Add Elements:")
+    
+    imguiButton("Add Straight", "editor_action_straight")
+    
+    imguiSameLine()
+    
+    imguiButton("Add Curve", "editor_action_curve")
+    
+    imguiButton("Right Angle Left", "editor_action_ral")
+    imguiSameLine()
+    imguiButton("Right Angle Right", "editor_action_rar")
+    
+    imguiSameLine()
+    imguiButton("Add Drop", "editor_action_drop")
+    
+    
+    imguiButton("Add Transition", "editor_action_trans")
+    imguiSameLine()
+    imguiButton("Bank Trans", "editor_action_bank_trans")
+    
+    
+    imguiSameLine()
+    imguiButton("Add Gate", "editor_action_gate")
+    imguiSameLine()
+    imguiButton("Flip Gate", "editor_action_flip_gate")
+    imguiSameLine()
+    imguiButton("Add Gap", "editor_action_gap")
+    
+    imguiSameLine()
+    imguiButton("Close Loop", "editor_action_close")
+        
+    imguiSeparator()
+    imguiSeparator()
+    imguiSeparator()
+    imguiText("Hole Mode Controls:")
+    imguiCheckbox("Select Undo Mode", "editor_select_undo_mode")
+    imguiSameLine()
+    imguiButton("Flip Build Dir", "editor_action_flip_dir")
+    imguiButton("Close Hole", "editor_action_spline_trans")
+    imguiSeparator()
+    imguiButton("Save JSON", "editor_action_save")
+    imguiSameLine()
+    imguiButton("Load JSON", "editor_action_load")
+    
+    
+    imguiButton("Clear Track", "editor_clear")
+    imguiSameLine()
+    imguiButton("Undo", "editor_action_undo")
+    imguiSameLine()
+    imguiButton("Redo", "editor_action_redo")
+    
+    imguiSeparator()
+    imguiCheckbox("Show Final", "editor_show_final")
+    imguiSameLine()
+    if getGlobalFloat("editor_show_final") > 0.5 then
+        imguiCheckbox("Show AI Wall", "editor_show_ai_wall")
     end
     
-    if supercar then
-        if is_paused then
-            godotSetProperty("process_mode", 4, supercar) -- Disable car physics
-        else
-            godotSetProperty("process_mode", 0, supercar) -- Re-enable physics
-        end
-    end
-
-    if supercar then
-        if is_paused then
-            -- Globe camera controls
-            local dx = godotGetProperty("mouse_dx", track) or 0.0
-            local dy = godotGetProperty("mouse_dy", track) or 0.0
-            
-            local delta_dx = dx - (last_mouse_dx or 0.0)
-            local delta_dy = dy - (last_mouse_dy or 0.0)
-            last_mouse_dx = dx
-            last_mouse_dy = dy
-            
-            orbit_yaw = orbit_yaw - delta_dx * 0.005
-            orbit_pitch = orbit_pitch + delta_dy * 0.005
-            
-            if orbit_pitch > 1.5 then orbit_pitch = 1.5 end
-            if orbit_pitch < -1.5 then orbit_pitch = -1.5 end
-            
-            -- Process new Mouse Wheel input for zooming
-            local wheel = godotGetProperty("mouse_wheel", track) or 0.0
-            local delta_wheel = wheel - (last_mouse_wheel or 0.0)
-            last_mouse_wheel = wheel
-            if delta_wheel ~= 0.0 then
-                orbit_dist = orbit_dist - delta_wheel * 2.0
-            end
-            
-            -- Keep keyboard W/S fallbacks
-            if ioKBDown("w") then orbit_dist = orbit_dist - 0.5 end
-            if ioKBDown("s") then orbit_dist = orbit_dist + 0.5 end
-            
-            if orbit_dist < 3.0 then orbit_dist = 3.0 end
-            if orbit_dist > 50.0 then orbit_dist = 50.0 end
-            
-            godotSetProperty("orbit_yaw", orbit_yaw, track)
-            godotSetProperty("orbit_pitch", orbit_pitch, track)
-            godotSetProperty("orbit_dist", orbit_dist, track)
-        else
-            updateCarControlsAndPhysics(supercar, joy_handle, track, "reset_car")
-            frame_count = frame_count + 1
-            updateCarTelemetry(supercar, frame_count)
-        end
-    end
-
-	delay(1) -- High-frequency input update loop
+    imguiEnd()
 end
 
-appQuit()
+while true do
+    renderEditorUI()
+
+
+    local btn_flip = getGlobalFloat("editor_action_flip_dir")
+    if btn_flip > 0.5 then
+        setGlobalFloat("editor_action", 15.0)
+        setGlobalFloat("editor_action_flip_dir", 0.0)
+    end
+
+    local btn_spline = getGlobalFloat("editor_action_spline_trans")
+    if btn_spline > 0.5 then
+        setGlobalFloat("editor_action", 16.0)
+        setGlobalFloat("editor_action_spline_trans", 0.0)
+    end
+
+    local btn_straight = getGlobalFloat("editor_action_straight")
+    if btn_straight > 0.5 then
+        setGlobalFloat("editor_action", 1.0)
+        setGlobalFloat("editor_action_straight", 0.0)
+    end
+
+    local swap_a = getGlobalFloat("editor_swap_angle")
+    if swap_a > 0.5 then
+        setGlobalFloat("editor_param_angle", -getGlobalFloat("editor_param_angle"))
+        setGlobalFloat("editor_swap_angle", 0.0)
+    end
+
+    local swap_i = getGlobalFloat("editor_swap_incline")
+    if swap_i > 0.5 then
+        setGlobalFloat("editor_param_incline", -getGlobalFloat("editor_param_incline"))
+        setGlobalFloat("editor_swap_incline", 0.0)
+    end
+
+    local btn_curve = getGlobalFloat("editor_action_curve")
+    if btn_curve > 0.5 then
+        setGlobalFloat("editor_action", 2.0)
+        setGlobalFloat("editor_action_curve", 0.0)
+    end   
+
+    local btn_drop = getGlobalFloat("editor_action_drop")
+    if btn_drop > 0.5 then
+        setGlobalFloat("editor_action", 3.0)
+        setGlobalFloat("editor_action_drop", 0.0)
+    end
+
+    local btn_trans = getGlobalFloat("editor_action_trans")
+    if btn_trans > 0.5 then
+        setGlobalFloat("editor_action", 4.0)
+        setGlobalFloat("editor_action_trans", 0.0)
+    end
+
+    local btn_bank = getGlobalFloat("editor_action_bank_trans")
+    if btn_bank > 0.5 then
+        setGlobalFloat("editor_action", 9.0)
+        setGlobalFloat("editor_action_bank_trans", 0.0)
+    end
+
+    local btn_gap = getGlobalFloat("editor_action_gap")
+    if btn_gap > 0.5 then
+        setGlobalFloat("editor_action", 6.0)
+        setGlobalFloat("editor_action_gap", 0.0)
+    end
+
+    local btn_close = getGlobalFloat("editor_action_close")
+    if btn_close > 0.5 then
+        setGlobalFloat("editor_action", 7.0)
+        setGlobalFloat("editor_action_close", 0.0)
+    end
+
+    local btn_gate = getGlobalFloat("editor_action_gate")
+    if btn_gate > 0.5 then
+        setGlobalFloat("editor_action", 5.0)
+        setGlobalFloat("editor_action_gate", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_flip_gate") > 0.5 then
+        setGlobalFloat("editor_action", 15.0)
+        setGlobalFloat("editor_action_flip_gate", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_save") > 0.5 then
+        setGlobalFloat("editor_action", 10.0)
+        setGlobalFloat("editor_action_save", 0.0)
+    end
+    if getGlobalFloat("editor_action_load") > 0.5 then
+        setGlobalFloat("editor_action", 11.0)
+        setGlobalFloat("editor_action_load", 0.0)
+    end
+    if getGlobalFloat("editor_action_undo") > 0.5 then
+        setGlobalFloat("editor_action", 12.0)
+        setGlobalFloat("editor_action_undo", 0.0)
+    end
+    if getGlobalFloat("editor_action_redo") > 0.5 then
+        setGlobalFloat("editor_action", 17.0)
+        setGlobalFloat("editor_action_redo", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_ral") > 0.5 then
+        setGlobalFloat("editor_action", 13.0)
+        setGlobalFloat("editor_action_ral", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_rar") > 0.5 then
+        setGlobalFloat("editor_action", 14.0)
+        setGlobalFloat("editor_action_rar", 0.0)
+    end
+
+    delay(1)
+end

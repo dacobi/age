@@ -1,5 +1,6 @@
 class_name TrackGenerator
 extends RefCounted
+static var show_ai_walls: bool = false
 
 static func get_road_mat() -> Material:
     var mat = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
@@ -73,7 +74,14 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
         if c_layer != 1:
             csg.collision_layer = c_layer
             csg.collision_mask = 0
-            csg.visible = false
+            if c_layer == 128 and show_ai_walls:
+                csg.visible = true
+                var aimat = StandardMaterial3D.new()
+                aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+                aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                csg.material = aimat
+            else:
+                csg.visible = false
         csg.polygon = poly
         
     var hw = width / 2.0
@@ -99,6 +107,9 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
     
     var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
     create_path_csg.call(ai_r, 128, null)
+    
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.5), Vector2(-hw, -2.0), Vector2(hw, -2.0), Vector2(hw, -2.5)])
+    create_path_csg.call(ai_f, 128, null)
 
 static func _build_straight(root: Node3D, length: float, width: float, incline: float = 0.0):
     var hw = width / 2.0
@@ -144,6 +155,60 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         border_r.use_collision = true
         border_r.material = get_cyan_mat()
         root.add_child(border_r)
+        
+        var ai_l = CSGPolygon3D.new()
+        ai_l.mode = CSGPolygon3D.MODE_DEPTH
+        ai_l.depth = max(0.1, length)
+        ai_l.polygon = PackedVector2Array([
+            Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)
+        ])
+        ai_l.use_collision = true
+        ai_l.collision_layer = 128
+        ai_l.collision_mask = 0
+        if show_ai_walls:
+            var aimat = StandardMaterial3D.new()
+            aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+            aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            ai_l.material = aimat
+        else:
+            ai_l.visible = false
+        root.add_child(ai_l)
+        
+        var ai_r = CSGPolygon3D.new()
+        ai_r.mode = CSGPolygon3D.MODE_DEPTH
+        ai_r.depth = max(0.1, length)
+        ai_r.polygon = PackedVector2Array([
+            Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)
+        ])
+        ai_r.use_collision = true
+        ai_r.collision_layer = 128
+        ai_r.collision_mask = 0
+        if show_ai_walls:
+            var aimat = StandardMaterial3D.new()
+            aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+            aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            ai_r.material = aimat
+        else:
+            ai_r.visible = false
+        root.add_child(ai_r)
+        
+        var ai_f = CSGPolygon3D.new()
+        ai_f.mode = CSGPolygon3D.MODE_DEPTH
+        ai_f.depth = max(0.1, length)
+        ai_f.polygon = PackedVector2Array([
+            Vector2(-hw, -2.5), Vector2(hw, -2.5), Vector2(hw, -2.0), Vector2(-hw, -2.0)
+        ])
+        ai_f.use_collision = true
+        ai_f.collision_layer = 128
+        ai_f.collision_mask = 0
+        if show_ai_walls:
+            var aimat = StandardMaterial3D.new()
+            aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+            aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            ai_f.material = aimat
+        else:
+            ai_f.visible = false
+        root.add_child(ai_f)
     else:
         var path = Path3D.new()
         var curve = Curve3D.new()
@@ -190,7 +255,14 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
             if c_layer != 1:
                 csg.collision_layer = c_layer
                 csg.collision_mask = 0
-                csg.visible = false
+                if c_layer == 128 and show_ai_walls:
+                    csg.visible = true
+                    var aimat = StandardMaterial3D.new()
+                    aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+                    aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                    csg.material = aimat
+                else:
+                    csg.visible = false
             csg.polygon = poly
             
         var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
@@ -269,6 +341,68 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
     border_r.use_collision = true
     border_r.material = get_cyan_mat()
     root.add_child(border_r)
+    
+    var ai_l = CSGPolygon3D.new()
+    ai_l.mode = CSGPolygon3D.MODE_DEPTH
+    ai_l.depth = 40.0
+    ai_l.polygon = PackedVector2Array([
+        Vector2(-sw/2.0 - 2.0 - w/2.0, 0), Vector2(-ew/2.0 - 2.0 - w/2.0, length), 
+        Vector2(-ew/2.0 - 2.0 + w/2.0, length), Vector2(-sw/2.0 - 2.0 + w/2.0, 0)
+    ])
+    ai_l.rotation_degrees.x = -90
+    ai_l.position.y = 20.0
+    ai_l.use_collision = true
+    ai_l.collision_layer = 128
+    ai_l.collision_mask = 0
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_l.material = aimat
+    else:
+        ai_l.visible = false
+    root.add_child(ai_l)
+    
+    var ai_r = CSGPolygon3D.new()
+    ai_r.mode = CSGPolygon3D.MODE_DEPTH
+    ai_r.depth = 40.0
+    ai_r.polygon = PackedVector2Array([
+        Vector2(sw/2.0 + 2.0 - w/2.0, 0), Vector2(ew/2.0 + 2.0 - w/2.0, length), 
+        Vector2(ew/2.0 + 2.0 + w/2.0, length), Vector2(sw/2.0 + 2.0 + w/2.0, 0)
+    ])
+    ai_r.rotation_degrees.x = -90
+    ai_r.position.y = 20.0
+    ai_r.use_collision = true
+    ai_r.collision_layer = 128
+    ai_r.collision_mask = 0
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_r.material = aimat
+    else:
+        ai_r.visible = false
+    root.add_child(ai_r)
+    
+    var ai_f = CSGPolygon3D.new()
+    ai_f.mode = CSGPolygon3D.MODE_DEPTH
+    ai_f.depth = 2.0
+    ai_f.polygon = PackedVector2Array([
+        Vector2(-sw/2.0, 0), Vector2(-ew/2.0, length), Vector2(ew/2.0, length), Vector2(sw/2.0, 0)
+    ])
+    ai_f.rotation_degrees.x = -90
+    ai_f.position.y = 0.0
+    ai_f.use_collision = true
+    ai_f.collision_layer = 128
+    ai_f.collision_mask = 0
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_f.material = aimat
+    else:
+        ai_f.visible = false
+    root.add_child(ai_f)
 
 static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ramp_length: float) -> Vector3:
     var path = Path3D.new()
@@ -337,6 +471,39 @@ static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ra
     ])
     create_csg.call(border_r, 1, get_cyan_mat())
     
+    var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
+    var ail_csg = create_csg.call(ai_l, 128, null)
+    if show_ai_walls:
+        ail_csg.visible = true
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ail_csg.material = aimat
+    else:
+        ail_csg.visible = false
+        
+    var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
+    var air_csg = create_csg.call(ai_r, 128, null)
+    if show_ai_walls:
+        air_csg.visible = true
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        air_csg.material = aimat
+    else:
+        air_csg.visible = false
+        
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.5), Vector2(-hw, -2.0), Vector2(hw, -2.0), Vector2(hw, -2.5)])
+    var aif_csg = create_csg.call(ai_f, 128, null)
+    if show_ai_walls:
+        aif_csg.visible = true
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aif_csg.material = aimat
+    else:
+        aif_csg.visible = false
+        
     return end_pos
 
 static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: float, ramp_length: float):
@@ -351,6 +518,62 @@ static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: fl
     land.rotation_degrees.y = 180
     root.add_child(land)
     _build_curved_ramp(land, width, ramp_angle, ramp_length)
+    
+    var ai_f = CSGPolygon3D.new()
+    ai_f.mode = CSGPolygon3D.MODE_DEPTH
+    ai_f.depth = length
+    var hw = width / 2.0
+    ai_f.polygon = PackedVector2Array([
+        Vector2(-hw, -20.0), Vector2(hw, -20.0), Vector2(hw, -19.5), Vector2(-hw, -19.5)
+    ])
+    ai_f.use_collision = true
+    ai_f.collision_layer = 128
+    ai_f.collision_mask = 0
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_f.material = aimat
+    else:
+        ai_f.visible = false
+    root.add_child(ai_f)
+    
+    var ai_l = CSGPolygon3D.new()
+    ai_l.mode = CSGPolygon3D.MODE_DEPTH
+    ai_l.depth = length
+    var w = 2.0
+    ai_l.polygon = PackedVector2Array([
+        Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)
+    ])
+    ai_l.use_collision = true
+    ai_l.collision_layer = 128
+    ai_l.collision_mask = 0
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_l.material = aimat
+    else:
+        ai_l.visible = false
+    root.add_child(ai_l)
+    
+    var ai_r = CSGPolygon3D.new()
+    ai_r.mode = CSGPolygon3D.MODE_DEPTH
+    ai_r.depth = length
+    ai_r.polygon = PackedVector2Array([
+        Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)
+    ])
+    ai_r.use_collision = true
+    ai_r.collision_layer = 128
+    ai_r.collision_mask = 0
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_r.material = aimat
+    else:
+        ai_r.visible = false
+    root.add_child(ai_r)
 
 static func _build_curve(root: Node3D, angle: float, radius: float, width: float, start_t: float, end_t: float, pitch: float = 0.0, banked: bool = true):
     var path = Path3D.new()
@@ -432,7 +655,14 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
         if c_layer != 1:
             csg.collision_layer = c_layer
             csg.collision_mask = 0
-            csg.visible = false
+            if c_layer == 128 and show_ai_walls:
+                csg.visible = true
+                var aimat = StandardMaterial3D.new()
+                aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+                aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                csg.material = aimat
+            else:
+                csg.visible = false
         csg.polygon = poly
         
     var hw = width / 2.0
@@ -571,6 +801,94 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     ib.rotation_degrees = Vector3(-90, 0, 0)
     ib.position = Vector3(0, 4.0, 0)
     root.add_child(ib)
+    
+    # ai_l (left wall)
+    var ai_l = CSGPolygon3D.new()
+    ai_l.mode = CSGPolygon3D.MODE_DEPTH
+    ai_l.depth = 40.0
+    var ailpts = PackedVector2Array()
+    var offset_l = bw + 2.0
+    if is_left:
+        ailpts.push_back(Vector2(hw - offset_l, 0))
+        ailpts.push_back(Vector2(hw - offset_l + bw*2, 0))
+        ailpts.push_back(Vector2(hw - offset_l + bw*2, radius + hw - offset_l + bw*2))
+        ailpts.push_back(Vector2(-radius, radius + hw - offset_l + bw*2))
+        ailpts.push_back(Vector2(-radius, radius + hw - offset_l))
+        ailpts.push_back(Vector2(hw - offset_l, radius + hw - offset_l))
+    else:
+        ailpts.push_back(Vector2(-hw + offset_l, 0))
+        ailpts.push_back(Vector2(-hw + offset_l - bw*2, 0))
+        ailpts.push_back(Vector2(-hw + offset_l - bw*2, radius + hw - offset_l + bw*2))
+        ailpts.push_back(Vector2(radius, radius + hw - offset_l + bw*2))
+        ailpts.push_back(Vector2(radius, radius + hw - offset_l))
+        ailpts.push_back(Vector2(-hw + offset_l, radius + hw - offset_l))
+    ai_l.polygon = ailpts
+    ai_l.use_collision = true
+    ai_l.collision_layer = 128
+    ai_l.collision_mask = 0
+    ai_l.rotation_degrees = Vector3(-90, 0, 0)
+    ai_l.position = Vector3(0, 20.0, 0)
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_l.material = aimat
+    else:
+        ai_l.visible = false
+    root.add_child(ai_l)
+    
+    # ai_r (right wall)
+    var ai_r = CSGPolygon3D.new()
+    ai_r.mode = CSGPolygon3D.MODE_DEPTH
+    ai_r.depth = 40.0
+    var airpts = PackedVector2Array()
+    var offset_r = bw + 2.0
+    if is_left:
+        airpts.push_back(Vector2(-hw - offset_r, 0))
+        airpts.push_back(Vector2(-hw - offset_r + bw*2, 0))
+        airpts.push_back(Vector2(-hw - offset_r + bw*2, radius - hw - offset_r + bw*2))
+        airpts.push_back(Vector2(-radius, radius - hw - offset_r + bw*2))
+        airpts.push_back(Vector2(-radius, radius - hw - offset_r))
+        airpts.push_back(Vector2(-hw - offset_r, radius - hw - offset_r))
+    else:
+        airpts.push_back(Vector2(hw + offset_r, 0))
+        airpts.push_back(Vector2(hw + offset_r - bw*2, 0))
+        airpts.push_back(Vector2(hw + offset_r - bw*2, radius - hw - offset_r + bw*2))
+        airpts.push_back(Vector2(radius, radius - hw - offset_r + bw*2))
+        airpts.push_back(Vector2(radius, radius - hw - offset_r))
+        airpts.push_back(Vector2(hw + offset_r, radius - hw - offset_r))
+    ai_r.polygon = airpts
+    ai_r.use_collision = true
+    ai_r.collision_layer = 128
+    ai_r.collision_mask = 0
+    ai_r.rotation_degrees = Vector3(-90, 0, 0)
+    ai_r.position = Vector3(0, 20.0, 0)
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_r.material = aimat
+    else:
+        ai_r.visible = false
+    root.add_child(ai_r)
+    
+    var ai_f = CSGPolygon3D.new()
+    ai_f.mode = CSGPolygon3D.MODE_DEPTH
+    ai_f.depth = 2.0
+    ai_f.polygon = pts
+    ai_f.use_collision = true
+    ai_f.collision_layer = 128
+    ai_f.collision_mask = 0
+    ai_f.rotation_degrees = Vector3(-90, 0, 0)
+    ai_f.position = Vector3(0, -0.5, 0)
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        ai_f.material = aimat
+    else:
+        ai_f.visible = false
+    root.add_child(ai_f)
 
     var path = Path3D.new()
     var curve = Curve3D.new()
@@ -630,7 +948,14 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
         if c_layer != 1:
             csg.collision_layer = c_layer
             csg.collision_mask = 0
-            csg.visible = false
+            if c_layer == 128 and show_ai_walls:
+                csg.visible = true
+                var aimat = StandardMaterial3D.new()
+                aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+                aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                csg.material = aimat
+            else:
+                csg.visible = false
         csg.polygon = poly
         
     var hw = width / 2.0
