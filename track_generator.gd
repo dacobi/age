@@ -109,7 +109,7 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
     var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
     create_path_csg.call(ai_r, 128, null)
     
-    var ai_f = PackedVector2Array([Vector2(-hw, -2.5), Vector2(-hw, -2.0), Vector2(hw, -2.0), Vector2(hw, -2.5)])
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0)])
     create_path_csg.call(ai_f, 128, null)
 
 static func _build_straight(root: Node3D, length: float, width: float, incline: float = 0.0):
@@ -199,7 +199,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         ai_f.mode = CSGPolygon3D.MODE_DEPTH
         ai_f.depth = max(0.1, length)
         ai_f.polygon = PackedVector2Array([
-            Vector2(-hw, -2.5), Vector2(hw, -2.5), Vector2(hw, -2.0), Vector2(-hw, -2.0)
+            Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0), Vector2(-hw, -2.0)
         ])
         ai_f.use_collision = true
         ai_f.collision_layer = 128
@@ -293,7 +293,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
         create_path_csg.call(ai_r, 128, null)
         
-        var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -2.0)])
+        var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0)])
         create_path_csg.call(ai_f, 128, null)
 
 static func _build_transition(root: Node3D, length: float, sw: float, ew: float):
@@ -398,7 +398,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
         Vector2(-sw/2.0, 0), Vector2(-ew/2.0, length), Vector2(ew/2.0, length), Vector2(sw/2.0, 0)
     ])
     ai_f.rotation_degrees.x = -90
-    ai_f.position.y = 0.0
+    ai_f.position.y = 0.01
     ai_f.use_collision = true
     ai_f.collision_layer = 128
     ai_f.collision_mask = 0
@@ -503,7 +503,7 @@ static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ra
     else:
         air_csg.visible = false
         
-    var ai_f = PackedVector2Array([Vector2(-hw, -2.5), Vector2(-hw, -2.0), Vector2(hw, -2.0), Vector2(hw, -2.5)])
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0)])
     var aif_csg = create_csg.call(ai_f, 128, null)
     if show_ai_walls:
         aif_csg.visible = true
@@ -705,7 +705,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
     create_path_csg.call(ai_r, 128, null)
     
-    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -2.0)])
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0)])
     create_path_csg.call(ai_f, 128, null)
 
 
@@ -900,7 +900,7 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     ai_f.collision_layer = 128
     ai_f.collision_mask = 0
     ai_f.rotation_degrees = Vector3(-90, 0, 0)
-    ai_f.position = Vector3(0, 0.0, 0)
+    ai_f.position = Vector3(0, 0.01, 0)
     if show_ai_walls:
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
@@ -1005,7 +1005,7 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
     var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
     create_path_csg.call(ai_r, 128, null)
     
-    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -2.0)])
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0)])
     create_path_csg.call(ai_f, 128, null)
     
     var ret = Transform3D()
