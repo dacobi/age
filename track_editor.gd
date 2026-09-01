@@ -1161,11 +1161,12 @@ func _build_bank_transition(root: Node3D, length: float, width: float, start_til
     path.curve = curve
     root.add_child(path)
     
-    var mat = StandardMaterial3D.new()
-    mat.albedo_color = Color(0.2, 0.2, 0.2)
+    var mat = tg.get_road_mat()
     
     var bmat = StandardMaterial3D.new()
-    bmat.albedo_color = Color(0.0, 1.0, 1.0)
+    bmat.albedo_color = Color(0, 0.9, 0.9, 1)
+    bmat.emission_enabled = true
+    bmat.emission = Color(0, 0.9, 0.9, 1)
     
     var hw = width / 2.0
     var csg = CSGPolygon3D.new()
