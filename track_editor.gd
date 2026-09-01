@@ -1,4 +1,5 @@
 extends Node3D
+const tg = preload("res://track_generator.gd")
 
 var track_data: Array = []
 var history_stack: Array = []
@@ -835,46 +836,11 @@ func _create_right_angle_csg(radius: float, width: float, is_left: bool) -> Node
         pts.push_back(Vector2(hw, 0))
     road.polygon = pts
     road.use_collision = true
-    var mat = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
-    if mat:
-        mat = mat.duplicate()
-        mat.uv1_triplanar = true
-        road.material = mat
+    road.material = tg.get_road_mat()
     road.rotation_degrees = Vector3(-90, 0, 0)
     node.add_child(road)
     
-    # Centerline
-    var cline = CSGPolygon3D.new()
-    cline.mode = CSGPolygon3D.MODE_DEPTH
-    cline.depth = 0.1
-    var cw = 1.2
-    var cpts = PackedVector2Array()
-    if is_left:
-        cpts.push_back(Vector2(cw, 0))
-        cpts.push_back(Vector2(cw, radius + cw))
-        cpts.push_back(Vector2(-radius, radius + cw))
-        cpts.push_back(Vector2(-radius, radius - cw))
-        cpts.push_back(Vector2(-cw, radius - cw))
-        cpts.push_back(Vector2(-cw, 0))
-    else:
-        cpts.push_back(Vector2(-cw, 0))
-        cpts.push_back(Vector2(-cw, radius + cw))
-        cpts.push_back(Vector2(radius, radius + cw))
-        cpts.push_back(Vector2(radius, radius - cw))
-        cpts.push_back(Vector2(cw, radius - cw))
-        cpts.push_back(Vector2(cw, 0))
-    cline.polygon = cpts
-    cline.use_collision = false
-    
-    var cmat = StandardMaterial3D.new()
-    cmat.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
-    cmat.emission_enabled = true
-    cmat.emission = Color(1.0, 0.0, 1.0, 1.0)
-    cline.material = cmat
-    
-    cline.rotation_degrees = Vector3(-90, 0, 0)
-    cline.position = Vector3(0, 0.35, 0)
-    node.add_child(cline)
+
     
     # Borders
     var bw = 1.0
@@ -955,13 +921,7 @@ func _create_straight_csg(length: float, width: float, y_offset: float, collisio
         csg.collision_mask = 0
         csg.visible = false
     else:
-        var mat = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
-        if mat:
-            mat = mat.duplicate()
-            mat.uv1_triplanar = true
-            mat.uv1_world_triplanar = true
-            mat.uv1_scale = Vector3(0.05, 0.05, 0.05) # Uniform scale for all orientations
-            csg.material = mat
+        csg.material = tg.get_road_mat()
     return csg
 
 func _create_straight_border(length: float, x_offset: float) -> CSGPolygon3D:
@@ -1023,13 +983,7 @@ func _create_transition_csg(length: float, sw: float, ew: float, y_offset: float
         csg.collision_mask = 0
         csg.visible = false
     else:
-        var mat = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
-        if mat:
-            mat = mat.duplicate()
-            mat.uv1_triplanar = true
-            mat.uv1_world_triplanar = true
-            mat.uv1_scale = Vector3(0.05, 0.05, 0.05) # Uniform scale for all orientations
-            csg.material = mat
+        csg.material = tg.get_road_mat()
     return csg
 
 func _create_transition_border(length: float, start_x: float, end_x: float) -> CSGPolygon3D:
@@ -1152,13 +1106,7 @@ func _build_path_csg_elements(root: Node3D, path: Path3D, width: float, path_loc
             csg.collision_mask = 0
             csg.visible = false
         else:
-            var mat = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
-            if mat:
-                mat = mat.duplicate()
-                mat.uv1_triplanar = true
-                mat.uv1_world_triplanar = true
-                mat.uv1_scale = Vector3(0.05, 0.05, 0.05)
-                csg.material = mat
+            csg.material = tg.get_road_mat()
         csg.polygon = poly
     var hw = width / 2.0
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
@@ -1172,22 +1120,7 @@ func _build_path_csg_elements(root: Node3D, path: Path3D, width: float, path_loc
     var right_b = PackedVector2Array([Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)])
     create_path_csg.call(right_b, 1, true)
     
-    # Centerline
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
-    var cline_csg = CSGPolygon3D.new()
-    path.add_child(cline_csg)
-    cline_csg.mode = CSGPolygon3D.MODE_PATH
-    cline_csg.path_node = NodePath("..")
-    cline_csg.path_rotation = CSGPolygon3D.PATH_ROTATION_PATH_FOLLOW
-    cline_csg.path_local = path_local
-    cline_csg.path_continuous_u = true
-    cline_csg.use_collision = false
-    var cmat = StandardMaterial3D.new()
-    cmat.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
-    cmat.emission_enabled = true
-    cmat.emission = Color(1.0, 0.0, 1.0, 1.0)
-    cline_csg.material = cmat
-    cline_csg.polygon = c_line
+
     
     var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
     create_path_csg.call(ai_l, 128, false)
@@ -1311,12 +1244,7 @@ func _create_curved_ramp_editor(root: Node3D, width: float, ramp_angle: float, r
         csg.use_collision = false
         return csg
         
-    var mat_asphalt = load("res://materials/grey_cracked_rock/grey_cracked_rock.tres")
-    if mat_asphalt:
-        mat_asphalt = mat_asphalt.duplicate()
-        mat_asphalt.uv1_triplanar = true
-        mat_asphalt.uv1_world_triplanar = true
-        mat_asphalt.uv1_scale = Vector3(0.05, 0.05, 0.05)
+
     
     var cmat = StandardMaterial3D.new()
     cmat.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
@@ -1330,10 +1258,9 @@ func _create_curved_ramp_editor(root: Node3D, width: float, ramp_angle: float, r
     
     var hw = width / 2.0
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
-    create_csg.call(road_poly, mat_asphalt)
+    create_csg.call(road_poly, tg.get_road_mat())
     
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
-    create_csg.call(c_line, cmat)
+
     
     var w = 2.0
     var border_l = PackedVector2Array([
