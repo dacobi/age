@@ -79,6 +79,7 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
                 var aimat = StandardMaterial3D.new()
                 aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
                 aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
                 csg.material = aimat
             else:
                 csg.visible = false
@@ -169,6 +170,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
             var aimat = StandardMaterial3D.new()
             aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
             aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
             ai_l.material = aimat
         else:
             ai_l.visible = false
@@ -187,6 +189,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
             var aimat = StandardMaterial3D.new()
             aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
             aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
             ai_r.material = aimat
         else:
             ai_r.visible = false
@@ -205,6 +208,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
             var aimat = StandardMaterial3D.new()
             aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
             aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
             ai_f.material = aimat
         else:
             ai_f.visible = false
@@ -260,6 +264,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
                     var aimat = StandardMaterial3D.new()
                     aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
                     aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                    aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
                     csg.material = aimat
                 else:
                     csg.visible = false
@@ -358,6 +363,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_l.material = aimat
     else:
         ai_l.visible = false
@@ -379,6 +385,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_r.material = aimat
     else:
         ai_r.visible = false
@@ -399,6 +406,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_f.material = aimat
     else:
         ai_f.visible = false
@@ -478,6 +486,7 @@ static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ra
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ail_csg.material = aimat
     else:
         ail_csg.visible = false
@@ -489,6 +498,7 @@ static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ra
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         air_csg.material = aimat
     else:
         air_csg.visible = false
@@ -500,6 +510,7 @@ static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ra
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         aif_csg.material = aimat
     else:
         aif_csg.visible = false
@@ -533,6 +544,7 @@ static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: fl
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_f.material = aimat
     else:
         ai_f.visible = false
@@ -552,6 +564,7 @@ static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: fl
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_l.material = aimat
     else:
         ai_l.visible = false
@@ -570,6 +583,7 @@ static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: fl
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_r.material = aimat
     else:
         ai_r.visible = false
@@ -660,6 +674,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
                 var aimat = StandardMaterial3D.new()
                 aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
                 aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
                 csg.material = aimat
             else:
                 csg.visible = false
@@ -802,26 +817,28 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     ib.position = Vector3(0, 4.0, 0)
     root.add_child(ib)
     
-    # ai_l (left wall)
+    # ai_l (left wall - inner side when is_left, outer side when !is_left)
     var ai_l = CSGPolygon3D.new()
     ai_l.mode = CSGPolygon3D.MODE_DEPTH
     ai_l.depth = 40.0
     var ailpts = PackedVector2Array()
-    var offset_l = bw + 2.0
+    var offset = bw + 2.0
     if is_left:
-        ailpts.push_back(Vector2(hw - offset_l, 0))
-        ailpts.push_back(Vector2(hw - offset_l + bw*2, 0))
-        ailpts.push_back(Vector2(hw - offset_l + bw*2, radius + hw - offset_l + bw*2))
-        ailpts.push_back(Vector2(-radius, radius + hw - offset_l + bw*2))
-        ailpts.push_back(Vector2(-radius, radius + hw - offset_l))
-        ailpts.push_back(Vector2(hw - offset_l, radius + hw - offset_l))
+        # inner side
+        ailpts.push_back(Vector2(-hw - offset, 0))
+        ailpts.push_back(Vector2(-hw - offset + bw*2, 0))
+        ailpts.push_back(Vector2(-hw - offset + bw*2, radius - hw - offset + bw*2))
+        ailpts.push_back(Vector2(-radius, radius - hw - offset + bw*2))
+        ailpts.push_back(Vector2(-radius, radius - hw - offset))
+        ailpts.push_back(Vector2(-hw - offset, radius - hw - offset))
     else:
-        ailpts.push_back(Vector2(-hw + offset_l, 0))
-        ailpts.push_back(Vector2(-hw + offset_l - bw*2, 0))
-        ailpts.push_back(Vector2(-hw + offset_l - bw*2, radius + hw - offset_l + bw*2))
-        ailpts.push_back(Vector2(radius, radius + hw - offset_l + bw*2))
-        ailpts.push_back(Vector2(radius, radius + hw - offset_l))
-        ailpts.push_back(Vector2(-hw + offset_l, radius + hw - offset_l))
+        # outer side
+        ailpts.push_back(Vector2(-hw + offset, 0))
+        ailpts.push_back(Vector2(-hw + offset - bw*2, 0))
+        ailpts.push_back(Vector2(-hw + offset - bw*2, radius + hw + offset - bw*2))
+        ailpts.push_back(Vector2(radius, radius + hw + offset - bw*2))
+        ailpts.push_back(Vector2(radius, radius + hw + offset))
+        ailpts.push_back(Vector2(-hw + offset, radius + hw + offset))
     ai_l.polygon = ailpts
     ai_l.use_collision = true
     ai_l.collision_layer = 128
@@ -832,31 +849,33 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_l.material = aimat
     else:
         ai_l.visible = false
     root.add_child(ai_l)
     
-    # ai_r (right wall)
+    # ai_r (right wall - outer side when is_left, inner side when !is_left)
     var ai_r = CSGPolygon3D.new()
     ai_r.mode = CSGPolygon3D.MODE_DEPTH
     ai_r.depth = 40.0
     var airpts = PackedVector2Array()
-    var offset_r = bw + 2.0
     if is_left:
-        airpts.push_back(Vector2(-hw - offset_r, 0))
-        airpts.push_back(Vector2(-hw - offset_r + bw*2, 0))
-        airpts.push_back(Vector2(-hw - offset_r + bw*2, radius - hw - offset_r + bw*2))
-        airpts.push_back(Vector2(-radius, radius - hw - offset_r + bw*2))
-        airpts.push_back(Vector2(-radius, radius - hw - offset_r))
-        airpts.push_back(Vector2(-hw - offset_r, radius - hw - offset_r))
+        # outer side
+        airpts.push_back(Vector2(hw + offset, 0))
+        airpts.push_back(Vector2(hw + offset - bw*2, 0))
+        airpts.push_back(Vector2(hw + offset - bw*2, radius + hw + offset - bw*2))
+        airpts.push_back(Vector2(-radius, radius + hw + offset - bw*2))
+        airpts.push_back(Vector2(-radius, radius + hw + offset))
+        airpts.push_back(Vector2(hw + offset, radius + hw + offset))
     else:
-        airpts.push_back(Vector2(hw + offset_r, 0))
-        airpts.push_back(Vector2(hw + offset_r - bw*2, 0))
-        airpts.push_back(Vector2(hw + offset_r - bw*2, radius - hw - offset_r + bw*2))
-        airpts.push_back(Vector2(radius, radius - hw - offset_r + bw*2))
-        airpts.push_back(Vector2(radius, radius - hw - offset_r))
-        airpts.push_back(Vector2(hw + offset_r, radius - hw - offset_r))
+        # inner side
+        airpts.push_back(Vector2(hw - offset, 0))
+        airpts.push_back(Vector2(hw - offset + bw*2, 0))
+        airpts.push_back(Vector2(hw - offset + bw*2, radius - hw - offset + bw*2))
+        airpts.push_back(Vector2(radius, radius - hw - offset + bw*2))
+        airpts.push_back(Vector2(radius, radius - hw - offset))
+        airpts.push_back(Vector2(hw - offset, radius - hw - offset))
     ai_r.polygon = airpts
     ai_r.use_collision = true
     ai_r.collision_layer = 128
@@ -867,6 +886,7 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_r.material = aimat
     else:
         ai_r.visible = false
@@ -880,16 +900,17 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     ai_f.collision_layer = 128
     ai_f.collision_mask = 0
     ai_f.rotation_degrees = Vector3(-90, 0, 0)
-    ai_f.position = Vector3(0, -0.5, 0)
+    ai_f.position = Vector3(0, 0.0, 0)
     if show_ai_walls:
         var aimat = StandardMaterial3D.new()
         aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
         aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
         ai_f.material = aimat
     else:
         ai_f.visible = false
     root.add_child(ai_f)
-
+    
     var path = Path3D.new()
     var curve = Curve3D.new()
     curve.bake_interval = 0.01
@@ -953,6 +974,7 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
                 var aimat = StandardMaterial3D.new()
                 aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
                 aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
                 csg.material = aimat
             else:
                 csg.visible = false
