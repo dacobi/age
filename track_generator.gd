@@ -817,28 +817,25 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     ib.position = Vector3(0, 4.0, 0)
     root.add_child(ib)
     
-    # ai_l (left wall - inner side when is_left, outer side when !is_left)
+    # ai_l (left wall)
     var ai_l = CSGPolygon3D.new()
     ai_l.mode = CSGPolygon3D.MODE_DEPTH
     ai_l.depth = 40.0
     var ailpts = PackedVector2Array()
-    var offset = bw + 2.0
     if is_left:
-        # inner side
-        ailpts.push_back(Vector2(-hw - offset, 0))
-        ailpts.push_back(Vector2(-hw - offset + bw*2, 0))
-        ailpts.push_back(Vector2(-hw - offset + bw*2, radius - hw - offset + bw*2))
-        ailpts.push_back(Vector2(-radius, radius - hw - offset + bw*2))
-        ailpts.push_back(Vector2(-radius, radius - hw - offset))
-        ailpts.push_back(Vector2(-hw - offset, radius - hw - offset))
+        ailpts.push_back(Vector2(-hw - bw, 0))
+        ailpts.push_back(Vector2(-hw - bw - 2.0, 0))
+        ailpts.push_back(Vector2(-hw - bw - 2.0, radius - hw - bw - 2.0))
+        ailpts.push_back(Vector2(-radius, radius - hw - bw - 2.0))
+        ailpts.push_back(Vector2(-radius, radius - hw - bw))
+        ailpts.push_back(Vector2(-hw - bw, radius - hw - bw))
     else:
-        # outer side
-        ailpts.push_back(Vector2(-hw + offset, 0))
-        ailpts.push_back(Vector2(-hw + offset - bw*2, 0))
-        ailpts.push_back(Vector2(-hw + offset - bw*2, radius + hw + offset - bw*2))
-        ailpts.push_back(Vector2(radius, radius + hw + offset - bw*2))
-        ailpts.push_back(Vector2(radius, radius + hw + offset))
-        ailpts.push_back(Vector2(-hw + offset, radius + hw + offset))
+        ailpts.push_back(Vector2(-hw - bw, 0))
+        ailpts.push_back(Vector2(-hw - bw - 2.0, 0))
+        ailpts.push_back(Vector2(-hw - bw - 2.0, radius + hw + bw + 2.0))
+        ailpts.push_back(Vector2(radius, radius + hw + bw + 2.0))
+        ailpts.push_back(Vector2(radius, radius + hw + bw))
+        ailpts.push_back(Vector2(-hw - bw, radius + hw + bw))
     ai_l.polygon = ailpts
     ai_l.use_collision = true
     ai_l.collision_layer = 128
@@ -855,27 +852,25 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
         ai_l.visible = false
     root.add_child(ai_l)
     
-    # ai_r (right wall - outer side when is_left, inner side when !is_left)
+    # ai_r (right wall)
     var ai_r = CSGPolygon3D.new()
     ai_r.mode = CSGPolygon3D.MODE_DEPTH
     ai_r.depth = 40.0
     var airpts = PackedVector2Array()
     if is_left:
-        # outer side
-        airpts.push_back(Vector2(hw + offset, 0))
-        airpts.push_back(Vector2(hw + offset - bw*2, 0))
-        airpts.push_back(Vector2(hw + offset - bw*2, radius + hw + offset - bw*2))
-        airpts.push_back(Vector2(-radius, radius + hw + offset - bw*2))
-        airpts.push_back(Vector2(-radius, radius + hw + offset))
-        airpts.push_back(Vector2(hw + offset, radius + hw + offset))
+        airpts.push_back(Vector2(hw + bw, 0))
+        airpts.push_back(Vector2(hw + bw + 2.0, 0))
+        airpts.push_back(Vector2(hw + bw + 2.0, radius + hw + bw + 2.0))
+        airpts.push_back(Vector2(-radius, radius + hw + bw + 2.0))
+        airpts.push_back(Vector2(-radius, radius + hw + bw))
+        airpts.push_back(Vector2(hw + bw, radius + hw + bw))
     else:
-        # inner side
-        airpts.push_back(Vector2(hw - offset, 0))
-        airpts.push_back(Vector2(hw - offset + bw*2, 0))
-        airpts.push_back(Vector2(hw - offset + bw*2, radius - hw - offset + bw*2))
-        airpts.push_back(Vector2(radius, radius - hw - offset + bw*2))
-        airpts.push_back(Vector2(radius, radius - hw - offset))
-        airpts.push_back(Vector2(hw - offset, radius - hw - offset))
+        airpts.push_back(Vector2(hw + bw, 0))
+        airpts.push_back(Vector2(hw + bw + 2.0, 0))
+        airpts.push_back(Vector2(hw + bw + 2.0, radius - hw - bw - 2.0))
+        airpts.push_back(Vector2(radius, radius - hw - bw - 2.0))
+        airpts.push_back(Vector2(radius, radius - hw - bw))
+        airpts.push_back(Vector2(hw + bw, radius - hw - bw))
     ai_r.polygon = airpts
     ai_r.use_collision = true
     ai_r.collision_layer = 128
@@ -1344,6 +1339,39 @@ static func _build_spline_transition(piece: Dictionary, current_transform: Trans
     
     var right_b = PackedVector2Array([Vector2(hw - w/2.0, 0.0), Vector2(hw - w/2.0, 4.0), Vector2(hw + w/2.0, 4.0), Vector2(hw + w/2.0, 0.0)])
     create_csg.call(right_b, 1, get_cyan_mat())
+    
+    var ai_l = PackedVector2Array([Vector2(-hw - 2.0 - w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, -20.0), Vector2(-hw - 2.0 + w/2.0, 20.0), Vector2(-hw - 2.0 - w/2.0, 20.0)])
+    var ail_csg = create_csg.call(ai_l, 128, null)
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
+        ail_csg.material = aimat
+    else:
+        ail_csg.visible = false
+        
+    var ai_r = PackedVector2Array([Vector2(hw + 2.0 - w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, -20.0), Vector2(hw + 2.0 + w/2.0, 20.0), Vector2(hw + 2.0 - w/2.0, 20.0)])
+    var air_csg = create_csg.call(ai_r, 128, null)
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
+        air_csg.material = aimat
+    else:
+        air_csg.visible = false
+        
+    var ai_f = PackedVector2Array([Vector2(-hw, -2.0), Vector2(-hw, 0.01), Vector2(hw, 0.01), Vector2(hw, -2.0)])
+    var aif_csg = create_csg.call(ai_f, 128, null)
+    if show_ai_walls:
+        var aimat = StandardMaterial3D.new()
+        aimat.albedo_color = Color(1.0, 0.0, 0.0, 0.3)
+        aimat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        aimat.cull_mode = BaseMaterial3D.CULL_DISABLED
+        aif_csg.material = aimat
+    else:
+        aif_csg.visible = false
     
     parent.add_child(root)
     return target_transform
