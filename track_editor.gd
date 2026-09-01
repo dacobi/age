@@ -219,13 +219,11 @@ func _process(_delta):
                 if piece_before != null and piece_after != null:
                     var type_b = piece_before.get("type", "")
                     var type_a = piece_after.get("type", "")
-                    var valid_types = ["straight", "bank_transition"]
                     
-                    if type_b in valid_types and type_a in valid_types:
-                        var is_b_straight = type_b == "straight" and float(piece_before.get("incline", 0.0)) == 0.0
-                        var is_a_straight = type_a == "straight" and float(piece_after.get("incline", 0.0)) == 0.0
-                        
-                        if is_b_straight or is_a_straight:
+                    var is_b_straight = type_b == "straight" and float(piece_before.get("incline", 0.0)) == 0.0
+                    var is_a_straight = type_a == "straight" and float(piece_after.get("incline", 0.0)) == 0.0
+                    
+                    if is_b_straight or is_a_straight:
                             var start_before = Transform3D.IDENTITY
                             if track_data.size() > 0:
                                 start_before = built_nodes[track_data.size() - 1].global_transform
@@ -247,12 +245,14 @@ func _process(_delta):
                                     if is_equal_approx(width_b, width_a):
                                         history_stack.append({"d": track_data.duplicate(true), "a": track_after_hole.duplicate(true), "anc": hole_anchor_transform, "hole": is_hole_mode, "dir": build_direction})
                                         
-                                        if is_b_straight and is_a_straight:
-                                            piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
-                                        elif type_a == "bank_transition":
+                                        if type_a == "bank_transition":
                                             piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
                                         elif type_b == "bank_transition":
                                             piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
+                                        elif is_b_straight:
+                                            piece_before["length"] = float(piece_before.get("length", 100.0)) + gap_dist
+                                        elif is_a_straight:
+                                            piece_after["length"] = float(piece_after.get("length", 100.0)) + gap_dist
                                             
                                         track_data.append_array(track_after_hole)
                                         track_after_hole = []
