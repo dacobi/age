@@ -327,7 +327,7 @@ private:
     SaveHighScoreFunc saveHighScoreFunc;
 
     struct ImGuiWidget {
-        enum Type { TEXT, SEPARATOR, CHECKBOX, SLIDER_FLOAT, BUTTON, PROGRESS_BAR, SAME_LINE };
+        enum Type { TEXT, SEPARATOR, CHECKBOX, SLIDER_FLOAT, SLIDER_INT, BUTTON, PROGRESS_BAR, SAME_LINE };
         Type type;
         std::string label;
         std::string var_name;
@@ -361,6 +361,7 @@ private:
     static int lua_imguiSeparator(lua_State* L);
     static int lua_imguiCheckbox(lua_State* L);
     static int lua_imguiSliderFloat(lua_State* L);
+    static int lua_imguiSliderInt(lua_State* L);
     static int lua_imguiButton(lua_State* L);
     static int lua_imguiProgressBar(lua_State* L);
     static int lua_imguiSameLine(lua_State* L);
