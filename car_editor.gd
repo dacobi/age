@@ -8,6 +8,7 @@ var mat_green = StandardMaterial3D.new()
 
 var lua_manager = null
 var debug_parent = null
+var swept_body: CSGMesh3D = null
 
 var dragging_node = null
 var drag_plane = Plane()
@@ -138,6 +139,7 @@ func _input(event):
                     _commit_history(int(lua_manager.get_global_float("ce_selected_mode")))
                     _save_data()
                     dragging_node = null
+                    _build_car()
 
     elif event is InputEventMouseMotion and dragging_node:
         var cam = get_viewport().get_camera_3d()
@@ -147,9 +149,24 @@ func _input(event):
         var intersect = drag_plane.intersects_ray(ray_origin, ray_dir)
         if intersect:
             var new_pos = intersect + drag_offset
+            
+            # Snap to X=0 if dragging spine near center
+            if dragging_node.get_meta("type") == "spine" and abs(new_pos.x) < 0.2:
+                new_pos.x = 0.0
+                
             _apply_drag(dragging_node, new_pos)
             _push_state_to_lua() # Update sliders in real-time
-            _build_car()
+            
+            # Fast rebuild during drag (avoids deleting nodes)
+            _build_sweep()
+            
+            # Move the visual sphere
+            if dragging_node.get_parent():
+                for sibling in dragging_node.get_parent().get_children():
+                    if sibling is CSGSphere3D and sibling.position.distance_to(dragging_node.position) < 0.01:
+                        sibling.position = new_pos
+                        break
+            dragging_node.position = new_pos
 
 func _handle_selection(node):
     if not lua_manager: return
@@ -160,7 +177,11 @@ func _handle_selection(node):
     elif type == "kf":
         lua_manager.set_global_float("ce_selected_mode", 2.0)
         lua_manager.set_global_float("ce_selected_kf", float(node.get_meta("kf_index") + 1))
+        lua_manager.set_global_float("ce_selected_vert", float(node.get_meta("vert_index") + 1))
     _push_state_to_lua()
+    
+    # Update colors instantly
+    _update_visual_colors()
 
 func _apply_drag(node, pos: Vector3):
     var type = node.get_meta("type")
@@ -535,11 +556,13 @@ func _build_sweep():
     st.generate_normals()
     var mesh = st.commit()
     
-    var csg = CSGMesh3D.new()
-    csg.name = "SweptBody"
-    csg.mesh = mesh
-    csg.material = mat_body
-    combiner.add_child(csg)
+    if swept_body == null or not is_instance_valid(swept_body):
+        swept_body = CSGMesh3D.new()
+        swept_body.name = "SweptBody"
+        swept_body.material = mat_body
+        combiner.add_child(swept_body)
+    
+    swept_body.mesh = mesh
 
 func _build_primitive(prim):
     var csg = null
@@ -610,9 +633,12 @@ func _build_debug_visuals():
         var tout = Vector3(pt.get("out_x", 0.0), pt.get("out_y", 0.0), pt.get("out_z", 0.0))
         curve.add_point(pos, tin, tout)
         
+        var sel_mode = int(lua_manager.get_global_float("ce_selected_mode"))
+        var sel_sp_idx = int(lua_manager.get_global_float("ce_selected_spine")) - 1
+        var is_sel = (sel_mode == 1 and i == sel_sp_idx)
         var s = CSGSphere3D.new()
         s.radius = 0.06
-        s.material = mat_red
+        s.material = mat_red if is_sel else mat_cyan # Let's use red for selected, cyan for others
         s.position = pos
         debug_parent.add_child(s)
         _create_draggable(debug_parent, pos, 0.06, {"type": "spine", "index": i})
@@ -665,9 +691,17 @@ func _build_debug_visuals():
             for v_idx in range(kf["verts"].size()):
                 var p2d = Vector2(kf["verts"][v_idx]["x"], kf["verts"][v_idx]["y"])
                 var pos3d = trans * Vector3(p2d.x, p2d.y, 0)
+                var sel_mode = int(lua_manager.get_global_float("ce_selected_mode"))
+                var sel_kf_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
+                var sel_v_idx = int(lua_manager.get_global_float("ce_selected_vert")) - 1
+                var is_sel = (sel_mode == 2 and k_idx == sel_kf_idx and v_idx == sel_v_idx)
+                
                 var gs = CSGSphere3D.new()
                 gs.radius = 0.04
-                gs.material = mat_green
+                var dyn_mat = StandardMaterial3D.new()
+                dyn_mat.albedo_color = Color(1, 0, 0) if is_sel else Color(1, 1, 0)
+                dyn_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+                gs.material = dyn_mat
                 gs.position = pos3d
                 debug_parent.add_child(gs)
                 _create_draggable(debug_parent, pos3d, 0.04, {"type": "kf", "kf_index": k_idx, "vert_index": v_idx, "trans": trans})
@@ -709,3 +743,27 @@ func _redo(mode: int):
     elif mode == 3 and history_prim_redo.size() > 0:
         history_prim_undo.append(car_data["primitives"].duplicate(true))
         car_data["primitives"] = history_prim_redo.pop_back()
+
+func _update_visual_colors():
+    if not debug_parent: return
+    var sel_mode = int(lua_manager.get_global_float("ce_selected_mode"))
+    var sel_sp_idx = int(lua_manager.get_global_float("ce_selected_spine")) - 1
+    var sel_kf_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
+    var sel_v_idx = int(lua_manager.get_global_float("ce_selected_vert")) - 1
+    
+    for area in debug_parent.get_children():
+        if area is Area3D and area.has_meta("type"):
+            var t = area.get_meta("type")
+            var is_sel = false
+            if t == "spine" and sel_mode == 1 and area.get_meta("index") == sel_sp_idx:
+                is_sel = true
+            elif t == "kf" and sel_mode == 2 and area.get_meta("kf_index") == sel_kf_idx and area.get_meta("vert_index") == sel_v_idx:
+                is_sel = true
+                
+            # Find the visual sphere sibling at the same position
+            for sibling in debug_parent.get_children():
+                if sibling is CSGSphere3D and sibling.position.distance_to(area.position) < 0.01:
+                    if t == "spine":
+                        sibling.material.albedo_color = Color(1, 0, 0) if is_sel else Color(0, 1, 1)
+                    elif t == "kf":
+                        sibling.material.albedo_color = Color(1, 0, 0) if is_sel else Color(1, 1, 0)
