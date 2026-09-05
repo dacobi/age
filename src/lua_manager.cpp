@@ -190,6 +190,7 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_loading_progress"), &LuaManager::get_loading_progress);
     ClassDB::bind_method(D_METHOD("finish_gdscript_load"), &LuaManager::finish_gdscript_load);
 
+    ClassDB::bind_method(D_METHOD("set_global_int", "name", "val"), &LuaManager::set_global_int);
     ClassDB::bind_method(D_METHOD("get_global_int", "name"), &LuaManager::get_global_int);
     ClassDB::bind_method(D_METHOD("set_global_float", "name", "val"), &LuaManager::set_global_float);
     ClassDB::bind_method(D_METHOD("get_global_float", "name"), &LuaManager::get_global_float);

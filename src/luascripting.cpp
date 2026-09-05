@@ -298,6 +298,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("imguiSeparator", lua_imguiSeparator);
     reg("imguiCheckbox", lua_imguiCheckbox);
     reg("imguiSliderFloat", lua_imguiSliderFloat);
+    reg("imguiSliderInt", lua_imguiSliderInt);
     reg("imguiButton", lua_imguiButton);
     reg("imguiProgressBar", lua_imguiProgressBar);
     reg("imguiSameLine", lua_imguiSameLine);
@@ -1902,6 +1903,13 @@ void LuaScripting::renderLuaImGui() {
                     }
                     break;
                 }
+                                case ImGuiWidget::SLIDER_INT: {
+                    int val = getGlobalInt(widget.var_name);
+                    if (ImGui::SliderInt(widget.label.c_str(), &val, (int)widget.min_val, (int)widget.max_val)) {
+                        setGlobalInt(widget.var_name, val);
+                    }
+                    break;
+                }
                 case ImGuiWidget::BUTTON: {
                     if (ImGui::Button(widget.label.c_str())) {
                         setGlobalFloat(widget.var_name, 1.0f);
@@ -2244,6 +2252,22 @@ int LuaScripting::lua_imguiSliderFloat(lua_State* L) {
         ImGuiWidget w;
         if (lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isnumber(L, 3) && lua_isnumber(L, 4)) {
             w.type = ImGuiWidget::SLIDER_FLOAT;
+            w.label = lua_tostring(L, 1);
+            w.var_name = lua_tostring(L, 2);
+            w.min_val = (float)lua_tonumber(L, 3);
+            w.max_val = (float)lua_tonumber(L, 4);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
+    }
+    return 0;
+}
+
+int LuaScripting::lua_imguiSliderInt(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isnumber(L, 3) && lua_isnumber(L, 4)) {
+            w.type = ImGuiWidget::SLIDER_INT;
             w.label = lua_tostring(L, 1);
             w.var_name = lua_tostring(L, 2);
             w.min_val = (float)lua_tonumber(L, 3);
