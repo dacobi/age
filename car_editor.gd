@@ -150,8 +150,9 @@ func _input(event):
         if intersect:
             var new_pos = intersect + drag_offset
             
-            # Snap to X=0 if dragging spine near center
-            if dragging_node.get_meta("type") == "spine" and abs(new_pos.x) < 0.2:
+            # Lock spine and handles to X=0
+            var type = dragging_node.get_meta("type")
+            if type == "spine" or type == "handle_in" or type == "handle_out":
                 new_pos.x = 0.0
                 
             _apply_drag(dragging_node, new_pos)
