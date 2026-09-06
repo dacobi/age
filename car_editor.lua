@@ -63,10 +63,9 @@ regGlobalFloat("ce_btn_show_verts", 0.0)
 regGlobalVar("ce_tmp_verts", 56)
 
 while true do
-    imguiBegin("Car Editor")
-    
     if getGlobalFloat("ce_file_loaded") == 0.0 then
-        imguiText("Welcome to Car Editor")
+        imguiBegin("Welcome to Car Editor")
+        
         imguiButton("Open Car", "ce_trigger_open")
         
         imguiText("")
@@ -82,7 +81,11 @@ while true do
         imguiRadioButton("Pill Shaped", "ce_new_car_shape", 2)
         
         imguiButton("Create New Car", "ce_trigger_new_car")
+        
+        imguiEnd()
     else
+        if imguiRemoveWindow then imguiRemoveWindow("Welcome to Car Editor") end
+        imguiBegin("Car Editor")
         -- Main UI Top Bar
     imguiButton("Save", "ce_trigger_save")
     imguiSameLine()
@@ -187,9 +190,8 @@ while true do
         if show_verts then
             imguiText("Keyframe Scale Tool:")
             imguiSliderFloat("Scale X", "ce_kf_scale_x", 0.1, 2.0)
-            if imguiIsItemDeactivatedAfterEdit() then setGlobalFloat("ce_trigger_scale_kf", 1.0) end
             imguiSliderFloat("Scale Y", "ce_kf_scale_y", 0.1, 2.0)
-            if imguiIsItemDeactivatedAfterEdit() then setGlobalFloat("ce_trigger_scale_kf", 1.0) end
+            imguiButton("Apply Scale", "ce_trigger_scale_kf")
             imguiSeparator()
             
             local sel_vert = math.floor(getGlobalFloat("ce_selected_vert"))

@@ -295,7 +295,6 @@ func _apply_drag(node, pos: Vector3):
 # LUA -> GODOT SYNC
 # ---------------------------------------------------------
 func _process(delta):
-    if not car_data.has("spine"): return
 
     # File Menu Triggers
     if lua_manager.get_global_float("ce_trigger_open") > 0.5:
@@ -315,8 +314,8 @@ func _process(delta):
             
     if lua_manager.get_global_float("ce_trigger_new_car") > 0.5:
         lua_manager.set_global_float("ce_trigger_new_car", 0.0)
-        var count = int(lua_manager.get_global_float("ce_new_car_verts"))
-        var shape = int(lua_manager.get_global_float("ce_new_car_shape"))
+        var count = lua_manager.get_global_int("ce_new_car_verts")
+        var shape = lua_manager.get_global_int("ce_new_car_shape")
         var verts = []
         if shape == 0: verts = _generate_shape_rect(count)
         elif shape == 1: verts = _generate_shape_ellipsoid(count)
@@ -374,6 +373,7 @@ func _process(delta):
         lua_manager.set_global_float("ce_selected_mode", 2.0)
     if not lua_manager: return
     
+    if not car_data.has("spine"): return
     var rebuild = false
     
     # 1. Update counts in Lua
@@ -455,6 +455,7 @@ func _process(delta):
                 rebuild = true
 
     # 3. Pull Slider edits from Lua
+    if not car_data.has("spine"): return
     var mode = int(lua_manager.get_global_float("ce_selected_mode"))
     
     var selection_changed = false
@@ -571,6 +572,7 @@ func _push_state_to_lua():
     if not lua_manager: return
     if not car_data.has("spine"): return
     
+    if not car_data.has("spine"): return
     var mode = int(lua_manager.get_global_float("ce_selected_mode"))
     if mode == 1:
         var idx = int(lua_manager.get_global_float("ce_selected_spine")) - 1
