@@ -33,8 +33,8 @@ regGlobalFloat("ce_trigger_open", 0.0)
 regGlobalFloat("ce_trigger_save", 0.0)
 regGlobalFloat("ce_trigger_save_as", 0.0)
 regGlobalFloat("ce_trigger_new_car", 0.0)
-regGlobalFloat("ce_new_car_verts", 56.0)
-regGlobalFloat("ce_new_car_shape", 0.0)
+regGlobalVar("ce_new_car_verts", 56)
+regGlobalVar("ce_new_car_shape", 0)
 regGlobalFloat("ce_trigger_copy_kf", 0.0)
 regGlobalFloat("ce_trigger_scale_kf", 0.0)
 regGlobalFloat("ce_kf_scale_x", 1.0)
@@ -57,6 +57,8 @@ regGlobalFloat("ce_btn_mode_2", 0.0)
 regGlobalFloat("ce_btn_mode_3", 0.0)
 regGlobalFloat("ce_btn_prev", 0.0)
 regGlobalFloat("ce_btn_next", 0.0)
+regGlobalFloat("ce_btn_prev_vert", 0.0)
+regGlobalFloat("ce_btn_next_vert", 0.0)
 regGlobalFloat("ce_btn_show_verts", 0.0)
 regGlobalVar("ce_tmp_verts", 56)
 
@@ -65,32 +67,28 @@ while true do
     
     if getGlobalFloat("ce_file_loaded") == 0.0 then
         imguiText("Welcome to Car Editor")
-        if imguiButton("Open Car") then
-            setGlobalFloat("ce_trigger_open", 1.0)
-        end
+        imguiButton("Open Car", "ce_trigger_open")
         
         imguiText("")
         imguiText("--- OR ---")
         imguiText("")
         
         imguiText("Create New Car")
-        imguiSliderFloat("Vertices Per Curve", "ce_new_car_verts", 4.0, 128.0)
+        imguiSliderInt("Vertices Per Curve", "ce_new_car_verts", 4, 128)
         
-        imguiSliderFloat("Shape (0=Rect, 1=Ellipsoid, 2=Pill)", "ce_new_car_shape", 0.0, 2.0)
+        imguiText("Base Shape:")
+        imguiRadioButton("Rectangle (60s Boxy)", "ce_new_car_shape", 0)
+        imguiRadioButton("Ellipsoid (Jaguar E-type)", "ce_new_car_shape", 1)
+        imguiRadioButton("Pill Shaped", "ce_new_car_shape", 2)
         
-        if imguiButton("Create New") then
-            setGlobalFloat("ce_trigger_new_car", 1.0)
-        end
-        
-        imguiEnd()
-        delay(1)
+        imguiButton("Create New Car", "ce_trigger_new_car")
     else
         -- Main UI Top Bar
-    if imguiButton("Save") then setGlobalFloat("ce_trigger_save", 1.0) end
+    imguiButton("Save", "ce_trigger_save")
     imguiSameLine()
-    if imguiButton("Save As") then setGlobalFloat("ce_trigger_save_as", 1.0) end
+    imguiButton("Save As", "ce_trigger_save_as")
     imguiSameLine()
-    if imguiButton("Open") then setGlobalFloat("ce_trigger_open", 1.0) end
+    imguiButton("Open", "ce_trigger_open")
     imguiSeparator()
 
     local ui_mode = math.floor(getGlobalFloat("ce_selected_mode"))
@@ -174,7 +172,7 @@ while true do
         imguiButton("Add Keyframe", "ce_cmd_add_kf")
         if getGlobalFloat("ce_cmd_add_kf") > 0.5 then setGlobalFloat("ce_cmd_add_kf", 1.0) end
         imguiSameLine()
-        if imguiButton("Copy Previous") then setGlobalFloat("ce_trigger_copy_kf", 1.0) end
+        imguiButton("Copy Previous", "ce_trigger_copy_kf")
         imguiButton("Delete Keyframe", "ce_cmd_del_kf")
         if getGlobalFloat("ce_cmd_del_kf") > 0.5 then setGlobalFloat("ce_cmd_del_kf", 1.0) end
         
@@ -197,11 +195,15 @@ while true do
             local sel_vert = math.floor(getGlobalFloat("ce_selected_vert"))
             imguiText("Selected Vertex: " .. sel_vert)
             
-            if imguiButton("Prev Vert") then
+            imguiButton("Prev Vert", "ce_btn_prev_vert")
+            if getGlobalFloat("ce_btn_prev_vert") > 0.5 then
+                setGlobalFloat("ce_btn_prev_vert", 0.0)
                 if sel_vert > 1 then setGlobalFloat("ce_selected_vert", sel_vert - 1) end
             end
             imguiSameLine()
-            if imguiButton("Next Vert") then
+            imguiButton("Next Vert", "ce_btn_next_vert")
+            if getGlobalFloat("ce_btn_next_vert") > 0.5 then
+                setGlobalFloat("ce_btn_next_vert", 0.0)
                 if sel_vert < 56 then setGlobalFloat("ce_selected_vert", sel_vert + 1) end
             end
 
@@ -251,7 +253,7 @@ while true do
         end
     end
     
-    imguiEnd()
     end
+    imguiEnd()
     delay(1)
 end
