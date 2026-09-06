@@ -569,6 +569,11 @@ func _process(delta):
         _save_data()
         _push_state_to_lua() # Optional, just makes sure things are locked in sync
         _build_car()
+        
+    if is_instance_valid(swept_body):
+        var show = lua_manager.get_global_float("ce_show_surface") > 0.5
+        if swept_body.visible != show:
+            swept_body.visible = show
     else:
         if history_timer > 0.0:
             history_timer -= delta

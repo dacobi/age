@@ -47,6 +47,7 @@ regGlobalFloat("ce_selected_vert", 1.0)
 regGlobalFloat("ce_sel_v_x", 0.0)
 regGlobalFloat("ce_sel_v_y", 1.0)
 regGlobalFloat("ce_selected_prim", 1.0)
+regGlobalFloat("ce_show_surface", 1.0)
 
 local show_verts = false
 
@@ -92,6 +93,8 @@ while true do
     imguiButton("Save As", "ce_trigger_save_as")
     imguiSameLine()
     imguiButton("Open", "ce_trigger_open")
+    imguiSameLine()
+    imguiCheckbox("Show Surface", "ce_show_surface")
     imguiSeparator()
 
     local ui_mode = math.floor(getGlobalFloat("ce_selected_mode"))
