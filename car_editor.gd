@@ -347,8 +347,17 @@ func _process(delta):
     if lua_manager.get_global_float("ce_trigger_copy_kf") > 0.5:
         lua_manager.set_global_float("ce_trigger_copy_kf", 0.0)
         var k_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
-        if k_idx > 0 and k_idx < car_data["keyframes"].size():
-            car_data["keyframes"][k_idx]["verts"] = car_data["keyframes"][k_idx-1]["verts"].duplicate(true)
+        if k_idx >= 0 and k_idx < car_data["keyframes"].size():
+            var current_kf = car_data["keyframes"][k_idx]
+            var new_kf = {
+                "t": min(current_kf["t"] + 0.05, 1.0),
+                "verts": current_kf["verts"].duplicate(true)
+            }
+            car_data["keyframes"].append(new_kf)
+            car_data["keyframes"].sort_custom(func(a, b): return a["t"] < b["t"])
+            var new_idx = car_data["keyframes"].find(new_kf)
+            lua_manager.set_global_float("ce_selected_kf", new_idx + 1)
+            
             _commit_history(2)
             _push_state_to_lua()
             _build_car()
