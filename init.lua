@@ -27,6 +27,19 @@ regGlobalFloat("ce_spine_count", 0.0)
 regGlobalFloat("ce_kf_count", 0.0)
 regGlobalFloat("ce_prim_count", 0.0)
 
+
+regGlobalFloat("ce_file_loaded", 0.0)
+regGlobalFloat("ce_trigger_open", 0.0)
+regGlobalFloat("ce_trigger_save", 0.0)
+regGlobalFloat("ce_trigger_save_as", 0.0)
+regGlobalFloat("ce_trigger_new_car", 0.0)
+regGlobalFloat("ce_new_car_verts", 56.0)
+regGlobalFloat("ce_new_car_shape", 0.0)
+regGlobalFloat("ce_trigger_copy_kf", 0.0)
+regGlobalFloat("ce_trigger_scale_kf", 0.0)
+regGlobalFloat("ce_kf_scale_x", 1.0)
+regGlobalFloat("ce_kf_scale_y", 1.0)
+
 regGlobalFloat("ce_selected_mode", 1.0) -- 1=Spine, 2=KF, 3=Prim
 regGlobalFloat("ce_selected_spine", 1.0)
 regGlobalFloat("ce_selected_kf", 1.0)

@@ -27,6 +27,10 @@ var prev_selected_spine = -1
 var prev_selected_kf = -1
 var prev_selected_prim = -1
 var prev_selected_vert = -1
+var open_dialog: FileDialog
+var save_dialog: FileDialog
+var current_file_path: String = ""
+
 
 var car_data = {}
 
@@ -45,37 +49,113 @@ func _ready():
     mat_green.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
     
     lua_manager = get_node_or_null("/root/LuaManager")
+    open_dialog = FileDialog.new()
+    open_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+    open_dialog.access = FileDialog.ACCESS_FILESYSTEM
+    open_dialog.filters = ["*.json ; Car Files"]
+    open_dialog.file_selected.connect(_on_file_opened)
+    add_child(open_dialog)
     
-    _load_or_create_data()
+    save_dialog = FileDialog.new()
+    save_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+    save_dialog.access = FileDialog.ACCESS_FILESYSTEM
+    save_dialog.filters = ["*.json ; Car Files"]
+    save_dialog.file_selected.connect(_on_file_saved)
+    add_child(save_dialog)
+
+    
+    pass
     _push_state_to_lua()
     _build_car()
 
-func _load_or_create_data():
-    if FileAccess.file_exists("res://car_editor_temp.json"):
-        var f = FileAccess.open("res://car_editor_temp.json", FileAccess.READ)
-        var text = f.get_as_text()
-        var json = JSON.new()
-        if json.parse(text) == OK:
-            car_data = json.get_data()
-            if typeof(car_data) == TYPE_DICTIONARY:
-                return
-                
-    # Create defaults if file missing or invalid
-    car_data = {
-        "vertices_per_curve": 56,
-        "spine": [
-            {"px": 0, "py": 0, "pz": 3, "in_x": 0, "in_y": 0, "in_z": 1, "out_x": 0, "out_y": 0, "out_z": -1},
-            {"px": 0, "py": 0, "pz": 0, "in_x": 0, "in_y": 0, "in_z": 1, "out_x": 0, "out_y": 0, "out_z": -1},
-            {"px": 0, "py": 0, "pz": -3, "in_x": 0, "in_y": 0, "in_z": 1, "out_x": 0, "out_y": 0, "out_z": -1}
-        ],
-        "keyframes": [
-            {"t": 0.0, "verts": _generate_half_circle(56)},
-            {"t": 0.5, "verts": _generate_half_circle(56)},
-            {"t": 1.0, "verts": _generate_half_circle(56)}
-        ],
-        "primitives": []
-    }
-    _save_data()
+func _on_file_opened(path: String):
+    current_file_path = path
+    var f = FileAccess.open(path, FileAccess.READ)
+    var text = f.get_as_text()
+    var json = JSON.new()
+    if json.parse(text) == OK:
+        car_data = json.get_data()
+        if typeof(car_data) == TYPE_DICTIONARY:
+            lua_manager.set_global_float("ce_file_loaded", 1.0)
+            lua_manager.set_global_float("ce_spine_count", car_data["spine"].size())
+            lua_manager.set_global_float("ce_kf_count", car_data["keyframes"].size())
+            lua_manager.set_global_float("ce_prim_count", car_data.get("primitives", []).size())
+            _build_car()
+
+func _on_file_saved(path: String):
+    current_file_path = path
+    var text = JSON.stringify(car_data, "  ")
+    var f = FileAccess.open(path, FileAccess.WRITE)
+    f.store_string(text)
+    f.close()
+func _generate_shape_rectangle(count: int) -> Array:
+    var arr = []
+    # Boxy: width 1.0, height 0.5 to -0.5
+    for i in range(count):
+        var t = float(i) / count
+        var x = 0.0
+        var y = 0.0
+        if t < 0.25: # Top
+            x = lerp(0.0, 1.0, t / 0.25)
+            y = 0.5
+        elif t < 0.5: # Right Side
+            x = 1.0
+            y = lerp(0.5, -0.5, (t - 0.25) / 0.25)
+        elif t < 0.75: # Bottom
+            x = lerp(1.0, 0.0, (t - 0.5) / 0.25)
+            y = -0.5
+        else: # Center seam (should not happen for full half-profile if we only generate one side, wait!
+            # The original generates a half profile! X goes from 0 to 1 back to 0?
+            pass
+            
+        # Actually original _generate_half_circle generates from bottom to top?
+        # Let's check original!
+    return arr
+
+func _generate_shape_ellipsoid(count: int) -> Array:
+    var arr = []
+    for i in range(count):
+        var angle = -PI/2.0 + PI * (float(i) / (count - 1))
+        # angle goes from -PI/2 to PI/2 (right half)
+        arr.append({"x": cos(angle) * 1.0, "y": sin(angle) * 0.5})
+    return arr
+
+func _generate_shape_pill(count: int) -> Array:
+    var arr = []
+    for i in range(count):
+        var t = float(i) / (count - 1)
+        var x = 0.0
+        var y = 0.0
+        if t < 0.25: # Bottom flat
+            y = -0.5
+            x = lerp(0.0, 0.8, t / 0.25)
+        elif t < 0.75: # Round side
+            var angle = -PI/2.0 + PI * ((t - 0.25) / 0.5)
+            x = 0.8 + cos(angle) * 0.2
+            y = sin(angle) * 0.5
+        else: # Top flat
+            y = 0.5
+            x = lerp(0.8, 0.0, (t - 0.75) / 0.25)
+        arr.append({"x": x, "y": y})
+    return arr
+    
+func _generate_shape_rect(count: int) -> Array:
+    var arr = []
+    for i in range(count):
+        var t = float(i) / (count - 1)
+        var x = 0.0
+        var y = 0.0
+        if t < 0.333: # Bottom flat
+            y = -0.5
+            x = lerp(0.0, 1.0, t / 0.333)
+        elif t < 0.666: # Right flat
+            x = 1.0
+            y = lerp(-0.5, 0.5, (t - 0.333) / 0.333)
+        else: # Top flat
+            y = 0.5
+            x = lerp(1.0, 0.0, (t - 0.666) / 0.334)
+        arr.append({"x": x, "y": y})
+    return arr
 
 func _generate_half_circle(count):
     var verts = []
@@ -215,6 +295,81 @@ func _apply_drag(node, pos: Vector3):
 # LUA -> GODOT SYNC
 # ---------------------------------------------------------
 func _process(delta):
+    if not car_data.has("spine"): return
+
+    # File Menu Triggers
+    if lua_manager.get_global_float("ce_trigger_open") > 0.5:
+        lua_manager.set_global_float("ce_trigger_open", 0.0)
+        open_dialog.popup_centered_ratio(0.5)
+        
+    if lua_manager.get_global_float("ce_trigger_save_as") > 0.5:
+        lua_manager.set_global_float("ce_trigger_save_as", 0.0)
+        save_dialog.popup_centered_ratio(0.5)
+        
+    if lua_manager.get_global_float("ce_trigger_save") > 0.5:
+        lua_manager.set_global_float("ce_trigger_save", 0.0)
+        if current_file_path == "":
+            save_dialog.popup_centered_ratio(0.5)
+        else:
+            _on_file_saved(current_file_path)
+            
+    if lua_manager.get_global_float("ce_trigger_new_car") > 0.5:
+        lua_manager.set_global_float("ce_trigger_new_car", 0.0)
+        var count = int(lua_manager.get_global_float("ce_new_car_verts"))
+        var shape = int(lua_manager.get_global_float("ce_new_car_shape"))
+        var verts = []
+        if shape == 0: verts = _generate_shape_rect(count)
+        elif shape == 1: verts = _generate_shape_ellipsoid(count)
+        elif shape == 2: verts = _generate_shape_pill(count)
+        else: verts = _generate_half_circle(count)
+        
+        car_data = {
+            "spine": [
+                {"px": 0, "py": 0, "pz": 3, "in_x": 0, "in_y": 0, "in_z": 1, "out_x": 0, "out_y": 0, "out_z": -1},
+                {"px": 0, "py": 0, "pz": 0, "in_x": 0, "in_y": 0, "in_z": 1, "out_x": 0, "out_y": 0, "out_z": -1},
+                {"px": 0, "py": 0, "pz": -3, "in_x": 0, "in_y": 0, "in_z": 1, "out_x": 0, "out_y": 0, "out_z": -1}
+            ],
+            "keyframes": [
+                {"t": 0.0, "verts": verts.duplicate(true)},
+                {"t": 0.5, "verts": verts.duplicate(true)},
+                {"t": 1.0, "verts": verts.duplicate(true)}
+            ],
+            "primitives": [],
+            "vertices_per_curve": count
+        }
+        current_file_path = ""
+        lua_manager.set_global_float("ce_file_loaded", 1.0)
+        lua_manager.set_global_float("ce_spine_count", 3.0)
+        lua_manager.set_global_float("ce_kf_count", 3.0)
+        lua_manager.set_global_float("ce_prim_count", 0.0)
+        _build_car()
+
+    # Keyframe tools triggers
+    if lua_manager.get_global_float("ce_trigger_copy_kf") > 0.5:
+        lua_manager.set_global_float("ce_trigger_copy_kf", 0.0)
+        var k_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
+        if k_idx > 0 and k_idx < car_data["keyframes"].size():
+            car_data["keyframes"][k_idx]["verts"] = car_data["keyframes"][k_idx-1]["verts"].duplicate(true)
+            _commit_history(2)
+            _push_state_to_lua()
+            _build_car()
+            
+    if lua_manager.get_global_float("ce_trigger_scale_kf") > 0.5:
+        lua_manager.set_global_float("ce_trigger_scale_kf", 0.0)
+        var scale_x = lua_manager.get_global_float("ce_kf_scale_x")
+        var scale_y = lua_manager.get_global_float("ce_kf_scale_y")
+        lua_manager.set_global_float("ce_kf_scale_x", 1.0)
+        lua_manager.set_global_float("ce_kf_scale_y", 1.0)
+        
+        var k_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
+        if k_idx >= 0 and k_idx < car_data["keyframes"].size():
+            for v in car_data["keyframes"][k_idx]["verts"]:
+                v["x"] = max(0.0, v["x"] * scale_x)
+                v["y"] *= scale_y
+            _commit_history(2)
+            _push_state_to_lua()
+            _build_car()
+
     if Engine.get_process_frames() == 10:
         lua_manager.set_global_float("ce_selected_mode", 2.0)
     if not lua_manager: return
@@ -414,6 +569,7 @@ func _process(delta):
 # ---------------------------------------------------------
 func _push_state_to_lua():
     if not lua_manager: return
+    if not car_data.has("spine"): return
     
     var mode = int(lua_manager.get_global_float("ce_selected_mode"))
     if mode == 1:
