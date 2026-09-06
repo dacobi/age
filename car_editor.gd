@@ -461,8 +461,27 @@ func _push_state_to_lua():
             elif p["type"] == "sphere":
                 lua_manager.set_global_float("ce_prim_r", p.get("r", 0.5))
 
+func _get_curve_transform(curve: Curve3D, offset: float) -> Transform3D:
+    var pos = curve.sample_baked(offset)
+    var pos_next = curve.sample_baked(min(offset + 0.01, curve.get_baked_length()))
+    var pos_prev = curve.sample_baked(max(offset - 0.01, 0.0))
+    var tangent = (pos_next - pos_prev).normalized()
+    if tangent.length() < 0.001:
+        return Transform3D(Basis(), pos)
+        
+    var right = Vector3(1, 0, 0)
+    var up = right.cross(tangent).normalized()
+    if up.length() < 0.001:
+        up = Vector3(0, 1, 0)
+        
+    var actual_right = tangent.cross(up).normalized()
+    
+    # We want the car's local Z to be the tangent, Y to be up, X to be right
+    return Transform3D(Basis(actual_right, up, tangent), pos)
+
 func _build_sweep():
     var curve = Curve3D.new()
+    curve.up_vector_enabled = false
     var spine = car_data.get("spine", [])
     for pt in spine:
         curve.add_point(
@@ -489,7 +508,7 @@ func _build_sweep():
     for i in range(segments + 1):
         var s = float(i) / segments
         var offset = s * path_length
-        var trans = curve.sample_baked_with_rotation(offset, false, true)
+        var trans = _get_curve_transform(curve, offset)
         
         var kf0 = keyframes[0]
         var kf1 = keyframes[keyframes.size() - 1]
@@ -626,6 +645,7 @@ func _build_debug_visuals():
     add_child(debug_parent)
     
     var curve = Curve3D.new()
+    curve.up_vector_enabled = false
     var spine = car_data.get("spine", [])
     for i in range(spine.size()):
         var pt = spine[i]
@@ -677,7 +697,7 @@ func _build_debug_visuals():
         for k_idx in range(keyframes.size()):
             var kf = keyframes[k_idx]
             var offset = kf["t"] * path_length
-            var trans = curve.sample_baked_with_rotation(offset, false, true)
+            var trans = _get_curve_transform(curve, offset)
             
             var loop_2d = PackedVector2Array()
             for v in kf["verts"]: loop_2d.append(Vector2(v["x"], v["y"]))
