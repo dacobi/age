@@ -41,6 +41,7 @@ func _ready():
     mat_body.clearcoat_enabled = true
     mat_body.clearcoat = 1.0
     mat_body.clearcoat_roughness = 0.05
+    mat_body.cull_mode = BaseMaterial3D.CULL_DISABLED
     mat_red.albedo_color = Color(1, 0, 0)
     mat_cyan.albedo_color = Color(0, 1, 1)
     mat_green.albedo_color = Color(0, 1, 0)
@@ -182,6 +183,8 @@ func _save_data():
 
 func _build_car():
     for child in combiner.get_children():
+        if child == swept_body:
+            continue
         child.queue_free()
     if debug_parent:
         debug_parent.queue_free()
@@ -715,17 +718,17 @@ func _build_sweep():
             var indices = Geometry2D.triangulate_polygon(loop_2d)
             if indices.size() > 0:
                 for j in range(0, indices.size(), 3):
-                    st.add_vertex(current_loop[indices[j+2]])
-                    st.add_vertex(current_loop[indices[j+1]])
                     st.add_vertex(current_loop[indices[j]])
+                    st.add_vertex(current_loop[indices[j+1]])
+                    st.add_vertex(current_loop[indices[j+2]])
                     
         if i == segments and current_loop.size() >= 3:
             var indices = Geometry2D.triangulate_polygon(loop_2d)
             if indices.size() > 0:
                 for j in range(0, indices.size(), 3):
-                    st.add_vertex(current_loop[indices[j]])
-                    st.add_vertex(current_loop[indices[j+1]])
                     st.add_vertex(current_loop[indices[j+2]])
+                    st.add_vertex(current_loop[indices[j+1]])
+                    st.add_vertex(current_loop[indices[j]])
                     
         if prev_loop.size() == current_loop.size():
             var n = current_loop.size()
@@ -741,6 +744,7 @@ func _build_sweep():
         prev_loop = current_loop
         
     st.generate_normals()
+    st.index()
     var mesh = st.commit()
     
     if swept_body == null or not is_instance_valid(swept_body):
