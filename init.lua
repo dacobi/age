@@ -175,7 +175,7 @@ while true do
         imguiButton("Add Keyframe", "ce_cmd_add_kf")
         if getGlobalFloat("ce_cmd_add_kf") > 0.5 then setGlobalFloat("ce_cmd_add_kf", 1.0) end
         imguiSameLine()
-        imguiButton("Copy Previous", "ce_trigger_copy_kf")
+        imguiButton("Copy Current", "ce_trigger_copy_kf")
         imguiButton("Delete Keyframe", "ce_cmd_del_kf")
         if getGlobalFloat("ce_cmd_del_kf") > 0.5 then setGlobalFloat("ce_cmd_del_kf", 1.0) end
         
