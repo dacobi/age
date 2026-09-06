@@ -48,6 +48,8 @@ regGlobalFloat("ce_sel_v_x", 0.0)
 regGlobalFloat("ce_sel_v_y", 1.0)
 regGlobalFloat("ce_selected_prim", 1.0)
 regGlobalFloat("ce_show_surface", 1.0)
+regGlobalFloat("ce_trigger_shape_popup", 0.0)
+regGlobalFloat("ce_trigger_apply_shape", 0.0)
 
 local show_verts = false
 
@@ -195,6 +197,8 @@ while true do
             imguiSliderFloat("Scale X", "ce_kf_scale_x", 0.1, 2.0)
             imguiSliderFloat("Scale Y", "ce_kf_scale_y", 0.1, 2.0)
             imguiButton("Apply Scale", "ce_trigger_scale_kf")
+            imguiSameLine()
+            imguiButton("Choose Shape", "ce_trigger_shape_popup")
             imguiSeparator()
             
             local sel_vert = math.floor(getGlobalFloat("ce_selected_vert"))

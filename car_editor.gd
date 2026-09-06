@@ -347,6 +347,20 @@ func _process(delta):
         _build_car()
 
     # Keyframe tools triggers
+    if lua_manager.get_global_float("ce_trigger_apply_shape") > 0.5:
+        lua_manager.set_global_float("ce_trigger_apply_shape", 0.0)
+        var k_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
+        if k_idx >= 0 and k_idx < car_data["keyframes"].size():
+            var verts = car_data["keyframes"][k_idx]["verts"]
+            for v in range(verts.size()):
+                var bx = "ce_vert_%d_x" % (v + 1)
+                var by = "ce_vert_%d_y" % (v + 1)
+                verts[v]["x"] = lua_manager.get_global_float(bx)
+                verts[v]["y"] = lua_manager.get_global_float(by)
+            _commit_history(2)
+            _push_state_to_lua()
+            _build_car()
+
     if lua_manager.get_global_float("ce_trigger_copy_kf") > 0.5:
         lua_manager.set_global_float("ce_trigger_copy_kf", 0.0)
         var k_idx = int(lua_manager.get_global_float("ce_selected_kf")) - 1
