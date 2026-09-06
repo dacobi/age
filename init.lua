@@ -63,6 +63,36 @@ regGlobalVar("ce_tmp_verts", 56)
 while true do
     imguiBegin("Car Editor")
     
+    if getGlobalFloat("ce_file_loaded") == 0.0 then
+        imguiText("Welcome to Car Editor")
+        if imguiButton("Open Car") then
+            setGlobalFloat("ce_trigger_open", 1.0)
+        end
+        
+        imguiText("")
+        imguiText("--- OR ---")
+        imguiText("")
+        
+        imguiText("Create New Car")
+        imguiSliderFloat("Vertices Per Curve", "ce_new_car_verts", 4.0, 128.0)
+        
+        imguiSliderFloat("Shape (0=Rect, 1=Ellipsoid, 2=Pill)", "ce_new_car_shape", 0.0, 2.0)
+        
+        if imguiButton("Create New") then
+            setGlobalFloat("ce_trigger_new_car", 1.0)
+        end
+        
+        imguiEnd()
+        delay(1)
+    else
+        -- Main UI Top Bar
+    if imguiButton("Save") then setGlobalFloat("ce_trigger_save", 1.0) end
+    imguiSameLine()
+    if imguiButton("Save As") then setGlobalFloat("ce_trigger_save_as", 1.0) end
+    imguiSameLine()
+    if imguiButton("Open") then setGlobalFloat("ce_trigger_open", 1.0) end
+    imguiSeparator()
+
     local ui_mode = math.floor(getGlobalFloat("ce_selected_mode"))
     local spine_count = math.floor(getGlobalFloat("ce_spine_count"))
     local kf_count = math.floor(getGlobalFloat("ce_kf_count"))
@@ -117,13 +147,10 @@ while true do
             show_verts = not show_verts
         end
         if show_verts then
-            imguiSliderFloat("Pos X", "ce_spine_px", -10.0, 10.0)
             imguiSliderFloat("Pos Y", "ce_spine_py", -10.0, 10.0)
             imguiSliderFloat("Pos Z", "ce_spine_pz", -10.0, 10.0)
-            imguiSliderFloat("In X", "ce_spine_inx", -5.0, 5.0)
             imguiSliderFloat("In Y", "ce_spine_iny", -5.0, 5.0)
             imguiSliderFloat("In Z", "ce_spine_inz", -5.0, 5.0)
-            imguiSliderFloat("Out X", "ce_spine_outx", -5.0, 5.0)
             imguiSliderFloat("Out Y", "ce_spine_outy", -5.0, 5.0)
             imguiSliderFloat("Out Z", "ce_spine_outz", -5.0, 5.0)
         end
@@ -146,6 +173,8 @@ while true do
         imguiSameLine()
         imguiButton("Add Keyframe", "ce_cmd_add_kf")
         if getGlobalFloat("ce_cmd_add_kf") > 0.5 then setGlobalFloat("ce_cmd_add_kf", 1.0) end
+        imguiSameLine()
+        if imguiButton("Copy Previous") then setGlobalFloat("ce_trigger_copy_kf", 1.0) end
         imguiButton("Delete Keyframe", "ce_cmd_del_kf")
         if getGlobalFloat("ce_cmd_del_kf") > 0.5 then setGlobalFloat("ce_cmd_del_kf", 1.0) end
         
@@ -158,6 +187,13 @@ while true do
         end
         
         if show_verts then
+            imguiText("Keyframe Scale Tool:")
+            imguiSliderFloat("Scale X", "ce_kf_scale_x", 0.1, 2.0)
+            if imguiIsItemDeactivatedAfterEdit() then setGlobalFloat("ce_trigger_scale_kf", 1.0) end
+            imguiSliderFloat("Scale Y", "ce_kf_scale_y", 0.1, 2.0)
+            if imguiIsItemDeactivatedAfterEdit() then setGlobalFloat("ce_trigger_scale_kf", 1.0) end
+            imguiSeparator()
+            
             local sel_vert = math.floor(getGlobalFloat("ce_selected_vert"))
             imguiText("Selected Vertex: " .. sel_vert)
             
@@ -216,5 +252,6 @@ while true do
     end
     
     imguiEnd()
+    end
     delay(1)
 end
