@@ -113,7 +113,9 @@ bool Recorder::setupAudio() {
     if (!audio_stream) return false;
 
     audio_codec_ctx = avcodec_alloc_context3(codec);
-    audio_codec_ctx->sample_fmt = codec->sample_fmts ? codec->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
+    const enum AVSampleFormat *sample_fmts = nullptr;
+    avcodec_get_supported_config(nullptr, codec, AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, (const void **)&sample_fmts, nullptr);
+    audio_codec_ctx->sample_fmt = sample_fmts ? sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
     audio_codec_ctx->bit_rate = 128000;
     audio_codec_ctx->sample_rate = audio_rate;
     // Set layout

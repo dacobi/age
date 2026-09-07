@@ -1,4 +1,5 @@
 #include "luascripting.h"
+#include "car_shapes.h"
 #include "imgui.h"
 #include <iostream>
 #include <chrono>
@@ -299,6 +300,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("imguiCheckbox", lua_imguiCheckbox);
     reg("imguiSliderFloat", lua_imguiSliderFloat);
     reg("imguiSliderInt", lua_imguiSliderInt);
+    reg("imguiRadioButton", lua_imguiRadioButton);
     reg("imguiButton", lua_imguiButton);
     reg("imguiProgressBar", lua_imguiProgressBar);
     reg("imguiSameLine", lua_imguiSameLine);
@@ -1910,6 +1912,14 @@ void LuaScripting::renderLuaImGui() {
                     }
                     break;
                 }
+
+                case ImGuiWidget::RADIO_BUTTON: {
+                    int current_val = getGlobalInt(widget.var_name);
+                    if (ImGui::RadioButton(widget.label.c_str(), &current_val, (int)widget.min_val)) {
+                        setGlobalInt(widget.var_name, current_val);
+                    }
+                    break;
+                }
                 case ImGuiWidget::BUTTON: {
                     if (ImGui::Button(widget.label.c_str())) {
                         setGlobalFloat(widget.var_name, 1.0f);
@@ -2001,6 +2011,78 @@ void LuaScripting::renderLuaImGui() {
         ImGui::End();
     }
     
+    
+    static bool show_shape_chooser = false;
+    if (getGlobalFloat("ce_trigger_shape_popup") > 0.5f) {
+        show_shape_chooser = true;
+        setGlobalFloat("ce_trigger_shape_popup", 0.0f);
+        ImGui::OpenPopup("Choose Keyframe Shape");
+    }
+
+    if (ImGui::BeginPopupModal("Choose Keyframe Shape", &show_shape_chooser, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static std::vector<CarShape> shapes;
+        if (shapes.empty()) shapes = get_car_shapes();
+        
+        for (const auto& shape : shapes) {
+            ImGui::Text("%s", shape.name);
+            ImGui::BeginChild(shape.name, ImVec2(0, 150), true, ImGuiWindowFlags_HorizontalScrollbar);
+            
+            for (size_t i = 0; i < shape.slices.size(); i++) {
+                ImGui::PushID((int)i);
+                
+                ImVec2 p = ImGui::GetCursorScreenPos();
+                float sz = 100.0f;
+                ImGui::InvisibleButton("##slice", ImVec2(sz, sz));
+                
+                if (ImGui::IsItemHovered()) {
+                    ImGui::GetWindowDrawList()->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), IM_COL32(50, 50, 50, 255));
+                }
+                if (ImGui::IsItemClicked()) {
+                    // Send to lua
+                    float vert_count = getGlobalFloat("ce_tmp_verts");
+                    if (vert_count < 1) vert_count = 56.0f;
+                    
+                    const auto& slice = shape.slices[i];
+                    for (int v = 0; v < (int)vert_count; v++) {
+                        float t = (float)v / (vert_count - 1.0f);
+                        // map t to slice.pts index (Reverse it so Top is first!)
+                        int idx = (int)((1.0f - t) * (slice.pts.size() - 1));
+                        
+                        char buf_x[64]; char buf_y[64];
+                        snprintf(buf_x, sizeof(buf_x), "ce_vert_%d_x", v + 1);
+                        snprintf(buf_y, sizeof(buf_y), "ce_vert_%d_y", v + 1);
+                        setGlobalFloat(buf_x, slice.pts[idx].x);
+                        setGlobalFloat(buf_y, slice.pts[idx].y);
+                    }
+                    setGlobalFloat("ce_trigger_apply_shape", 1.0f);
+                    show_shape_chooser = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                
+                ImDrawList* draw = ImGui::GetWindowDrawList();
+                float scale = sz / 2.5f; // car shapes are roughly within [-1.2, 1.2]
+                ImVec2 center = ImVec2(p.x + sz/2, p.y + sz/2);
+                
+                std::vector<ImVec2> draw_pts;
+                for (const auto& pt : shape.slices[i].pts) {
+                    draw_pts.push_back(ImVec2(center.x + pt.x * scale, center.y - pt.y * scale));
+                }
+                
+                draw->AddPolyline(draw_pts.data(), draw_pts.size(), IM_COL32(255, 255, 0, 255), 0, 2.0f);
+                
+                ImGui::PopID();
+                ImGui::SameLine();
+            }
+            ImGui::EndChild();
+        }
+        
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            show_shape_chooser = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
     was_recording_last_frame = recorder.isRecording();
     
 
@@ -2272,6 +2354,22 @@ int LuaScripting::lua_imguiSliderInt(lua_State* L) {
             w.var_name = lua_tostring(L, 2);
             w.min_val = (float)lua_tonumber(L, 3);
             w.max_val = (float)lua_tonumber(L, 4);
+        } else return 0;
+        self->active_window_widgets.push_back(w);
+    }
+    return 0;
+}
+
+
+int LuaScripting::lua_imguiRadioButton(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && !self->active_window_title.empty()) {
+        ImGuiWidget w;
+        if (lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isnumber(L, 3)) {
+            w.type = ImGuiWidget::RADIO_BUTTON;
+            w.label = lua_tostring(L, 1);
+            w.var_name = lua_tostring(L, 2);
+            w.min_val = (float)lua_tonumber(L, 3);
         } else return 0;
         self->active_window_widgets.push_back(w);
     }
