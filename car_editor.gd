@@ -161,19 +161,18 @@ func _generate_shape_rect(count: int) -> Array:
 func _generate_half_circle(count):
     var verts = []
     # We want a dome resting on a flat bottom (Y=0)
-    # Right half: 48 vertices on quarter circle, 8 vertices on flat bottom
+    var bottom_pts = 8
     var curve_pts = max(1, count - 8)
-    var bottom_pts = count - curve_pts
     
-    # Quarter circle from top (0, 1) to right edge (1, 0)
-    for i in range(curve_pts):
-        var theta = (float(i) / max(1, curve_pts - 1)) * (PI / 2.0)
-        verts.append({"x": sin(theta), "y": cos(theta)})
-        
-    # Flat bottom from right edge (1, 0) to center (0, 0)
+    # Flat bottom from center (0, 0) to right edge (1, 0)
     for i in range(bottom_pts):
-        var t = float(i + 1) / float(bottom_pts)
-        verts.append({"x": lerp(1.0, 0.0, t), "y": 0.0})
+        var t = float(i) / float(bottom_pts)
+        verts.append({"x": lerp(0.0, 1.0, t), "y": 0.0})
+        
+    # Quarter circle from right edge (1, 0) to top (0, 1)
+    for i in range(curve_pts):
+        var theta = PI/2.0 - (float(curve_pts - 1 - i) / max(1, curve_pts - 1)) * (PI / 2.0)
+        verts.append({"x": cos(theta), "y": sin(theta)})
         
     return verts
 
@@ -602,6 +601,8 @@ func _process(delta):
 func _push_state_to_lua():
     if not lua_manager: return
     if not car_data.has("spine"): return
+    if car_data.has("vertices_per_curve"):
+        lua_manager.set_global_float("ce_active_verts_count", float(car_data["vertices_per_curve"]))
     
     if not car_data.has("spine"): return
     var mode = int(lua_manager.get_global_float("ce_selected_mode"))

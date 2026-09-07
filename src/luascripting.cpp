@@ -2039,20 +2039,30 @@ void LuaScripting::renderLuaImGui() {
                 }
                 if (ImGui::IsItemClicked()) {
                     // Send to lua
-                    float vert_count = getGlobalFloat("ce_tmp_verts");
-                    if (vert_count < 1) vert_count = 56.0f;
+                    float vert_count = getGlobalFloat("ce_active_verts_count");
+                    if (vert_count < 1) {
+                        vert_count = getGlobalFloat("ce_tmp_verts");
+                        if (vert_count < 1) vert_count = 56.0f;
+                    }
                     
                     const auto& slice = shape.slices[i];
                     for (int v = 0; v < (int)vert_count; v++) {
                         float t = (float)v / (vert_count - 1.0f);
-                        // map t to slice.pts index (Reverse it so Top is first!)
-                        int idx = (int)((1.0f - t) * (slice.pts.size() - 1));
+                        // map t to slice.pts index (Bottom to Top) with linear interpolation
+                        float f_idx = t * (slice.pts.size() - 1);
+                        int idx = (int)f_idx;
+                        int next_idx = idx + 1;
+                        if (next_idx >= slice.pts.size()) next_idx = slice.pts.size() - 1;
+                        float frac = f_idx - idx;
+                        
+                        float lerp_x = slice.pts[idx].x + (slice.pts[next_idx].x - slice.pts[idx].x) * frac;
+                        float lerp_y = slice.pts[idx].y + (slice.pts[next_idx].y - slice.pts[idx].y) * frac;
                         
                         char buf_x[64]; char buf_y[64];
                         snprintf(buf_x, sizeof(buf_x), "ce_vert_%d_x", v + 1);
                         snprintf(buf_y, sizeof(buf_y), "ce_vert_%d_y", v + 1);
-                        setGlobalFloat(buf_x, slice.pts[idx].x);
-                        setGlobalFloat(buf_y, slice.pts[idx].y);
+                        setGlobalFloat(buf_x, lerp_x);
+                        setGlobalFloat(buf_y, lerp_y);
                     }
                     setGlobalFloat("ce_trigger_apply_shape", 1.0f);
                     show_shape_chooser = false;
