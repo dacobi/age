@@ -545,6 +545,7 @@ func reset_to_track() -> void:
 func _physics_process(delta: float) -> void:
 	# --- AUTO-RESET LOGIC ---
 	var is_falling_out = false
+	var is_airborne = false
 	if get_contact_count() == 0:
 		var space_state = get_world_3d().direct_space_state
 		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 200.0)
@@ -552,7 +553,13 @@ func _physics_process(delta: float) -> void:
 		query.collision_mask = 1
 		var result = space_state.intersect_ray(query)
 		if result.is_empty():
-			is_falling_out = true
+			# It missed layer 1 (track). Check layer 128 (AI Wall).
+			query.collision_mask = 128
+			var result_ai = space_state.intersect_ray(query)
+			if not result_ai.is_empty():
+				is_airborne = true
+			else:
+				is_falling_out = true
 			
 	if is_falling_out:
 		reset_fall_timer += delta
@@ -587,10 +594,16 @@ func _physics_process(delta: float) -> void:
 		
 	if reset_stuck_timer > 0.1 and is_flipped:
 		flipped_label.text = "FLIPPED!"
+		flipped_label.modulate = Color(1.0, 0.2, 0.2)
 		flipped_label.visible = int(reset_stuck_timer * 10) % 2 == 0
 	elif reset_fall_timer > 0.1 and is_falling_out:
 		flipped_label.text = "FALLING!"
+		flipped_label.modulate = Color(1.0, 0.2, 0.2)
 		flipped_label.visible = int(reset_fall_timer * 10) % 2 == 0
+	elif is_airborne:
+		flipped_label.text = "AIRBORNE!"
+		flipped_label.modulate = Color(0.2, 0.5, 1.0)
+		flipped_label.visible = true
 	else:
 		flipped_label.visible = false
 		
