@@ -550,16 +550,15 @@ func _physics_process(delta: float) -> void:
 		var space_state = get_world_3d().direct_space_state
 		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 200.0)
 		query.exclude = [self.get_rid()]
-		query.collision_mask = 1
+		# Only check Layer 1 (Track) and Layer 9 (256, Gap AI Floor)
+		query.collision_mask = 1 | 256
 		var result = space_state.intersect_ray(query)
 		if result.is_empty():
-			# It missed layer 1 (track). Check layer 128 (AI Wall).
-			query.collision_mask = 128
-			var result_ai = space_state.intersect_ray(query)
-			if not result_ai.is_empty():
+			is_falling_out = true
+		else:
+			var hit_layer = result.collider.collision_layer
+			if (hit_layer & 256) != 0:
 				is_airborne = true
-			else:
-				is_falling_out = true
 			
 	if is_falling_out:
 		reset_fall_timer += delta
