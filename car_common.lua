@@ -52,7 +52,7 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("show_fps_hud", 0.0)
 
 	-- Load saved car settings on startup if present
-	godotLoadCarSettings()
+	-- godotLoadCarSettings()
 end
 
 function renderCarPhysicsUI()
