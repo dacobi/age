@@ -343,6 +343,8 @@ func _ready():
 		mount_RR = to_local(setup.pivot_RR.global_position)
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength
+		suspension_travel_cm = setup.AirborneTravel
+		compressed_travel_cm = setup.CompressedTravel
 
 	# Dynamically build wheels at startup
 	var use_shapecast = true

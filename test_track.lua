@@ -21,7 +21,8 @@ print("SUPERCAR POINTER IS: ", supercar)
 
 -- Include shared car physics and controls
 dofile("car_common.lua")
--- initCarPhysicsDefaults(supercar)
+initCarPhysicsDefaults(supercar)
+	godotLoadCarSettings()
 
 local joy_handle = ioJoystickOpen(0)
 if joy_handle >= 0 then
