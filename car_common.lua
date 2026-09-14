@@ -78,8 +78,8 @@ function renderCarPhysicsUI()
 		imguiSliderFloat("Brake Force", "brake_force_value", 50.0, 1000.0)
 		imguiSliderFloat("Max Steer", "max_steer", 0.1, 1.5)
 		imguiSliderFloat("Wheel Friction", "wheel_friction_slip", 1.0, 20.0)
-		imguiSliderFloat("Susp. Travel", "suspension_travel", 0.1, 1.0)
-		imguiSliderFloat("Susp. Stiffness", "suspension_stiffness", 10.0, 300.0)
+		imguiSliderFloat("Airborne Travel (cm)", "airborne_travel_cm", 5.0, 60.0)
+		imguiSliderFloat("Compressed Travel (cm)", "compressed_travel_cm", 2.0, 50.0)
 		imguiSliderFloat("Susp. Max Force", "suspension_max_force", 1000.0, 30000.0)
 		imguiSliderFloat("Damp Compress", "damping_compression", 1.0, 20.0)
 		imguiSliderFloat("Damp Relax", "damping_relaxation", 1.0, 20.0)
@@ -282,8 +282,28 @@ function updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_nam
 	godotSetProperty("brake_force_value", getGlobalFloat("brake_force_value"), supercar)
 	godotSetProperty("max_steer", getGlobalFloat("max_steer"), supercar)
 	godotSetProperty("wheel_friction_slip", getGlobalFloat("wheel_friction_slip"), supercar)
-	godotSetProperty("suspension_travel", getGlobalFloat("suspension_travel"), supercar)
-	godotSetProperty("suspension_stiffness", getGlobalFloat("suspension_stiffness"), supercar)
+	local air_cm = getGlobalFloat("airborne_travel_cm")
+	local comp_cm = getGlobalFloat("compressed_travel_cm")
+	
+	-- Keep compressed less than airborne
+	if comp_cm >= air_cm then
+		comp_cm = air_cm - 1.0
+		setGlobalFloat("compressed_travel_cm", comp_cm)
+	end
+	
+	local travel_m = air_cm / 100.0
+	local diff_m = (air_cm - comp_cm) / 100.0
+	local mass = getGlobalFloat("car_mass")
+	local gravity = 9.8
+	local weight_per_wheel = (mass * gravity) / 4.0
+	local stiffness = weight_per_wheel / diff_m
+	
+	godotSetProperty("suspension_travel", travel_m, supercar)
+	godotSetProperty("suspension_stiffness", stiffness, supercar)
+	
+	-- Push back to node so saving car.ini writes the UI parameters
+	godotSetProperty("airborne_travel_cm", air_cm, supercar)
+	godotSetProperty("compressed_travel_cm", comp_cm, supercar)
 	godotSetProperty("suspension_max_force", getGlobalFloat("suspension_max_force"), supercar)
 	godotSetProperty("damping_compression", getGlobalFloat("damping_compression"), supercar)
 	godotSetProperty("damping_relaxation", getGlobalFloat("damping_relaxation"), supercar)
