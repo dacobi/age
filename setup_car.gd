@@ -34,20 +34,47 @@ var pivot_RR : Node3D
 var spring_strength : float
 var rest_dist : float
 
-func _ready():
+var is_initialized = false
+
+func initialize_setup():
+	if is_initialized: return
 	_calculate_dimensions()
 	_automate_pivots()
+	is_initialized = true
+
+func _ready():
+	initialize_setup()
+
+func _get_transform_relative_to(node: Node3D, ancestor: Node3D) -> Transform3D:
+	var t = node.transform
+	var p = node.get_parent()
+	while p and p != ancestor and p is Node3D:
+		t = p.transform * t
+		p = p.get_parent()
+	return t
 
 func _calculate_dimensions():
+	var visual_root = get_parent()
 	if wheel_FL and wheel_RL:
-		wheel_base = abs(wheel_FL.global_position.z - wheel_RL.global_position.z)
+		var t_FL = _get_transform_relative_to(wheel_FL, visual_root)
+		var t_RL = _get_transform_relative_to(wheel_RL, visual_root)
+		wheel_base = abs(t_FL.origin.z - t_RL.origin.z)
+		
+		var local_front_z = t_FL.origin.z
+		var local_rear_z = t_RL.origin.z
+		if local_front_z > local_rear_z:
+			visual_root.rotation.y += PI
 	
 	if wheel_FL and wheel_FR:
-		track_width = abs(wheel_FL.global_position.x - wheel_FR.global_position.x)
+		var t_FL = _get_transform_relative_to(wheel_FL, visual_root)
+		var t_FR = _get_transform_relative_to(wheel_FR, visual_root)
+		track_width = abs(t_FL.origin.x - t_FR.origin.x)
 	
 	wheel_diameter = wheel_radius * 2.0
 	
-	var car = get_parent() as RigidBody3D
+	var car = get_parent()
+	while car and not car is RigidBody3D:
+		car = car.get_parent()
 	rest_dist = AirborneTravel / 100.0
 	var compressed_m = CompressedTravel / 100.0
 	var travel_diff = rest_dist - compressed_m
@@ -71,9 +98,9 @@ func _create_pivot(wheel: Node3D, p_name: String) -> Node3D:
 	var pivot = Node3D.new()
 	pivot.name = p_name
 	
-	var car = get_parent()
-	car.add_child(pivot)
-	pivot.global_transform = wheel.global_transform
+	var visual_root = get_parent()
+	visual_root.add_child(pivot)
+	pivot.transform = _get_transform_relative_to(wheel, visual_root)
 	
 	var parent = wheel.get_parent()
 	parent.remove_child(wheel)

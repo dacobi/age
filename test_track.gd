@@ -26,8 +26,49 @@ var is_crash_cam_active = false
 
 
 func _ready():
-    supercar = get_node_or_null("SuperCar")
+    # --- DYNAMIC CAR LOADER ---
+    # Remove baked-in SuperCar
+    var old_car = get_node_or_null("SuperCar")
+    if old_car:
+        old_car.queue_free()
+        remove_child(old_car)
+        
+    var physics_scene = load("res://lemans_car.tscn")
+    var visual_scene = load("res://car_stingray.tscn")
     
+    if physics_scene and visual_scene:
+        supercar = physics_scene.instantiate()
+        supercar.name = "SuperCar"
+        
+        var visual_car = visual_scene.instantiate()
+        supercar.add_child(visual_car)
+        
+        # Hide/remove the default LeMans body parts
+        var hide_list = ["LeMansCombiner", "CabinGlass", "RearDiffuser", "HeadlightL_Glass", "HeadlightR_Glass", "HeadlightL_Bulb", "HeadlightR_Bulb", "FrontLeftSteerPivot", "FrontRightSteerPivot", "RearLeftSteerPivot", "RearRightSteerPivot"]
+        for child in supercar.get_children():
+            if child.name in hide_list:
+                child.hide()
+                child.queue_free()
+                
+        # Manually initialize setup before entering tree to avoid "busy" errors
+        var setup_node = null
+        var to_check = [supercar]
+        while to_check.size() > 0:
+            var current = to_check.pop_back()
+            if current.has_method("initialize_setup"):
+                setup_node = current
+                break
+            for child in current.get_children():
+                to_check.append(child)
+                
+        if setup_node:
+            setup_node.initialize_setup()
+                
+        add_child(supercar)
+    else:
+        supercar = get_node_or_null("SuperCar")
+    # --------------------------
+
     # Create the root for track elements
     track_root = Node3D.new()
     track_root.name = "TrackRoot"

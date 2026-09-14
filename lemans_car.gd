@@ -326,15 +326,19 @@ func _ready():
 	add_child(magnet_area)
 	# Flexible setup hook
 	var setup = null
-	for child in get_children():
-		if child is CarSetup:
-			setup = child
+	var to_check = [self]
+	while to_check.size() > 0:
+		var current = to_check.pop_back()
+		if current.has_method("initialize_setup"):
+			setup = current
 			break
+		for child in current.get_children():
+			to_check.append(child)
 	if setup:
-		mount_FL = setup.pivot_FL.position
-		mount_FR = setup.pivot_FR.position
-		mount_RL = setup.pivot_RL.position
-		mount_RR = setup.pivot_RR.position
+		mount_FL = to_local(setup.pivot_FL.global_position)
+		mount_FR = to_local(setup.pivot_FR.global_position)
+		mount_RL = to_local(setup.pivot_RL.global_position)
+		mount_RR = to_local(setup.pivot_RR.global_position)
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength / 50.0 # to work with existing create_wheel math temporarily
 
@@ -1188,10 +1192,14 @@ func add_nitro(seconds: float) -> void:
 func _setup_nitro_flames() -> void:
 	var positions = []
 	var setup = null
-	for child in get_children():
-		if child is CarSetup:
-			setup = child
+	var to_check = [self]
+	while to_check.size() > 0:
+		var current = to_check.pop_back()
+		if current.has_method("initialize_setup"):
+			setup = current
 			break
+		for child in current.get_children():
+			to_check.append(child)
 			
 	if setup:
 		var global_positions = setup.get_exhaust_global_positions()
