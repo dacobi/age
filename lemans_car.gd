@@ -23,7 +23,7 @@ var max_steer = 1.2
 var wheel_friction_slip = 1.5
 var suspension_travel = 0.25
 var suspension_stiffness = 350.0
-var airborne_travel_cm = 25.0
+var suspension_travel_cm = 25.0
 var compressed_travel_cm = 15.0
 var suspension_max_force = 15000.0
 var damping_compression = 12.0
@@ -342,7 +342,7 @@ func _ready():
 		mount_RL = to_local(setup.pivot_RL.global_position)
 		mount_RR = to_local(setup.pivot_RR.global_position)
 		suspension_travel = setup.rest_dist
-		suspension_stiffness = setup.spring_strength / 50.0 # to work with existing create_wheel math temporarily
+		suspension_stiffness = setup.spring_strength
 
 	# Dynamically build wheels at startup
 	var use_shapecast = true
@@ -463,7 +463,7 @@ func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, i
 	
 	w.wheel_radius = radius
 	w.rest_dist = suspension_travel
-	w.spring_strength = suspension_stiffness * 50.0
+	w.spring_strength = suspension_stiffness
 	w.spring_damping = damping_compression * 15.0
 	w.max_spring_force = suspension_max_force
 	w.over_extend = 0.05
@@ -854,7 +854,7 @@ func _physics_process(delta: float) -> void:
 		var w = wheels[i]
 		
 		w.rest_dist = suspension_travel
-		w.spring_strength = suspension_stiffness * 250.0
+		w.spring_strength = suspension_stiffness
 		w.spring_damping = damping_compression * 200.0
 		
 		var r = radius_front if i < 2 else radius_rear
