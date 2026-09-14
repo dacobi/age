@@ -324,12 +324,26 @@ func _ready():
 	
 	magnet_area.add_child(magnet_col)
 	add_child(magnet_area)
+	# Flexible setup hook
+	var setup = null
+	for child in get_children():
+		if child is CarSetup:
+			setup = child
+			break
+	if setup:
+		mount_FL = setup.pivot_FL.position
+		mount_FR = setup.pivot_FR.position
+		mount_RL = setup.pivot_RL.position
+		mount_RR = setup.pivot_RR.position
+		suspension_travel = setup.rest_dist
+		suspension_stiffness = setup.spring_strength / 50.0 # to work with existing create_wheel math temporarily
+
 	# Dynamically build wheels at startup
 	var use_shapecast = true
-	var w_fl = create_wheel("FL", mount_FL, radius_front, true, false, use_shapecast)
-	var w_fr = create_wheel("FR", mount_FR, radius_front, true, false, use_shapecast)
-	var w_rl = create_wheel("RL", mount_RL, radius_rear, false, true, use_shapecast)
-	var w_rr = create_wheel("RR", mount_RR, radius_rear, false, true, use_shapecast)
+	var w_fl = create_wheel("FL", mount_FL, radius_front, true, false, use_shapecast, setup)
+	var w_fr = create_wheel("FR", mount_FR, radius_front, true, false, use_shapecast, setup)
+	var w_rl = create_wheel("RL", mount_RL, radius_rear, false, true, use_shapecast, setup)
+	var w_rr = create_wheel("RR", mount_RR, radius_rear, false, true, use_shapecast, setup)
 	wheels = [w_fl, w_fr, w_rl, w_rr]
 	
 	# Create dynamic skid mark particle systems
@@ -435,7 +449,7 @@ func _ready():
 	add_child(cp_area)
 	
 	_setup_nitro_flames()
-func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, is_drive: bool, use_shapecast: bool) -> RayCast3D:
+func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, is_drive: bool, use_shapecast: bool, setup: Node = null) -> RayCast3D:
 	var w = RayCast3D.new()
 	w.name = "Wheel" + w_name
 	w.position = pos
@@ -454,25 +468,39 @@ func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, i
 	w.grip_curve = grip_curve
 	w.z_brake_traction = 0.5
 	
-	# Dynamically bind visual node references
-	var pivot_name := ""
-	var wheel_node_name := ""
-	if w_name == "FL":
-		pivot_name = "FrontLeftSteerPivot"
-		wheel_node_name = "FrontLeftWheel"
-	elif w_name == "FR":
-		pivot_name = "FrontRightSteerPivot"
-		wheel_node_name = "FrontRightWheel"
-	elif w_name == "RL":
-		pivot_name = "RearLeftSteerPivot"
-		wheel_node_name = "RearLeftWheel"
-	elif w_name == "RR":
-		pivot_name = "RearRightSteerPivot"
-		wheel_node_name = "RearRightWheel"
-		
-	w.visual_pivot = get_node_or_null(pivot_name)
-	if w.visual_pivot:
-		w.visual_wheel = w.visual_pivot.get_node_or_null(wheel_node_name)
+	if setup and setup is CarSetup:
+		if w_name == "FL":
+			w.visual_pivot = setup.pivot_FL
+			w.visual_wheel = setup.wheel_FL
+		elif w_name == "FR":
+			w.visual_pivot = setup.pivot_FR
+			w.visual_wheel = setup.wheel_FR
+		elif w_name == "RL":
+			w.visual_pivot = setup.pivot_RL
+			w.visual_wheel = setup.wheel_RL
+		elif w_name == "RR":
+			w.visual_pivot = setup.pivot_RR
+			w.visual_wheel = setup.wheel_RR
+	else:
+		# Fallback to older hardcoded names
+		var pivot_name := ""
+		var wheel_node_name := ""
+		if w_name == "FL":
+			pivot_name = "FrontLeftSteerPivot"
+			wheel_node_name = "FrontLeftWheel"
+		elif w_name == "FR":
+			pivot_name = "FrontRightSteerPivot"
+			wheel_node_name = "FrontRightWheel"
+		elif w_name == "RL":
+			pivot_name = "RearLeftSteerPivot"
+			wheel_node_name = "RearLeftWheel"
+		elif w_name == "RR":
+			pivot_name = "RearRightSteerPivot"
+			wheel_node_name = "RearRightWheel"
+			
+		w.visual_pivot = get_node_or_null(pivot_name)
+		if w.visual_pivot:
+			w.visual_wheel = w.visual_pivot.get_node_or_null(wheel_node_name)
 		
 	if use_shapecast:
 		var sc = ShapeCast3D.new()
@@ -1158,12 +1186,25 @@ func add_nitro(seconds: float) -> void:
 	nitro_seconds = minf(max_nitro_seconds, nitro_seconds + seconds)
 
 func _setup_nitro_flames() -> void:
-	var positions = [
-		Vector3(-0.626, -0.12, 3.45),
-		Vector3(-0.506, -0.12, 3.45),
-		Vector3(0.506, -0.12, 3.45),
-		Vector3(0.626, -0.12, 3.45)
-	]
+	var positions = []
+	var setup = null
+	for child in get_children():
+		if child is CarSetup:
+			setup = child
+			break
+			
+	if setup:
+		var global_positions = setup.get_exhaust_global_positions()
+		for g_pos in global_positions:
+			positions.append(to_local(g_pos))
+	else:
+		positions = [
+			Vector3(-0.626, -0.12, 3.45),
+			Vector3(-0.506, -0.12, 3.45),
+			Vector3(0.506, -0.12, 3.45),
+			Vector3(0.626, -0.12, 3.45)
+		]
+	
 	for pos in positions:
 		var parts = CPUParticles3D.new()
 		parts.amount = 200
