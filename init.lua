@@ -1,268 +1,136 @@
-for i=1, 56 do
-    regGlobalFloat("ce_vert_"..i.."_x", 0.0)
-    regGlobalFloat("ce_vert_"..i.."_y", 0.0)
+ioWindowSetFullScreen(true)
+local is_fullscreen = true
+
+godotLoadScene("test_track.tscn")
+delay(200) -- give it a moment to load
+
+print("\n=== MegaRacer Synthwave Test Track ===")
+print("Controls: Up/Down arrow keys to Accelerate and Brake/Reverse.")
+print("          Left/Right arrow keys to Steer.")
+print("Press ESC to exit.\n")
+
+setAudioVolume(50)
+
+-- Get the supercar node pointer
+godotSelectRoot()
+local supercar = godotGetNodePointer("SuperCar")
+if supercar then
 end
-regGlobalFloat("ce_spine_px", 0.0); regGlobalFloat("ce_spine_py", 0.0); regGlobalFloat("ce_spine_pz", 0.0)
-regGlobalFloat("ce_spine_inx", 0.0); regGlobalFloat("ce_spine_iny", 0.0); regGlobalFloat("ce_spine_inz", 0.0)
-regGlobalFloat("ce_spine_outx", 0.0); regGlobalFloat("ce_spine_outy", 0.0); regGlobalFloat("ce_spine_outz", 0.0)
-regGlobalFloat("ce_kf_t", 0.0)
-regGlobalFloat("ce_prim_px", 0.0); regGlobalFloat("ce_prim_py", 0.0); regGlobalFloat("ce_prim_pz", 0.0)
-regGlobalFloat("ce_prim_rx", 0.0); regGlobalFloat("ce_prim_ry", 0.0); regGlobalFloat("ce_prim_rz", 0.0)
-regGlobalFloat("ce_prim_sx", 1.0); regGlobalFloat("ce_prim_sy", 1.0); regGlobalFloat("ce_prim_sz", 1.0)
-regGlobalVar("ce_prim_op", 0)
 
-regGlobalFloat("ce_cmd_add_spine", 0.0)
-regGlobalFloat("ce_cmd_del_spine", 0.0)
-regGlobalFloat("ce_cmd_add_kf", 0.0)
-regGlobalFloat("ce_cmd_del_kf", 0.0)
-regGlobalFloat("ce_cmd_add_box", 0.0)
-regGlobalFloat("ce_cmd_add_cyl", 0.0)
-regGlobalFloat("ce_cmd_add_sph", 0.0)
-regGlobalFloat("ce_cmd_del_prim", 0.0)
+print("SUPERCAR POINTER IS: ", supercar)
 
-regGlobalFloat("ce_cmd_undo", 0.0)
-regGlobalFloat("ce_cmd_redo", 0.0)
+-- Include shared car physics and controls
+dofile("car_common.lua")
+initCarPhysicsDefaults(supercar)
+	godotLoadCarSettings()
 
-regGlobalFloat("ce_spine_count", 0.0)
-regGlobalFloat("ce_kf_count", 0.0)
-regGlobalFloat("ce_prim_count", 0.0)
+local joy_handle = ioJoystickOpen(0)
+if joy_handle >= 0 then
+	print("Joystick 1 connected for driving!")
+end
 
+local is_paused = false
+local esc_held_state = false
+local orbit_yaw = 0.0
+local orbit_pitch = 0.5
+local orbit_dist = 12.0
+local last_mouse_dx = 0.0
+local last_mouse_dy = 0.0
+local last_mouse_wheel = 0.0
 
-regGlobalFloat("ce_file_loaded", 0.0)
-regGlobalFloat("ce_trigger_open", 0.0)
-regGlobalFloat("ce_trigger_save", 0.0)
-regGlobalFloat("ce_trigger_save_as", 0.0)
-regGlobalFloat("ce_trigger_new_car", 0.0)
-regGlobalVar("ce_new_car_verts", 56)
-regGlobalVar("ce_new_car_shape", 0)
-regGlobalFloat("ce_trigger_copy_kf", 0.0)
-regGlobalFloat("ce_trigger_scale_kf", 0.0)
-regGlobalFloat("ce_kf_scale_x", 1.0)
-regGlobalFloat("ce_kf_scale_y", 1.0)
+local frame_count = 0
+local has_disabled_auto_reset = false
 
-regGlobalFloat("ce_selected_mode", 1.0) -- 1=Spine, 2=KF, 3=Prim
-regGlobalFloat("ce_selected_spine", 1.0)
-regGlobalFloat("ce_selected_kf", 1.0)
-regGlobalFloat("ce_selected_vert", 1.0)
-regGlobalFloat("ce_sel_v_x", 0.0)
-regGlobalFloat("ce_sel_v_y", 1.0)
-regGlobalFloat("ce_selected_prim", 1.0)
-regGlobalFloat("ce_show_surface", 1.0)
-regGlobalFloat("ce_trigger_shape_popup", 0.0)
-regGlobalFloat("ce_trigger_apply_shape", 0.0)
+--godotSetProperty("auto_reset_enabled", true, supercar)
 
-local show_verts = false
-
-godotLoadScene("car_editor.tscn")
-
-regGlobalFloat("ce_btn_mode_1", 0.0)
-regGlobalFloat("ce_btn_mode_2", 0.0)
-regGlobalFloat("ce_btn_mode_3", 0.0)
-regGlobalFloat("ce_btn_prev", 0.0)
-regGlobalFloat("ce_btn_next", 0.0)
-regGlobalFloat("ce_btn_prev_vert", 0.0)
-regGlobalFloat("ce_btn_next_vert", 0.0)
-regGlobalFloat("ce_btn_show_verts", 0.0)
-regGlobalVar("ce_tmp_verts", 56)
 
 while true do
-    if getGlobalFloat("ce_file_loaded") == 0.0 then
-        imguiBegin("Welcome to Car Editor")
-        
-        imguiButton("Open Car", "ce_trigger_open")
-        
-        imguiText("")
-        imguiText("--- OR ---")
-        imguiText("")
-        
-        imguiText("Create New Car")
-        imguiSliderInt("Vertices Per Curve", "ce_new_car_verts", 4, 128)
-        
-        imguiText("Base Shape:")
-        imguiRadioButton("Rectangle (60s Boxy)", "ce_new_car_shape", 0)
-        imguiRadioButton("Ellipsoid (Jaguar E-type)", "ce_new_car_shape", 1)
-        imguiRadioButton("Pill Shaped", "ce_new_car_shape", 2)
-        
-        imguiButton("Create New Car", "ce_trigger_new_car")
-        
-        imguiEnd()
-    else
-        if imguiRemoveWindow then imguiRemoveWindow("Welcome to Car Editor") end
-        imguiBegin("Car Editor")
-        -- Main UI Top Bar
-    imguiButton("Save", "ce_trigger_save")
-    imguiSameLine()
-    imguiButton("Save As", "ce_trigger_save_as")
-    imguiSameLine()
-    imguiButton("Open", "ce_trigger_open")
-    imguiSameLine()
-    imguiCheckbox("Show Surface", "ce_show_surface")
-    imguiSeparator()
+	-- Draw Car Physics dialog if show_car_physics_ui is enabled
+	renderCarPhysicsUI()
 
-    local ui_mode = math.floor(getGlobalFloat("ce_selected_mode"))
-    local spine_count = math.floor(getGlobalFloat("ce_spine_count"))
-    local kf_count = math.floor(getGlobalFloat("ce_kf_count"))
-    local prim_count = math.floor(getGlobalFloat("ce_prim_count"))
-    
-    local sel_spine = math.floor(getGlobalFloat("ce_selected_spine"))
-    local sel_kf = math.floor(getGlobalFloat("ce_selected_kf"))
-    local sel_prim = math.floor(getGlobalFloat("ce_selected_prim"))
-    
-    imguiButton("Spine Mode", "ce_btn_mode_1")
-    if getGlobalFloat("ce_btn_mode_1") > 0.5 then setGlobalFloat("ce_btn_mode_1", 0.0); setGlobalFloat("ce_selected_mode", 1.0) end
-    imguiSameLine()
-    imguiButton("Keyframes Mode", "ce_btn_mode_2")
-    if getGlobalFloat("ce_btn_mode_2") > 0.5 then setGlobalFloat("ce_btn_mode_2", 0.0); setGlobalFloat("ce_selected_mode", 2.0) end
-    imguiSameLine()
-    imguiButton("Primitives Mode", "ce_btn_mode_3")
-    if getGlobalFloat("ce_btn_mode_3") > 0.5 then setGlobalFloat("ce_btn_mode_3", 0.0); setGlobalFloat("ce_selected_mode", 3.0) end
-    
-    imguiSameLine()
-    imguiButton("Undo", "ce_cmd_undo")
-    if getGlobalFloat("ce_cmd_undo") > 0.5 then setGlobalFloat("ce_cmd_undo", 1.0) end
-    imguiSameLine()
-    imguiButton("Redo", "ce_cmd_redo")
-    if getGlobalFloat("ce_cmd_redo") > 0.5 then setGlobalFloat("ce_cmd_redo", 1.0) end
-    
-    imguiSeparator()
-    
-    if ui_mode == 1 then
-        imguiText("--- Spine Editor ---")
-        imguiText("Editing Spine Point: Index " .. sel_spine .. " (Total: " .. spine_count .. ")")
-        
-        imguiButton("Prev Pt", "ce_btn_prev")
-        if getGlobalFloat("ce_btn_prev") > 0.5 then
-            setGlobalFloat("ce_btn_prev", 0.0)
-            if sel_spine > 1 then setGlobalFloat("ce_selected_spine", sel_spine - 1) end
-        end
-        imguiSameLine()
-        imguiButton("Next Pt", "ce_btn_next")
-        if getGlobalFloat("ce_btn_next") > 0.5 then
-            setGlobalFloat("ce_btn_next", 0.0)
-            if sel_spine < spine_count then setGlobalFloat("ce_selected_spine", sel_spine + 1) end
-        end
-        imguiSameLine()
-        imguiButton("Add Spine Point", "ce_cmd_add_spine")
-        if getGlobalFloat("ce_cmd_add_spine") > 0.5 then setGlobalFloat("ce_cmd_add_spine", 1.0) end
-        imguiButton("Delete Spine Point", "ce_cmd_del_spine")
-        if getGlobalFloat("ce_cmd_del_spine") > 0.5 then setGlobalFloat("ce_cmd_del_spine", 1.0) end
-        
-        imguiButton(show_verts and "Hide Position Sliders" or "Show Position Sliders", "ce_btn_show_verts")
-        if getGlobalFloat("ce_btn_show_verts") > 0.5 then
-            setGlobalFloat("ce_btn_show_verts", 0.0)
-            show_verts = not show_verts
-        end
-        if show_verts then
-            imguiSliderFloat("Pos Y", "ce_spine_py", -10.0, 10.0)
-            imguiSliderFloat("Pos Z", "ce_spine_pz", -10.0, 10.0)
-            imguiSliderFloat("In Y", "ce_spine_iny", -5.0, 5.0)
-            imguiSliderFloat("In Z", "ce_spine_inz", -5.0, 5.0)
-            imguiSliderFloat("Out Y", "ce_spine_outy", -5.0, 5.0)
-            imguiSliderFloat("Out Z", "ce_spine_outz", -5.0, 5.0)
-        end
-        
-    elseif ui_mode == 2 then
-        imguiText("--- Keyframes Editor ---")
-        
-        imguiText("Selected KF: " .. sel_kf .. " / " .. kf_count)
-        imguiButton("Prev KF", "ce_btn_prev")
-        if getGlobalFloat("ce_btn_prev") > 0.5 then
-            setGlobalFloat("ce_btn_prev", 0.0)
-            if sel_kf > 1 then setGlobalFloat("ce_selected_kf", sel_kf - 1) end
-        end
-        imguiSameLine()
-        imguiButton("Next KF", "ce_btn_next")
-        if getGlobalFloat("ce_btn_next") > 0.5 then
-            setGlobalFloat("ce_btn_next", 0.0)
-            if sel_kf < kf_count then setGlobalFloat("ce_selected_kf", sel_kf + 1) end
-        end
-        imguiSameLine()
-        imguiButton("Add Keyframe", "ce_cmd_add_kf")
-        if getGlobalFloat("ce_cmd_add_kf") > 0.5 then setGlobalFloat("ce_cmd_add_kf", 1.0) end
-        imguiSameLine()
-        imguiButton("Copy Current", "ce_trigger_copy_kf")
-        imguiButton("Delete Keyframe", "ce_cmd_del_kf")
-        if getGlobalFloat("ce_cmd_del_kf") > 0.5 then setGlobalFloat("ce_cmd_del_kf", 1.0) end
-        
-        imguiSliderFloat("T (Offset)", "ce_kf_t", 0.0, 1.0)
-        
-        imguiButton(show_verts and "Hide Vertex Positions" or "Show Vertex Positions", "ce_btn_show_verts")
-        if getGlobalFloat("ce_btn_show_verts") > 0.5 then
-            setGlobalFloat("ce_btn_show_verts", 0.0)
-            show_verts = not show_verts
-        end
-        
-        if show_verts then
-            imguiText("Keyframe Scale Tool:")
-            imguiSliderFloat("Scale X", "ce_kf_scale_x", 0.1, 2.0)
-            imguiSliderFloat("Scale Y", "ce_kf_scale_y", 0.1, 2.0)
-            imguiButton("Apply Scale", "ce_trigger_scale_kf")
-            imguiSameLine()
-            imguiButton("Choose Shape", "ce_trigger_shape_popup")
-            imguiSeparator()
-            
-            local sel_vert = math.floor(getGlobalFloat("ce_selected_vert"))
-            imguiText("Selected Vertex: " .. sel_vert)
-            
-            imguiButton("Prev Vert", "ce_btn_prev_vert")
-            if getGlobalFloat("ce_btn_prev_vert") > 0.5 then
-                setGlobalFloat("ce_btn_prev_vert", 0.0)
-                if sel_vert > 1 then setGlobalFloat("ce_selected_vert", sel_vert - 1) end
-            end
-            imguiSameLine()
-            imguiButton("Next Vert", "ce_btn_next_vert")
-            if getGlobalFloat("ce_btn_next_vert") > 0.5 then
-                setGlobalFloat("ce_btn_next_vert", 0.0)
-                if sel_vert < 56 then setGlobalFloat("ce_selected_vert", sel_vert + 1) end
-            end
+	-- Handle Q to quit (moved from ESCAPE)
+	if ioKBClicked("SDLK_q") then
+		print("Exiting game logic...")
+		ioWindowSetFullScreen(false)
+		break
+	end
 
-            imguiSliderFloat("Vert X", "ce_sel_v_x", 0.0, 10.0)
-            imguiSliderFloat("Vert Y", "ce_sel_v_y", -10.0, 10.0)
-        end
-        
-    elseif ui_mode == 3 then
-        imguiText("--- CSG Primitives ---")
-        imguiText("Selected Prim: " .. sel_prim .. " / " .. prim_count)
-        
-        imguiButton("Prev Prim", "ce_btn_prev")
-        if getGlobalFloat("ce_btn_prev") > 0.5 then
-            setGlobalFloat("ce_btn_prev", 0.0)
-            if sel_prim > 1 then setGlobalFloat("ce_selected_prim", sel_prim - 1) end
-        end
-        imguiSameLine()
-        imguiButton("Next Prim", "ce_btn_next")
-        if getGlobalFloat("ce_btn_next") > 0.5 then
-            setGlobalFloat("ce_btn_next", 0.0)
-            if sel_prim < prim_count then setGlobalFloat("ce_selected_prim", sel_prim + 1) end
-        end
-        
-        imguiButton("Add Box", "ce_cmd_add_box")
-        if getGlobalFloat("ce_cmd_add_box") > 0.5 then setGlobalFloat("ce_cmd_add_box", 1.0) end
-        imguiSameLine()
-        imguiButton("Add Cylinder", "ce_cmd_add_cyl")
-        if getGlobalFloat("ce_cmd_add_cyl") > 0.5 then setGlobalFloat("ce_cmd_add_cyl", 1.0) end
-        imguiSameLine()
-        imguiButton("Add Sphere", "ce_cmd_add_sph")
-        if getGlobalFloat("ce_cmd_add_sph") > 0.5 then setGlobalFloat("ce_cmd_add_sph", 1.0) end
-        
-        if prim_count > 0 then
-            imguiSliderInt("Operation (0=U, 1=S, 2=I)", "ce_prim_op", 0, 2)
-            imguiSliderFloat("Pos X", "ce_prim_px", -10.0, 10.0)
-            imguiSliderFloat("Pos Y", "ce_prim_py", -10.0, 10.0)
-            imguiSliderFloat("Pos Z", "ce_prim_pz", -10.0, 10.0)
-            imguiSliderFloat("Rot X", "ce_prim_rx", -180.0, 180.0)
-            imguiSliderFloat("Rot Y", "ce_prim_ry", -180.0, 180.0)
-            imguiSliderFloat("Rot Z", "ce_prim_rz", -180.0, 180.0)
-            imguiSliderFloat("Size/Rad", "ce_prim_sx", 0.1, 10.0)
-            imguiSliderFloat("Size/Height", "ce_prim_sy", 0.1, 10.0)
-            imguiSliderFloat("Size Z", "ce_prim_sz", 0.1, 10.0)
-            
-            imguiButton("Delete Prim", "ce_cmd_del_prim")
-            if getGlobalFloat("ce_cmd_del_prim") > 0.5 then setGlobalFloat("ce_cmd_del_prim", 1.0) end
+	-- Handle F11 for fullscreen toggle
+	if ioKBClicked("SDLK_F11") then
+		is_fullscreen = not is_fullscreen
+		ioWindowSetFullScreen(is_fullscreen)
+	end
+
+	local track = godotGetNodePointer("MegaRacerScene")
+
+	
+
+    if ioKBClicked("SDLK_e") then
+        godotSetProperty("key_e_pressed", true, track)
+        godotSetProperty("key_e_pressed", false, track)
+        ioMouseCapture()
+    end
+
+    if track then
+        local p = godotGetProperty("is_paused", track)
+        if p == "True" or p == "true" or p == 1.0 or p == true then
+            is_paused = true
+        else
+            is_paused = false
         end
     end
     
+    if supercar then
+        if is_paused then
+            godotSetProperty("process_mode", 4, supercar) -- Disable car physics
+        else
+            godotSetProperty("process_mode", 0, supercar) -- Re-enable physics
+        end
     end
-    imguiEnd()
-    delay(1)
+
+    if supercar then
+        if is_paused then
+            -- Globe camera controls
+            local dx = godotGetProperty("mouse_dx", track) or 0.0
+            local dy = godotGetProperty("mouse_dy", track) or 0.0
+            
+            local delta_dx = dx - (last_mouse_dx or 0.0)
+            local delta_dy = dy - (last_mouse_dy or 0.0)
+            last_mouse_dx = dx
+            last_mouse_dy = dy
+            
+            orbit_yaw = orbit_yaw - delta_dx * 0.005
+            orbit_pitch = orbit_pitch + delta_dy * 0.005
+            
+            if orbit_pitch > 1.5 then orbit_pitch = 1.5 end
+            if orbit_pitch < -1.5 then orbit_pitch = -1.5 end
+            
+            -- Process new Mouse Wheel input for zooming
+            local wheel = godotGetProperty("mouse_wheel", track) or 0.0
+            local delta_wheel = wheel - (last_mouse_wheel or 0.0)
+            last_mouse_wheel = wheel
+            if delta_wheel ~= 0.0 then
+                orbit_dist = orbit_dist - delta_wheel * 2.0
+            end
+            
+            -- Keep keyboard W/S fallbacks
+            if ioKBDown("w") then orbit_dist = orbit_dist - 0.5 end
+            if ioKBDown("s") then orbit_dist = orbit_dist + 0.5 end
+            
+            if orbit_dist < 3.0 then orbit_dist = 3.0 end
+            if orbit_dist > 50.0 then orbit_dist = 50.0 end
+            
+            godotSetProperty("orbit_yaw", orbit_yaw, track)
+            godotSetProperty("orbit_pitch", orbit_pitch, track)
+            godotSetProperty("orbit_dist", orbit_dist, track)
+        else
+            updateCarControlsAndPhysics(supercar, joy_handle, track, "reset_car")
+            frame_count = frame_count + 1
+            updateCarTelemetry(supercar, frame_count)
+        end
+    end
+
+	delay(1) -- High-frequency input update loop
 end
+
+appQuit()

@@ -34,8 +34,19 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("max_speed", 210.0)
 	setGlobalFloat("over_extend", 0.05)
 	setGlobalFloat("z_traction", 0.15)
-	setGlobalFloat("radius_front", 0.5)
-	setGlobalFloat("radius_rear", 0.5)
+	local r_f = godotGetProperty("radius_front", supercar)
+	if r_f and type(r_f) == "number" and r_f > 0 then
+		setGlobalFloat("radius_front", r_f)
+	else
+		setGlobalFloat("radius_front", 0.5)
+	end
+
+	local r_r = godotGetProperty("radius_rear", supercar)
+	if r_r and type(r_r) == "number" and r_r > 0 then
+		setGlobalFloat("radius_rear", r_r)
+	else
+		setGlobalFloat("radius_rear", 0.5)
+	end
 	setGlobalFloat("use_shapecast", 1.0)
 	setGlobalFloat("drivetrain_mode", 0.0)
 	setGlobalFloat("tire_turn_speed", 15.0)
@@ -93,8 +104,6 @@ function renderCarPhysicsUI()
 		imguiSliderFloat("Max Speed", "max_speed", 10.0, 1000.0)
 		imguiSliderFloat("Over Extend", "over_extend", 0.0, 1.0)
 		imguiSliderFloat("Longitudinal Traction", "z_traction", 0.0, 1.0)
-		imguiSliderFloat("Radius Front", "radius_front", 0.1, 2.0)
-		imguiSliderFloat("Radius Rear", "radius_rear", 0.1, 2.0)
 		imguiCheckbox("Use Shapecast", "use_shapecast")
 		imguiCheckbox("Show Collision Mesh", "show_collision_debug")
 		imguiCheckbox("Show FPS", "show_fps_hud")
@@ -320,8 +329,6 @@ function updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_nam
 	godotSetProperty("slider_max_speed_kmh", getGlobalFloat("max_speed"), supercar)
 	godotSetProperty("over_extend", getGlobalFloat("over_extend"), supercar)
 	godotSetProperty("z_traction", getGlobalFloat("z_traction"), supercar)
-	godotSetProperty("radius_front", getGlobalFloat("radius_front"), supercar)
-	godotSetProperty("radius_rear", getGlobalFloat("radius_rear"), supercar)
 	godotSetProperty("use_shapecast", getGlobalFloat("use_shapecast"), supercar)
 	godotSetProperty("drivetrain_mode", getGlobalFloat("drivetrain_mode"), supercar)
 	godotSetProperty("tire_turn_speed", getGlobalFloat("tire_turn_speed"), supercar)

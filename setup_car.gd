@@ -6,6 +6,8 @@ class_name CarSetup
 @export var wheel_FR : Node3D
 @export var wheel_RL : Node3D
 @export var wheel_RR : Node3D
+@export var wheel_diameter_front : float = 0.0 # 0.0 means auto-calculate
+@export var wheel_diameter_rear : float = 0.0 # 0.0 means auto-calculate
 
 @export_group("Exhausts")
 @export_range(1, 6) var NumberOfExaustPipes: int = 1
@@ -23,8 +25,8 @@ class_name CarSetup
 # Calculated Properties
 var wheel_base : float
 var track_width : float
-var wheel_radius : float = 0.35
-var wheel_diameter : float
+var wheel_radius_front : float = 0.35
+var wheel_radius_rear : float = 0.35
 
 var pivot_FL : Node3D
 var pivot_FR : Node3D
@@ -52,6 +54,31 @@ func _get_transform_relative_to(node: Node3D, ancestor: Node3D) -> Transform3D:
 		t = p.transform * t
 		p = p.get_parent()
 	return t
+
+func _measure_wheel_radius(node: Node3D) -> float:
+	if not node: return 0.35
+	var aabb = AABB()
+	var meshes = []
+	var to_check = [node]
+	while to_check.size() > 0:
+		var n = to_check.pop_back()
+		if n is MeshInstance3D and n.mesh:
+			meshes.append(n)
+		for c in n.get_children():
+			to_check.append(c)
+	if meshes.is_empty(): return 0.35
+	
+	var first = true
+	for m in meshes:
+		var local_trans = _get_transform_relative_to(m, node)
+		var m_aabb = m.get_aabb()
+		var t_aabb = local_trans * m_aabb
+		if first:
+			aabb = t_aabb
+			first = false
+		else:
+			aabb = aabb.merge(t_aabb)
+	return maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z)) / 2.0
 
 func _calculate_dimensions():
 	var visual_root = get_parent()
@@ -81,7 +108,15 @@ func _calculate_dimensions():
 		var t_FR = _get_transform_relative_to(wheel_FR, visual_root)
 		track_width = abs(t_FL.origin.x - t_FR.origin.x)
 	
-	wheel_diameter = wheel_radius * 2.0
+	if wheel_diameter_front > 0.001:
+		wheel_radius_front = wheel_diameter_front / 2.0
+	else:
+		wheel_radius_front = _measure_wheel_radius(wheel_FL)
+		
+	if wheel_diameter_rear > 0.001:
+		wheel_radius_rear = wheel_diameter_rear / 2.0
+	else:
+		wheel_radius_rear = _measure_wheel_radius(wheel_RL)
 	
 	var car = get_parent()
 	while car and not car is RigidBody3D:
