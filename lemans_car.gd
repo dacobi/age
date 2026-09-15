@@ -345,6 +345,8 @@ func _ready():
 		suspension_stiffness = setup.spring_strength
 		suspension_travel_cm = setup.AirborneTravel
 		compressed_travel_cm = setup.CompressedTravel
+		print("DEBUG: mount_FL = ", mount_FL)
+		print("DEBUG: mount_RL = ", mount_RL)
 
 	# Dynamically build wheels at startup
 	var use_shapecast = true
