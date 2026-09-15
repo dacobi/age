@@ -34,7 +34,7 @@ var pivot_RR : Node3D
 var spring_strength : float
 var rest_dist : float
 
-var is_initialized = false
+var is_initialized = false # Trigger Godot UI reload
 
 func initialize_setup():
 	if is_initialized: return
@@ -43,7 +43,7 @@ func initialize_setup():
 	is_initialized = true
 
 func _ready():
-	initialize_setup()
+	pass
 
 func _get_transform_relative_to(node: Node3D, ancestor: Node3D) -> Transform3D:
 	var t = node.transform
@@ -62,8 +62,19 @@ func _calculate_dimensions():
 		
 		var local_front_z = t_FL.origin.z
 		var local_rear_z = t_RL.origin.z
+		
+		# If the Z coordinates indicate the FL wheel is physically at the Godot rear (+Z),
+		# then the car body was imported facing backwards. We must rotate the visual meshes 180 degrees.
+		# AND we MUST swap the wheel pointers, because the FL mesh is physically the rear wheel!
 		if local_front_z > local_rear_z:
-			visual_root.rotation.y += PI
+
+			# Rotate the meshes so they face the correct direction
+			for child in visual_root.get_children():
+				if child != self and child is Node3D:
+					var t = child.transform
+					t.origin = t.origin.rotated(Vector3.UP, PI)
+					t.basis = t.basis.rotated(Vector3.UP, PI)
+					child.transform = t
 	
 	if wheel_FL and wheel_FR:
 		var t_FL = _get_transform_relative_to(wheel_FL, visual_root)
