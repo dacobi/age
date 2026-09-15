@@ -534,11 +534,12 @@ static func _build_gap(root: Node3D, length: float, width: float, ramp_angle: fl
     ai_f.mode = CSGPolygon3D.MODE_DEPTH
     ai_f.depth = length
     var hw = width / 2.0
+    var floor_y = end_pos.y - 2.0
     ai_f.polygon = PackedVector2Array([
-        Vector2(-hw, -20.0), Vector2(hw, -20.0), Vector2(hw, -19.5), Vector2(-hw, -19.5)
+        Vector2(-hw, floor_y), Vector2(hw, floor_y), Vector2(hw, floor_y + 0.5), Vector2(-hw, floor_y + 0.5)
     ])
     ai_f.use_collision = true
-    ai_f.collision_layer = 128
+    ai_f.collision_layer = 256
     ai_f.collision_mask = 0
     if show_ai_walls:
         var aimat = StandardMaterial3D.new()

@@ -120,37 +120,6 @@ func _ready():
 	ai_vision.add_child(ai_vision_col)
 	add_child(ai_vision)
 
-	# Resize collision box to act as the main hull, shrunk and lifted slightly
-	var body_col = get_node_or_null("BodyCol")
-	if body_col and body_col.shape is BoxShape3D:
-		body_col.shape = body_col.shape.duplicate()
-		body_col.shape.size = Vector3(2.8, 0.4, 3.0)
-		body_col.position.y += 0.2
-		
-		# Add 4 perfectly smooth skid spheres at the bottom corners to prevent snagging on sharp ramps
-		for z_pos in [-1.5, 1.5]:
-			for x_pos in [-1.4, 1.4]:
-				var sphere_col = CollisionShape3D.new()
-				var sphere = SphereShape3D.new()
-				sphere.radius = 0.3
-				sphere_col.shape = sphere
-				sphere_col.position = Vector3(x_pos, 0.1, z_pos)
-				
-				# Generate debug visual for the sphere so it works with the toggle
-				var mi = MeshInstance3D.new()
-				mi.name = "CollisionDebugVisual"
-				var sph = SphereMesh.new()
-				sph.radius = 0.3
-				sph.height = 0.6
-				mi.mesh = sph
-				var mat = StandardMaterial3D.new()
-				mat.albedo_color = Color(1, 0, 0, 0.4)
-				mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				mi.material_override = mat
-				mi.visible = false
-				sphere_col.add_child(mi)
-				
-				add_child(sphere_col)
 
 	default_radius_front = radius_front
 	default_radius_rear = radius_rear
@@ -333,6 +302,7 @@ func _ready():
 		var current = to_check.pop_back()
 		if current.has_method("initialize_setup"):
 			setup = current
+			setup.initialize_setup()
 			break
 		for child in current.get_children():
 			to_check.append(child)
@@ -341,12 +311,80 @@ func _ready():
 		mount_FR = to_local(setup.pivot_FR.global_position)
 		mount_RL = to_local(setup.pivot_RL.global_position)
 		mount_RR = to_local(setup.pivot_RR.global_position)
+		
+		var comp_m = compressed_travel_cm / 100.0
+		mount_FL.y += comp_m
+		mount_FR.y += comp_m
+		mount_RL.y += comp_m
+		mount_RR.y += comp_m
+		
+		radius_front = setup.wheel_radius_front
+		radius_rear = setup.wheel_radius_rear
+		default_radius_front = radius_front
+		default_radius_rear = radius_rear
+		
+		# Resize the collision shape to prevent bottoming out
+		var dyn_body_col = get_node_or_null("BodyCol")
+		if dyn_body_col and dyn_body_col.shape is BoxShape3D:
+			# Base dimensions on track width and wheel base
+			var width = setup.track_width * 0.85
+			var length = setup.wheel_base * 1.5
+			var height = 0.4
+			# Ensure the collision shape is high enough above the ground!
+			var min_pivot_y = min(mount_FL.y, mount_RL.y)
+			var y_pos = min_pivot_y + 0.05
+			
+			var new_box = BoxShape3D.new()
+			new_box.size = Vector3(width, height, length)
+			dyn_body_col.shape = new_box
+			dyn_body_col.position = Vector3(0, y_pos, 0)
+			
+			# Add 4 perfectly smooth skid spheres at the bottom corners
+			var sphere_radius = 0.3
+			for z_pos in [-length/2.0, length/2.0]:
+				for x_pos in [-width/2.0, width/2.0]:
+					var sphere_col = CollisionShape3D.new()
+					var sphere = SphereShape3D.new()
+					sphere.radius = sphere_radius
+					sphere_col.shape = sphere
+					# spheres sit slightly below the box bottom (-0.05)
+					sphere_col.position = Vector3(x_pos, y_pos, z_pos)
+					
+					# Generate debug visual for the sphere so it works with the toggle
+					var mi = MeshInstance3D.new()
+					mi.name = "CollisionDebugVisual"
+					var sph = SphereMesh.new()
+					sph.radius = sphere_radius
+					sph.height = sphere_radius * 2.0
+					mi.mesh = sph
+					
+					var mat = StandardMaterial3D.new()
+					mat.albedo_color = Color(0, 0.6, 0.7, 0.42)
+					mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+					mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+					mi.material_override = mat
+					
+					# Need to manually manage visibility based on the 'Show Collision Meshes' option
+					var debugger = get_node_or_null("/root/MegaRacerDebugger")
+					if debugger and debugger.show_collision:
+						mi.visible = true
+					else:
+						mi.visible = false
+						
+					sphere_col.add_child(mi)
+					dyn_body_col.get_parent().add_child(sphere_col)
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength
 		suspension_travel_cm = setup.AirborneTravel
 		compressed_travel_cm = setup.CompressedTravel
 		print("DEBUG: mount_FL = ", mount_FL)
 		print("DEBUG: mount_RL = ", mount_RL)
+		print("DEBUG: radius_front = ", radius_front)
+		print("DEBUG: radius_rear = ", radius_rear)
+		print("DEBUG: track_width = ", setup.track_width)
+		print("DEBUG: wheel_base = ", setup.wheel_base)
+		print("DEBUG: box_size = ", dyn_body_col.shape.size if dyn_body_col and dyn_body_col.shape is BoxShape3D else "N/A")
+		print("DEBUG: box_pos = ", dyn_body_col.position if dyn_body_col else "N/A")
 
 	# Dynamically build wheels at startup
 	var use_shapecast = true
@@ -586,7 +624,7 @@ func _physics_process(delta: float) -> void:
 	var is_airborne = false
 	if get_contact_count() == 0:
 		var space_state = get_world_3d().direct_space_state
-		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 200.0)
+		var query = PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 1.0, global_position + Vector3.DOWN * 200.0)
 		query.exclude = [self.get_rid()]
 		# Only check Layer 1 (Track) and Layer 9 (256, Gap AI Floor)
 		query.collision_mask = 1 | 256
@@ -864,8 +902,10 @@ func _physics_process(delta: float) -> void:
 		var r = radius_front if i < 2 else radius_rear
 		w.wheel_radius = r
 		if w.visual_wheel and is_instance_valid(w.visual_wheel):
-			var scale_f = r / 0.5
-			w.visual_wheel.scale = Vector3(scale_f, scale_f, scale_f)
+			var base_r = default_radius_front if i < 2 else default_radius_rear
+			if base_r > 0.001:
+				var scale_f = r / base_r
+				w.visual_wheel.scale = Vector3(scale_f, scale_f, scale_f)
 			
 		w.z_brake_traction = brake_force_value * 0.002
 		w.is_motor = (i >= 2) # Strict RWD realistic physics
@@ -1203,6 +1243,7 @@ func _setup_nitro_flames() -> void:
 		var current = to_check.pop_back()
 		if current.has_method("initialize_setup"):
 			setup = current
+			setup.initialize_setup()
 			break
 		for child in current.get_children():
 			to_check.append(child)
