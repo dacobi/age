@@ -1,5 +1,5 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1789475202
+::res://::1789571525
 aga.gdextension::GDExtension::6091002112854102600::1787220233::0::1::::<><><>0<>0<><>::
 ai_brain_driver.gd::GDScript::6401822491950000156::1788091464::0::1::::<>Node<><>0<>0<><>::
 ai_driver.gd::GDScript::7146605027880264044::1788091464::0::1::::<>Node<><>0<>0<><>::
@@ -25,7 +25,7 @@ carbug.jpeg::CompressedTexture2D::6152551012890319146::1789423654::1789423714::1
 car_editor.gd::GDScript::3932928870150902290::1788772765::0::1::::<>Node3D<><>0<>0<><>::
 car_editor.tscn::PackedScene::162510093732945::1788600488::0::1::::<><><>0<>0<><>::res://editor_camera.gd<>res://car_editor.gd
 car_editor_temp.json::JSON::-1::1788864419::0::1::::<><><>0<>0<><>::
-car_stingray.tscn::PackedScene::1256804781955215757::1789474379::0::1::::<><><>0<>0<><>::uid://chlefp6k1yn64::::res://models/corvette_c7_stingray/textures/Corvette_logo_Diffuse.png<>uid://efg7vn7v0a8s::::res://models/corvette_c7_stingray/textures/Corvette_logo_Metallic.png<>uid://dlg3dcy4wplgu::::res://models/corvette_c7_stingray/textures/Pilot_Sport_4s_AO.png<>uid://cqcdfa4pxi38::::res://models/corvette_c7_stingray/textures/Pilot_Sport_4s_Bump.png<>uid://drrn4ndldayl0::::res://setup_car.gd
+car_stingray.tscn::PackedScene::1256804781955215757::1789475253::0::1::::<><><>0<>0<><>::uid://chlefp6k1yn64::::res://models/corvette_c7_stingray/textures/Corvette_logo_Diffuse.png<>uid://efg7vn7v0a8s::::res://models/corvette_c7_stingray/textures/Corvette_logo_Metallic.png<>uid://dlg3dcy4wplgu::::res://models/corvette_c7_stingray/textures/Pilot_Sport_4s_AO.png<>uid://cqcdfa4pxi38::::res://models/corvette_c7_stingray/textures/Pilot_Sport_4s_Bump.png<>uid://drrn4ndldayl0::::res://setup_car.gd
 catish.png::CompressedTexture2D::543576244255305766::1787220216::1787220216::1::::<><><>0<>0<>752333229254dc15d9acdd4fc22905d3<>res://.godot/imported/catish.png-82ff36997a4f2c26f35649227cfb895d.ctex::
 check_csg.gd::GDScript::277181335114592114::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 check_csg_doc.gd::GDScript::5420295394421260981::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
@@ -46,6 +46,8 @@ debug_radius.gd::GDScript::343608582294519424::1789469245::0::1::::<>SceneTree<>
 debug_tilt_sign.gd::GDScript::4348035143850770799::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 debug_torsion_cancel.gd::GDScript::6168311688212538230::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 debug_track.gd::GDScript::8103929215907578147::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
+docallismeonstreet.otf::FontFile::8879406085153885949::1789570517::1789571527::1::::<><><>0<>0<>ad2654173d575843a9a999f0bd904846<>res://.godot/imported/docallismeonstreet.otf-300bc76d931f03a438d7f63f6f98ce19.fontdata::
+dostreet.ttf::FontFile::3994314230207390120::1789569627::1789570233::1::::<><><>0<>0<>6fd03d50c6515d9ceba0a1525c5c6803<>res://.godot/imported/dostreet.ttf-7c94208861a7e3261603a16e4203c12b.fontdata::
 dude.png::CompressedTexture2D::4104455158570452839::1787220216::1787220216::1::::<><><>0<>0<>3f796cb42eba8fa14aa4907fbf15cbdf<>res://.godot/imported/dude.png-fb4e14cb83845e5914adbc9d4566a289.ctex::
 dudeemoji.png::CompressedTexture2D::1365623087853087634::1787220216::1787220216::1::::<><><>0<>0<>19147954001c7b6998fe5b5f68981e0a<>res://.godot/imported/dudeemoji.png-29c43fe6e7f95fe5bc7c9232de61f4fb.ctex::
 dump.gd::GDScript::9040609474543219967::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
@@ -64,6 +66,8 @@ find_sun.gd::GDScript::906658335234116990::1788091464::0::1::::<>SceneTree<><>0<
 firee.gd::GDScript::4604120676218911074::1788091464::0::1::::<>Area3D<><>0<>0<><>::
 firep.gd::GDScript::8869931329999029192::1788091464::0::1::::<>Area3D<><>0<>0<><>::
 fix_csg.gd::GDScript::8747060405065922456::1788258653::0::1::::<>SceneTree<><>0<>0<><>::
+fix_scene2.gd::GDScript::6016365766666890762::1789566437::0::1::::<>SceneTree<><>0<>0<><>::
+fix_scene.gd::GDScript::791268089978619329::1789566052::0::1::::<>SceneTree<><>0<>0<><>::
 fix_sun.gd::GDScript::6138805039048053110::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 fix_twist.gd::GDScript::2381284517334499126::1788258511::0::1::::<>SceneTree<><>0<>0<><>::
 game_icon.png::CompressedTexture2D::5510586427982334011::1787220216::1787220216::1::::<><><>0<>0<>7316585c9454a1e3b74c782363a126bc<>res://.godot/imported/game_icon.png-389b50e564fffef90defc972f4d00b12.ctex::
@@ -105,6 +109,9 @@ megaracer_car_model.tscn::PackedScene::-1::1787220216::0::1::::<><><>0<>0<><>::r
 megaracer_car_physics.gd::GDScript::5309311054126941497::1788091464::0::1::::<>CharacterBody3D<><>0<>0<><>::
 megaracer_car_rigid.gd::GDScript::5133287149374206061::1788091464::0::1::::<>RigidBody3D<><>0<>0<><>::
 megaracer_car_rigid.tscn::PackedScene::-1::1787220216::0::1::::<><><>0<>0<><>::res://megaracer_car_rigid.gd
+neonrun.jpg::CompressedTexture2D::2753377566022185363::1789563164::1789564798::1::::<><><>0<>0<>01fd03d79b9f31228bd07decdafc5d1a<>res://.godot/imported/neonrun.jpg-a48eaa1434369a1abe00ed4043d8d809.ctex::
+neonrun.png::CompressedTexture2D::2757943157792799779::1789563666::1789566149::1::::<><><>0<>0<>eaa05a181a7514559fafa4cde0abbef3<>res://.godot/imported/neonrun.png-4fd401c68328791f9048329feae8cf0d.ctex::
+neonrun.tscn::PackedScene::-1::1789566438::0::1::::<><><>0<>0<><>::res://neonrun.png
 new.gd::GDScript::6565269190489862691::1788091464::0::1::::<>RigidBody3D<><>0<>0<><>::
 new_ship.png::CompressedTexture2D::8061838859526042999::1787220216::1787220216::1::::<><><>0<>0<>449c5feda5e8e87e819a5525e5c009ab<>res://.godot/imported/new_ship.png-8df8dd1454b1722571fd4b1343881d88.ctex::
 nitro_powerup.gd::GDScript::2809563668667521429::1788091464::0::1::::<>StaticBody3D<><>0<>0<><>::
@@ -191,6 +198,8 @@ test_fmod_args.gd::GDScript::1955564121557821904::1788091464::0::1::::<>SceneTre
 test_fmod_inst.gd::GDScript::3599673948120045647::1788091464::0::1::::<>Node3D<><>0<>0<><>::
 test_fmod_inst.tscn::PackedScene::153480067043::1787220216::0::1::::<><><>0<>0<><>::res://test_fmod_inst.gd
 test_fmod_methods.gd::GDScript::753985142629263798::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
+test_font_in_godot.gd::GDScript::67655537816082327::1789570152::0::1::::<>SceneTree<><>0<>0<><>::
+test_fv.gd::GDScript::5629456623184465399::1789571201::0::1::::<>SceneTree<><>0<>0<><>::
 test_helix2.gd::GDScript::2851327471813366564::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_helix3.gd::GDScript::1501403528258672958::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_helix4.gd::GDScript::3425192390499544532::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
@@ -215,6 +224,7 @@ test_message.md::TextFile::-1::1789432416::0::1::::<><><>0<>0<><>::
 test_min_y.gd::GDScript::5268770032164642559::1788101046::0::1::::<>SceneTree<><>0<>0<><>::
 test_mount.gd::GDScript::4687457459051739115::1789431925::0::1::::<>SceneTree<><>0<>0<><>::
 test_mounts.gd::GDScript::5373883202954632992::1789429172::0::1::::<>SceneTree<><>0<>0<><>::
+test_neonrun.gd::GDScript::2191861921789198184::1789565251::0::1::::<>SceneTree<><>0<>0<><>::
 test_new2.log::TextFile::-1::1788684680::0::1::::<><><>0<>0<><>::
 test_new3.log::TextFile::-1::1788684697::0::1::::<><><>0<>0<><>::
 test_new4.log::TextFile::-1::1788684717::0::1::::<><><>0<>0<><>::
@@ -236,6 +246,7 @@ test_new19.log::TextFile::-1::1788687788::0::1::::<><><>0<>0<><>::
 test_new20.log::TextFile::-1::1788688997::0::1::::<><><>0<>0<><>::
 test_new21.log::TextFile::-1::1788690273::0::1::::<><><>0<>0<><>::
 test_new.log::TextFile::-1::1788684643::0::1::::<><><>0<>0<><>::
+test_opentype.gd::GDScript::2758022935104873310::1789571172::0::1::::<>SceneTree<><>0<>0<><>::
 test_parse.gd::GDScript::7368067873877116728::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_path_to.gd::GDScript::7873610396630059082::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_poly.gd::GDScript::2026556358836480850::1788166649::0::1::::<>SceneTree<><>0<>0<><>::
@@ -510,7 +521,7 @@ test_track3.json::JSON::-1::1788257582::0::1::::<><><>0<>0<><>::
 test_track4.json::JSON::-1::1788257582::0::1::::<><><>0<>0<><>::
 ::res://Audio/::1787220233
 ::res://Audio/Desktop/::1787220233
-::res://bin/::1789427517
+::res://bin/::1789571471
 ::res://fmoddata/::1787220233
 ::res://fmoddata/CarExamples/::1787332683
 ::res://fmoddata/CarExamples/Assets/::1787252632
@@ -1739,5 +1750,5 @@ milky_way_with_stars.hdr::CompressedTexture2D::6100825906591027145::1787302293::
 rogland_clear_night.hdr::CompressedTexture2D::491127653546223955::1787302627::1787304666::1::::<><><>0<>0<>4df7eac01b8d0a77e328edb377222d5c<>res://.godot/imported/rogland_clear_night.hdr-d7a6250307ff5db250a284c3e02e4ce9.bptc.ctex::
 sky1.hdr::CompressedTexture2D::7872460534491457551::1787253217::1787653954::1::::<><><>0<>0<>a38dbde9b0195b0b6406cacbe723a137<>res://.godot/imported/sky1.hdr-9fb5731395f21a88b93c71db588f64cc.bptc.ctex::
 sky2.hdr::CompressedTexture2D::7259031161061506522::1787253443::1787653962::1::::<><><>0<>0<>a396c5c03454d7015ce56fe0cbc89081<>res://.godot/imported/sky2.hdr-1a1c73b0476fadcb0b7cd32d7a11357d.bptc.ctex::
-::res://src/::1789427516
+::res://src/::1789571471
 ::res://tmp/::1788721963
