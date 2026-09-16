@@ -1,5 +1,9 @@
 #include <algorithm>
 #include <godot_cpp/classes/rich_text_label.hpp>
+#include <godot_cpp/classes/font.hpp>
+#include <godot_cpp/classes/font_variation.hpp>
+#include <godot_cpp/classes/text_server_manager.hpp>
+#include <godot_cpp/classes/text_server.hpp>
 #include <godot_cpp/classes/h_box_container.hpp>
 #include <godot_cpp/classes/panel_container.hpp>
 #include <godot_cpp/classes/style_box_flat.hpp>
@@ -40,6 +44,12 @@ using namespace godot;
 void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
     if (interactive_bouncers.find(control_id) != interactive_bouncers.end()) {
         InteractiveData& idata = interactive_bouncers[control_id];
+        if (idata.is_graffity && idata.label_id != 0) {
+            RichTextLabel* rtl = Object::cast_to<RichTextLabel>(ObjectDB::get_instance(idata.label_id));
+            if (rtl) {
+                rtl->add_theme_color_override("font_outline_color", idata.graffity_hover);
+            }
+        }
         if (idata.has_hover) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
             if (container) {
@@ -58,6 +68,12 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
 void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
     if (interactive_bouncers.find(control_id) != interactive_bouncers.end()) {
         InteractiveData& idata = interactive_bouncers[control_id];
+        if (idata.is_graffity && idata.label_id != 0) {
+            RichTextLabel* rtl = Object::cast_to<RichTextLabel>(ObjectDB::get_instance(idata.label_id));
+            if (rtl) {
+                rtl->add_theme_color_override("font_outline_color", idata.graffity_outer);
+            }
+        }
         if (idata.has_hover) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
             if (container) {
@@ -303,6 +319,11 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     
     bool has_ttl = false;
     float ttl_val = 0.0f;
+    
+    bool is_graffity = false;
+    Color graffity_inner;
+    Color graffity_outer;
+    Color graffity_hover;
 
     int current_idx = 0;
     while (current_idx < s.length()) {
@@ -373,6 +394,14 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
             PackedStringArray rgb = tag.substr(6).split(",");
             if (rgb.size() >= 3) {
                 hover_color = Color(rgb[0].to_float() / 255.0f, rgb[1].to_float() / 255.0f, rgb[2].to_float() / 255.0f);
+            }
+        } else if (tag.begins_with("graffity:") || tag.begins_with("graffiti:")) {
+            PackedStringArray p = tag.substr(9).split(",");
+            if (p.size() >= 9) {
+                is_graffity = true;
+                graffity_inner = Color(p[0].to_float() / 255.0f, p[1].to_float() / 255.0f, p[2].to_float() / 255.0f);
+                graffity_outer = Color(p[3].to_float() / 255.0f, p[4].to_float() / 255.0f, p[5].to_float() / 255.0f);
+                graffity_hover = Color(p[6].to_float() / 255.0f, p[7].to_float() / 255.0f, p[8].to_float() / 255.0f);
             }
         } else if (tag.begins_with("clicked:")) {
             clicked_script = tag.substr(8);
@@ -509,6 +538,18 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         label->add_theme_font_size_override("normal_font_size", MAX(1, (int)(64.0 * font_size)));
         label->set_autowrap_mode(TextServer::AUTOWRAP_OFF);
         label->set_fit_content(true);
+        if (is_graffity) {
+            Ref<Font> custom_font = ResourceLoader::get_singleton()->load("res://docallismeonstreet.otf");
+            if (custom_font.is_valid()) {
+                label->add_theme_font_override("normal_font", custom_font);
+            }
+            // Prepend a transparent period to fool the font into middle-of-word alternates
+            text = "[color=#00000000].[/color]" + text;
+            label->set_text(text);
+            label->add_theme_color_override("default_color", graffity_inner);
+            label->add_theme_color_override("font_outline_color", graffity_outer);
+            label->add_theme_constant_override("outline_size", 12);
+        }
         
         if (syntax.find("[global:") != -1) {
             DynamicLabel dl;
@@ -632,7 +673,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         }
     }
     
-    if (interactive_control && (has_hover || !clicked_script.is_empty())) {
+    if (interactive_control && (has_hover || !clicked_script.is_empty() || is_graffity)) {
         interactive_control->set_mouse_filter(Control::MOUSE_FILTER_STOP);
         uint64_t ctrl_id = interactive_control->get_instance_id();
         
@@ -642,6 +683,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         idata.has_hover = has_hover;
         idata.clicked_script = clicked_script;
         idata.container_id = container->get_instance_id();
+        idata.is_graffity = is_graffity;
+        idata.graffity_outer = graffity_outer;
+        idata.graffity_hover = graffity_hover;
+        idata.label_id = label ? label->get_instance_id() : 0;
         interactive_bouncers[ctrl_id] = idata;
         
         interactive_control->connect("mouse_entered", Callable(this, "_on_bouncer_mouse_entered").bind(ctrl_id));

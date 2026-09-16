@@ -68,6 +68,11 @@ private:
         bool has_hover = false;
         String clicked_script;
         uint64_t container_id = 0;
+        
+        bool is_graffity = false;
+        Color graffity_outer;
+        Color graffity_hover;
+        uint64_t label_id = 0;
     };
     struct BouncerPhysics {
         bool enabled = false;

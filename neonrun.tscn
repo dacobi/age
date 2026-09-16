@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://neonrun.png" id="1_cmsnd"]
+
+[node name="NeonRunBg" type="TextureRect" unique_id=552743697]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("1_cmsnd")
+expand_mode = 1
+stretch_mode = 6
