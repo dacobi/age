@@ -1,3 +1,6 @@
+#include <godot_cpp/classes/audio_stream_player.hpp>
+#include <godot_cpp/classes/audio_stream_wav.hpp>
+#include <godot_cpp/classes/input_event_key.hpp>
 #include <algorithm>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/font.hpp>
@@ -41,23 +44,41 @@
 
 using namespace godot;
 
-void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
+void LuaManager::_play_ui_sound(const String& path) {
+    AudioStreamPlayer* player = nullptr;
+    if (ui_audio_player_id != 0) {
+        Object* obj = ObjectDB::get_instance(ui_audio_player_id);
+        if (obj) player = Object::cast_to<AudioStreamPlayer>(obj);
+    }
+    if (!player) {
+        player = memnew(AudioStreamPlayer);
+        add_child(player);
+        ui_audio_player_id = player->get_instance_id();
+    }
+    Ref<AudioStream> stream = AudioStreamWAV::load_from_file(path);
+    if (stream.is_valid()) {
+        player->set_stream(stream);
+        player->play();
+    }
+}
+
+void LuaManager::_set_bouncer_hover(uint64_t control_id, bool is_hovered) {
     if (interactive_bouncers.find(control_id) != interactive_bouncers.end()) {
         InteractiveData& idata = interactive_bouncers[control_id];
         if (idata.is_graffity && idata.label_id != 0) {
             RichTextLabel* rtl = Object::cast_to<RichTextLabel>(ObjectDB::get_instance(idata.label_id));
             if (rtl) {
-                rtl->add_theme_color_override("font_outline_color", idata.graffity_hover);
+                rtl->add_theme_color_override("font_outline_color", is_hovered ? idata.graffity_hover : idata.graffity_outer);
             }
         }
         if (idata.has_hover) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
             if (container) {
-                container->set_modulate(idata.hover_color);
+                container->set_modulate(is_hovered ? idata.hover_color : idata.normal_color);
                 for (int i = 0; i < container->get_child_count(); ++i) {
                     if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                        vp->set_process_mode(Node::PROCESS_MODE_INHERIT);
-                        vp->set_volume_db(0.0f);
+                        vp->set_process_mode(is_hovered ? Node::PROCESS_MODE_INHERIT : Node::PROCESS_MODE_DISABLED);
+                        vp->set_volume_db(is_hovered ? 0.0f : -80.0f);
                     }
                 }
             }
@@ -65,28 +86,27 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
     }
 }
 
-void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
-    if (interactive_bouncers.find(control_id) != interactive_bouncers.end()) {
-        InteractiveData& idata = interactive_bouncers[control_id];
-        if (idata.is_graffity && idata.label_id != 0) {
-            RichTextLabel* rtl = Object::cast_to<RichTextLabel>(ObjectDB::get_instance(idata.label_id));
-            if (rtl) {
-                rtl->add_theme_color_override("font_outline_color", idata.graffity_outer);
-            }
-        }
-        if (idata.has_hover) {
-            Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
-            if (container) {
-                container->set_modulate(idata.normal_color);
-                for (int i = 0; i < container->get_child_count(); ++i) {
-                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                        vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
-                        vp->set_volume_db(-80.0f);
-                    }
+void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
+    _play_ui_sound("res://menu_click.wav");
+    
+    if (active_menu_index >= 0 && active_menu_index < menus.size()) {
+        MenuData& m = menus[active_menu_index];
+        for (int i = 0; i < (int)m.items.size(); i++) {
+            if (m.items[i] == control_id) {
+                if (m.selected_index != i && m.selected_index >= 0 && m.selected_index < (int)m.items.size()) {
+                    _set_bouncer_hover(m.items[m.selected_index], false);
                 }
+                m.selected_index = i;
+                break;
             }
         }
     }
+    
+    _set_bouncer_hover(control_id, true);
+}
+
+void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
+    _set_bouncer_hover(control_id, false);
 }
 
 void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id) {
@@ -95,7 +115,13 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
         Ref<InputEventMouseButton> mb = event;
         if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == MouseButton::MOUSE_BUTTON_LEFT) {
             if (!idata.clicked_script.is_empty()) {
-                call_deferred("_clear_and_run_deferred", idata.clicked_script);
+                if (idata.clicked_script.ends_with(".lua")) {
+                    call_deferred("_clear_and_run_deferred", idata.clicked_script);
+                } else {
+                    if (lua_engine) {
+                        lua_engine->triggerCallback(idata.clicked_script.utf8().get_data());
+                    }
+                }
             }
         }
     }
@@ -180,6 +206,8 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
     ClassDB::bind_method(D_METHOD("_on_bouncer_gui_input", "event", "control_id"), &LuaManager::_on_bouncer_gui_input);
     ClassDB::bind_method(D_METHOD("_on_addhscore_submitted", "text", "score", "level", "bouncer_id"), &LuaManager::_on_addhscore_submitted);
+    ClassDB::bind_method(D_METHOD("_begin_menu_deferred"), &LuaManager::_begin_menu_deferred);
+    ClassDB::bind_method(D_METHOD("_end_menu_deferred"), &LuaManager::_end_menu_deferred);
     ClassDB::bind_method(D_METHOD("_add_bouncer_deferred", "syntax"), &LuaManager::_add_bouncer_deferred);
     ClassDB::bind_method(D_METHOD("_del_bouncer_deferred", "index"), &LuaManager::_del_bouncer_deferred);
     ClassDB::bind_method(D_METHOD("_set_bouncer_param_deferred", "index", "name", "value"), &LuaManager::_set_bouncer_param_deferred);
@@ -281,6 +309,38 @@ LuaManager::~LuaManager() {
 #include <godot_cpp/classes/color_rect.hpp>
 #include <algorithm>
 #include <thread>
+
+
+void LuaManager::_begin_menu_deferred() {
+    is_building_menu = true;
+    MenuData m;
+    menus.push_back(m);
+    active_menu_index = menus.size() - 1;
+}
+
+void LuaManager::_end_menu_deferred() {
+    is_building_menu = false;
+    if (active_menu_index >= 0 && active_menu_index < menus.size()) {
+        MenuData& m = menus[active_menu_index];
+        if (m.items.size() > 0) {
+            float min_y = 1e9, max_y = -1e9;
+            for (uint64_t ctrl_id : m.items) {
+                if (interactive_bouncers.find(ctrl_id) != interactive_bouncers.end()) {
+                    uint64_t cont_id = interactive_bouncers[ctrl_id].container_id;
+                    Node2D* n = Object::cast_to<Node2D>(ObjectDB::get_instance(cont_id));
+                    if (n) {
+                        float y = n->get_position().y;
+                        if (y < min_y) min_y = y;
+                        if (y > max_y) max_y = y;
+                    }
+                }
+            }
+            m.is_horizontal = (max_y - min_y) < 10.0f;
+            m.selected_index = 0;
+            _set_bouncer_hover(m.items[0], true);
+        }
+    }
+}
 
 void LuaManager::_add_bouncer_deferred(const String& syntax) {
     String s = syntax;
@@ -692,6 +752,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         interactive_control->connect("mouse_entered", Callable(this, "_on_bouncer_mouse_entered").bind(ctrl_id));
         interactive_control->connect("mouse_exited", Callable(this, "_on_bouncer_mouse_exited").bind(ctrl_id));
         interactive_control->connect("gui_input", Callable(this, "_on_bouncer_gui_input").bind(ctrl_id));
+        
+        if (is_building_menu && active_menu_index >= 0) {
+            menus[active_menu_index].items.push_back(ctrl_id);
+        }
     }
     
     target_layer->add_child(container);
@@ -1441,6 +1505,7 @@ void LuaManager::_maximize_window_deferred() {
 void LuaManager::_ready() {
     UtilityFunctions::print("LuaManager is ready!");
     set_process(true);
+    set_process_input(true);
     
     godot::AudioServer* as = godot::AudioServer::get_singleton();
     int master_idx = as->get_bus_index("Master");
@@ -1647,6 +1712,11 @@ void LuaManager::_ready() {
         this->call_deferred("_skip_to_playlist_track", idx);
     };
 
+    lua_engine->setMenuCallbacks(
+        [this]() { call_deferred("_begin_menu_deferred"); },
+        [this]() { call_deferred("_end_menu_deferred"); }
+    );
+    
     // Start script if init.lua exists
     if (godot::FileAccess::file_exists("res://init.lua")) {
         lua_engine->runScript("init.lua");
@@ -1659,6 +1729,48 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
         if (motion) {
             Vector2 rel = motion->get_relative();
             lua_engine->setMouseMotion(rel.x, rel.y);
+        }
+    }
+    
+    InputEventKey* key_event = Object::cast_to<InputEventKey>(event.ptr());
+    if (key_event && key_event->is_pressed() && !key_event->is_echo()) {
+        if (active_menu_index >= 0 && active_menu_index < menus.size()) {
+            MenuData& m = menus[active_menu_index];
+            if (!m.items.empty()) {
+                Key k = key_event->get_keycode();
+                int old_idx = m.selected_index;
+                bool handled = false;
+
+                int new_idx = m.selected_index;
+                if (m.is_horizontal) {
+                    if (k == Key::KEY_LEFT) { new_idx--; handled = true; }
+                    else if (k == Key::KEY_RIGHT) { new_idx++; handled = true; }
+                } else {
+                    if (k == Key::KEY_UP) { new_idx--; handled = true; }
+                    else if (k == Key::KEY_DOWN) { new_idx++; handled = true; }
+                }
+
+                if (handled) {
+                    if (new_idx < 0) new_idx = m.items.size() - 1;
+                    if (new_idx >= (int)m.items.size()) new_idx = 0;
+                    
+                    _on_bouncer_mouse_entered(m.items[new_idx]);
+                }
+                
+                if (k == Key::KEY_ENTER || k == Key::KEY_SPACE) {
+                    uint64_t ctrl_id = m.items[m.selected_index];
+                    if (interactive_bouncers.find(ctrl_id) != interactive_bouncers.end()) {
+                        String script = interactive_bouncers[ctrl_id].clicked_script;
+                        if (!script.is_empty()) {
+                            if (script.ends_with(".lua")) {
+                                call_deferred("_clear_and_run_deferred", script);
+                            } else {
+                                if (lua_engine) lua_engine->triggerCallback(script.utf8().get_data());
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
