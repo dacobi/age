@@ -71,6 +71,22 @@ private:
     std::vector<MenuData> menus;
     int active_menu_index = -1;
     bool is_building_menu = false;
+    
+    struct SubMenuData {
+        String handle;
+        std::vector<uint64_t> all_bouncers;
+        int menu_index = -1;
+        bool is_active = false;
+    };
+    std::map<String, SubMenuData> submenus;
+    String active_building_submenu;
+    int main_menu_index = -1;
+    
+    void _create_submenu_deferred(String handle);
+    void _begin_submenu_deferred(String handle);
+    void _end_submenu_deferred(String handle);
+    void _enable_submenu_deferred(String handle);
+    void _disable_submenu_deferred(String handle);
 
     struct InteractiveData {
         Color normal_color;
