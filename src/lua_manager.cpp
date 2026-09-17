@@ -412,7 +412,30 @@ void LuaManager::_enable_submenu_deferred(String handle) {
         sm.is_active = true;
         for (uint64_t id : sm.all_bouncers) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(id));
-            if (container) container->show();
+            if (container) {
+                container->show();
+                uint64_t ctrl_id = 0;
+                for (auto& pair : interactive_bouncers) {
+                    if (pair.second.container_id == id) {
+                        ctrl_id = pair.first;
+                        break;
+                    }
+                }
+                if (ctrl_id != 0) {
+                    VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(ObjectDB::get_instance(ctrl_id));
+                    if (vp) {
+                        vp->set_process_mode(Node::PROCESS_MODE_INHERIT);
+                        vp->set_volume_db(0.0f);
+                    }
+                } else {
+                    for (int i = 0; i < container->get_child_count(); ++i) {
+                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
+                            vp->set_process_mode(Node::PROCESS_MODE_INHERIT);
+                            vp->set_volume_db(0.0f);
+                        }
+                    }
+                }
+            }
         }
         if (sm.menu_index >= 0) {
             active_menu_index = sm.menu_index;
@@ -433,7 +456,30 @@ void LuaManager::_disable_submenu_deferred(String handle) {
         sm.is_active = false;
         for (uint64_t id : sm.all_bouncers) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(id));
-            if (container) container->hide();
+            if (container) {
+                container->hide();
+                uint64_t ctrl_id = 0;
+                for (auto& pair : interactive_bouncers) {
+                    if (pair.second.container_id == id) {
+                        ctrl_id = pair.first;
+                        break;
+                    }
+                }
+                if (ctrl_id != 0) {
+                    VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(ObjectDB::get_instance(ctrl_id));
+                    if (vp) {
+                        vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
+                        vp->set_volume_db(-80.0f);
+                    }
+                } else {
+                    for (int i = 0; i < container->get_child_count(); ++i) {
+                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
+                            vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
+                            vp->set_volume_db(-80.0f);
+                        }
+                    }
+                }
+            }
         }
         if (sm.menu_index >= 0 && active_menu_index == sm.menu_index) {
             active_menu_index = main_menu_index;
@@ -892,6 +938,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     if (!active_building_submenu.is_empty()) {
         submenus[active_building_submenu].all_bouncers.push_back(container->get_instance_id());
         container->hide();
+        if (video_player) {
+            video_player->set_process_mode(Node::PROCESS_MODE_DISABLED);
+            video_player->set_volume_db(-80.0f);
+        }
     }
     
     if (has_phys || has_linear || has_ttl) {
