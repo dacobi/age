@@ -119,6 +119,31 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
     bool runScript(const std::string& filename);
     void runOneShotScript(const std::string& filename);
     void stop();
+    
+    // Menu callbacks
+    using BeginMenuFunc = std::function<void()>;
+    using EndMenuFunc = std::function<void()>;
+    void setMenuCallbacks(BeginMenuFunc beginFunc, EndMenuFunc endFunc) {
+        beginMenuFunc = beginFunc;
+        endMenuFunc = endFunc;
+    }
+    BeginMenuFunc beginMenuFunc;
+    EndMenuFunc endMenuFunc;
+
+    using StringCallback = std::function<void(const std::string&)>;
+    StringCallback createSubMenuFunc;
+    StringCallback beginSubMenuFunc;
+    StringCallback endSubMenuFunc;
+    StringCallback enableSubMenuFunc;
+    StringCallback disableSubMenuFunc;
+
+    void setSubMenuCallbacks(StringCallback createFunc, StringCallback beginFunc, StringCallback endFunc, StringCallback enableFunc, StringCallback disableFunc) {
+        createSubMenuFunc = createFunc;
+        beginSubMenuFunc = beginFunc;
+        endSubMenuFunc = endFunc;
+        enableSubMenuFunc = enableFunc;
+        disableSubMenuFunc = disableFunc;
+    }
     lua_State* getL() const { return L; }
 
     void triggerCallback(const std::string& name);
@@ -146,6 +171,13 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
 private:
     static int lua_addBouncer(lua_State* L);
     static int lua_delBouncer(lua_State* L);
+    static int lua_ageBeginMenu(lua_State* L);
+    static int lua_ageEndMenu(lua_State* L);
+    static int lua_ageCreateSubMenu(lua_State* L);
+    static int lua_ageBeginSubMenu(lua_State* L);
+    static int lua_ageEndSubMenu(lua_State* L);
+    static int lua_ageEnableSubMenu(lua_State* L);
+    static int lua_ageDisableSubMenu(lua_State* L);
     static int lua_setParam(lua_State* L);
     static int lua_setBG(lua_State* L);
     static int lua_godotLoadScene(lua_State* L);

@@ -184,6 +184,13 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
 
     reg("addBouncer", lua_addBouncer);
     reg("delBouncer", lua_delBouncer);
+    reg("ageBeginMenu", lua_ageBeginMenu);
+    reg("ageEndMenu", lua_ageEndMenu);
+    reg("ageCreateSubMenu", lua_ageCreateSubMenu);
+    reg("ageBeginSubMenu", lua_ageBeginSubMenu);
+    reg("ageEndSubMenu", lua_ageEndSubMenu);
+    reg("ageEnableSubMenu", lua_ageEnableSubMenu);
+    reg("ageDisableSubMenu", lua_ageDisableSubMenu);
     reg("setParam", lua_setParam);
     reg("setBG", lua_setBG);
     reg("godotLoadScene", lua_godotLoadScene);
@@ -528,6 +535,58 @@ int LuaScripting::lua_getGlobalFloat(lua_State* L) {
         float val = self->getGlobalFloat(lua_tostring(L, 1));
         lua_pushnumber(L, val);
         return 1;
+    }
+    return 0;
+}
+
+int LuaScripting::lua_ageBeginMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->beginMenuFunc) {
+        self->beginMenuFunc();
+    }
+    return 0;
+}
+
+int LuaScripting::lua_ageEndMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->endMenuFunc) {
+        self->endMenuFunc();
+    }
+    return 0;
+}
+
+int LuaScripting::lua_ageCreateSubMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->createSubMenuFunc && lua_isstring(L, 1)) {
+        self->createSubMenuFunc(lua_tostring(L, 1));
+    }
+    return 0;
+}
+int LuaScripting::lua_ageBeginSubMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->beginSubMenuFunc && lua_isstring(L, 1)) {
+        self->beginSubMenuFunc(lua_tostring(L, 1));
+    }
+    return 0;
+}
+int LuaScripting::lua_ageEndSubMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->endSubMenuFunc && lua_isstring(L, 1)) {
+        self->endSubMenuFunc(lua_tostring(L, 1));
+    }
+    return 0;
+}
+int LuaScripting::lua_ageEnableSubMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->enableSubMenuFunc && lua_isstring(L, 1)) {
+        self->enableSubMenuFunc(lua_tostring(L, 1));
+    }
+    return 0;
+}
+int LuaScripting::lua_ageDisableSubMenu(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->disableSubMenuFunc && lua_isstring(L, 1)) {
+        self->disableSubMenuFunc(lua_tostring(L, 1));
     }
     return 0;
 }

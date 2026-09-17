@@ -89,6 +89,23 @@ void LuaManager::_set_bouncer_hover(uint64_t control_id, bool is_hovered) {
 void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
     _play_ui_sound("res://menu_click.wav");
     
+    bool is_main_menu_item = false;
+    if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
+        for (uint64_t id : menus[main_menu_index].items) {
+            if (id == control_id) {
+                is_main_menu_item = true;
+                break;
+            }
+        }
+    }
+    if (is_main_menu_item && active_menu_index != main_menu_index) {
+        for (auto& pair : submenus) {
+            if (pair.second.is_active) {
+                _disable_submenu_deferred(pair.first);
+            }
+        }
+    }
+    
     if (active_menu_index >= 0 && active_menu_index < menus.size()) {
         MenuData& m = menus[active_menu_index];
         for (int i = 0; i < (int)m.items.size(); i++) {
@@ -208,6 +225,11 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_on_addhscore_submitted", "text", "score", "level", "bouncer_id"), &LuaManager::_on_addhscore_submitted);
     ClassDB::bind_method(D_METHOD("_begin_menu_deferred"), &LuaManager::_begin_menu_deferred);
     ClassDB::bind_method(D_METHOD("_end_menu_deferred"), &LuaManager::_end_menu_deferred);
+    ClassDB::bind_method(D_METHOD("_create_submenu_deferred", "handle"), &LuaManager::_create_submenu_deferred);
+    ClassDB::bind_method(D_METHOD("_begin_submenu_deferred", "handle"), &LuaManager::_begin_submenu_deferred);
+    ClassDB::bind_method(D_METHOD("_end_submenu_deferred", "handle"), &LuaManager::_end_submenu_deferred);
+    ClassDB::bind_method(D_METHOD("_enable_submenu_deferred", "handle"), &LuaManager::_enable_submenu_deferred);
+    ClassDB::bind_method(D_METHOD("_disable_submenu_deferred", "handle"), &LuaManager::_disable_submenu_deferred);
     ClassDB::bind_method(D_METHOD("_add_bouncer_deferred", "syntax"), &LuaManager::_add_bouncer_deferred);
     ClassDB::bind_method(D_METHOD("_del_bouncer_deferred", "index"), &LuaManager::_del_bouncer_deferred);
     ClassDB::bind_method(D_METHOD("_set_bouncer_param_deferred", "index", "name", "value"), &LuaManager::_set_bouncer_param_deferred);
@@ -316,6 +338,67 @@ void LuaManager::_begin_menu_deferred() {
     MenuData m;
     menus.push_back(m);
     active_menu_index = menus.size() - 1;
+    if (!active_building_submenu.is_empty()) {
+        submenus[active_building_submenu].menu_index = active_menu_index;
+    } else {
+        main_menu_index = active_menu_index;
+    }
+}
+
+void LuaManager::_create_submenu_deferred(String handle) {
+    if (!submenus.count(handle)) {
+        SubMenuData sm;
+        sm.handle = handle;
+        sm.is_active = false;
+        submenus[handle] = sm;
+    }
+}
+
+void LuaManager::_begin_submenu_deferred(String handle) {
+    _create_submenu_deferred(handle); // Ensure it exists
+    active_building_submenu = handle;
+}
+
+void LuaManager::_end_submenu_deferred(String handle) {
+    active_building_submenu = "";
+}
+
+void LuaManager::_enable_submenu_deferred(String handle) {
+    if (submenus.count(handle)) {
+        SubMenuData& sm = submenus[handle];
+        sm.is_active = true;
+        for (uint64_t id : sm.all_bouncers) {
+            Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(id));
+            if (container) container->show();
+        }
+        if (sm.menu_index >= 0) {
+            active_menu_index = sm.menu_index;
+            if (active_menu_index < (int)menus.size() && !menus[active_menu_index].items.empty()) {
+                for (uint64_t id : menus[active_menu_index].items) {
+                    _set_bouncer_hover(id, false);
+                }
+                menus[active_menu_index].selected_index = 0;
+                _set_bouncer_hover(menus[active_menu_index].items[0], true);
+            }
+        }
+    }
+}
+
+void LuaManager::_disable_submenu_deferred(String handle) {
+    if (submenus.count(handle)) {
+        SubMenuData& sm = submenus[handle];
+        sm.is_active = false;
+        for (uint64_t id : sm.all_bouncers) {
+            Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(id));
+            if (container) container->hide();
+        }
+        if (sm.menu_index >= 0 && active_menu_index == sm.menu_index) {
+            active_menu_index = main_menu_index;
+            if (active_menu_index >= 0 && active_menu_index < (int)menus.size() && !menus[active_menu_index].items.empty()) {
+                _set_bouncer_hover(menus[active_menu_index].items[menus[active_menu_index].selected_index], true);
+            }
+        }
+    }
 }
 
 void LuaManager::_end_menu_deferred() {
@@ -763,6 +846,11 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         interactive_control->grab_focus();
     }
     
+    if (!active_building_submenu.is_empty()) {
+        submenus[active_building_submenu].all_bouncers.push_back(container->get_instance_id());
+        container->hide();
+    }
+    
     if (has_phys || has_linear || has_ttl) {
         if (has_phys || has_linear) container->set_position(has_phys ? phys_pos : pos);
         BouncerPhysics bp;
@@ -969,6 +1057,11 @@ void LuaManager::_do_clear_and_run(const String& filename) {
         }
     }
     bouncers.clear();
+    submenus.clear();
+    active_building_submenu = "";
+    main_menu_index = -1;
+    menus.clear();
+    active_menu_index = -1;
     
     for (uint64_t id : loaded_nodes) {
         Object* obj = ObjectDB::get_instance(id);
@@ -1716,6 +1809,13 @@ void LuaManager::_ready() {
         [this]() { call_deferred("_begin_menu_deferred"); },
         [this]() { call_deferred("_end_menu_deferred"); }
     );
+    lua_engine->setSubMenuCallbacks(
+        [this](const std::string& h) { call_deferred("_create_submenu_deferred", String(h.c_str())); },
+        [this](const std::string& h) { call_deferred("_begin_submenu_deferred", String(h.c_str())); },
+        [this](const std::string& h) { call_deferred("_end_submenu_deferred", String(h.c_str())); },
+        [this](const std::string& h) { call_deferred("_enable_submenu_deferred", String(h.c_str())); },
+        [this](const std::string& h) { call_deferred("_disable_submenu_deferred", String(h.c_str())); }
+    );
     
     // Start script if init.lua exists
     if (godot::FileAccess::file_exists("res://init.lua")) {
@@ -1734,6 +1834,36 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
     
     InputEventKey* key_event = Object::cast_to<InputEventKey>(event.ptr());
     if (key_event && key_event->is_pressed() && !key_event->is_echo()) {
+        Key k = key_event->get_keycode();
+        if (k == Key::KEY_ESCAPE) {
+            bool closed_submenu = false;
+            for (auto& pair : submenus) {
+                if (pair.second.is_active) {
+                    call_deferred("_disable_submenu_deferred", pair.first);
+                    closed_submenu = true;
+                }
+            }
+            if (!closed_submenu) {
+                if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
+                    MenuData& main_menu = menus[main_menu_index];
+                    if (!main_menu.items.empty()) {
+                        uint64_t quit_id = main_menu.items.back();
+                        if (interactive_bouncers.find(quit_id) != interactive_bouncers.end()) {
+                            String script = interactive_bouncers[quit_id].clicked_script;
+                            if (!script.is_empty()) {
+                                if (script.ends_with(".lua")) {
+                                    call_deferred("_clear_and_run_deferred", script);
+                                } else {
+                                    if (lua_engine) lua_engine->triggerCallback(script.utf8().get_data());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
         if (active_menu_index >= 0 && active_menu_index < menus.size()) {
             MenuData& m = menus[active_menu_index];
             if (!m.items.empty()) {
@@ -1755,6 +1885,28 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
                     if (new_idx >= (int)m.items.size()) new_idx = 0;
                     
                     _on_bouncer_mouse_entered(m.items[new_idx]);
+                } else if (active_menu_index != main_menu_index && main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
+                    MenuData& mm = menus[main_menu_index];
+                    int new_mm_idx = mm.selected_index;
+                    bool mm_handled = false;
+                    if (mm.is_horizontal) {
+                        if (k == Key::KEY_LEFT) { new_mm_idx--; mm_handled = true; }
+                        else if (k == Key::KEY_RIGHT) { new_mm_idx++; mm_handled = true; }
+                    } else {
+                        if (k == Key::KEY_UP) { new_mm_idx--; mm_handled = true; }
+                        else if (k == Key::KEY_DOWN) { new_mm_idx++; mm_handled = true; }
+                    }
+                    
+                    if (mm_handled) {
+                        for (auto& pair : submenus) {
+                            if (pair.second.is_active) {
+                                _disable_submenu_deferred(pair.first);
+                            }
+                        }
+                        if (new_mm_idx < 0) new_mm_idx = mm.items.size() - 1;
+                        if (new_mm_idx >= (int)mm.items.size()) new_mm_idx = 0;
+                        _on_bouncer_mouse_entered(mm.items[new_mm_idx]);
+                    }
                 }
                 
                 if (k == Key::KEY_ENTER || k == Key::KEY_SPACE) {
