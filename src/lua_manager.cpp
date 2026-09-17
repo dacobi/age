@@ -95,10 +95,12 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
         for (int i = 0; i < (int)mm.items.size(); i++) {
             if (mm.items[i] == control_id) {
                 is_main_menu_item = true;
-                if (mm.selected_index != i && mm.selected_index >= 0 && mm.selected_index < (int)mm.items.size()) {
-                    _set_bouncer_hover(mm.items[mm.selected_index], false);
+                if (active_menu_index == main_menu_index) {
+                    if (mm.selected_index != i && mm.selected_index >= 0 && mm.selected_index < (int)mm.items.size()) {
+                        _set_bouncer_hover(mm.items[mm.selected_index], false);
+                    }
+                    mm.selected_index = i;
                 }
-                mm.selected_index = i;
                 break;
             }
         }
@@ -121,7 +123,20 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
 }
 
 void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
-    _set_bouncer_hover(control_id, false);
+    bool is_selected = false;
+    for (int m_idx = 0; m_idx < (int)menus.size(); m_idx++) {
+        MenuData& m = menus[m_idx];
+        if (m.selected_index >= 0 && m.selected_index < (int)m.items.size()) {
+            if (m.items[m.selected_index] == control_id) {
+                is_selected = true;
+                break;
+            }
+        }
+    }
+    
+    if (!is_selected) {
+        _set_bouncer_hover(control_id, false);
+    }
 }
 
 void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id) {
@@ -129,6 +144,36 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
         InteractiveData& idata = interactive_bouncers[control_id];
         Ref<InputEventMouseButton> mb = event;
         if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == MouseButton::MOUSE_BUTTON_LEFT) {
+            
+            bool is_main_menu_item = false;
+            if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
+                for (uint64_t id : menus[main_menu_index].items) {
+                    if (id == control_id) {
+                        is_main_menu_item = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (is_main_menu_item && active_menu_index != main_menu_index) {
+                for (auto& pair : submenus) {
+                    if (pair.second.is_active) {
+                        _disable_submenu_deferred(pair.first);
+                    }
+                }
+                
+                MenuData& mm = menus[main_menu_index];
+                for (int i = 0; i < (int)mm.items.size(); i++) {
+                    if (mm.items[i] == control_id) {
+                        if (mm.selected_index != i && mm.selected_index >= 0 && mm.selected_index < (int)mm.items.size()) {
+                            _set_bouncer_hover(mm.items[mm.selected_index], false);
+                        }
+                        mm.selected_index = i;
+                        break;
+                    }
+                }
+            }
+
             if (!idata.clicked_script.is_empty()) {
                 if (idata.clicked_script.ends_with(".lua")) {
                     call_deferred("_clear_and_run_deferred", idata.clicked_script);
