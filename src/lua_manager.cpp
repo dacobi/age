@@ -75,10 +75,27 @@ void LuaManager::_set_bouncer_hover(uint64_t control_id, bool is_hovered) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(idata.container_id));
             if (container) {
                 container->set_modulate(is_hovered ? idata.hover_color : idata.normal_color);
+                std::vector<VideoStreamPlayer*> vps;
                 for (int i = 0; i < container->get_child_count(); ++i) {
-                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                        vp->set_process_mode(is_hovered ? Node::PROCESS_MODE_INHERIT : Node::PROCESS_MODE_DISABLED);
-                        vp->set_volume_db(is_hovered ? 0.0f : -80.0f);
+                    Node* child = container->get_child(i);
+                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child)) vps.push_back(vp);
+                    for (int j = 0; j < child->get_child_count(); ++j) {
+                        Node* child2 = child->get_child(j);
+                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child2)) vps.push_back(vp);
+                        for (int k = 0; k < child2->get_child_count(); ++k) {
+                            Node* child3 = child2->get_child(k);
+                            if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child3)) vps.push_back(vp);
+                        }
+                    }
+                }
+                for (VideoStreamPlayer* vp : vps) {
+                    if (is_hovered) {
+                        vp->set_paused(false);
+                        vp->play();
+                        vp->set_volume_db(0.0f);
+                    } else {
+                        vp->set_paused(true);
+                        vp->set_volume_db(-80.0f);
                     }
                 }
             }
@@ -155,7 +172,7 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
                 }
             }
             
-            if (is_main_menu_item && active_menu_index != main_menu_index) {
+            if (is_main_menu_item) {
                 for (auto& pair : submenus) {
                     if (pair.second.is_active) {
                         _disable_submenu_deferred(pair.first);
@@ -421,18 +438,24 @@ void LuaManager::_enable_submenu_deferred(String handle) {
                         break;
                     }
                 }
-                if (ctrl_id != 0) {
-                    VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(ObjectDB::get_instance(ctrl_id));
-                    if (vp) {
-                        vp->set_process_mode(Node::PROCESS_MODE_INHERIT);
-                        vp->set_volume_db(0.0f);
-                    }
-                } else {
-                    for (int i = 0; i < container->get_child_count(); ++i) {
-                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                            vp->set_process_mode(Node::PROCESS_MODE_INHERIT);
-                            vp->set_volume_db(0.0f);
+                std::vector<VideoStreamPlayer*> vps;
+                for (int i = 0; i < container->get_child_count(); ++i) {
+                    Node* child = container->get_child(i);
+                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child)) vps.push_back(vp);
+                    for (int j = 0; j < child->get_child_count(); ++j) {
+                        Node* child2 = child->get_child(j);
+                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child2)) vps.push_back(vp);
+                        for (int k = 0; k < child2->get_child_count(); ++k) {
+                            Node* child3 = child2->get_child(k);
+                            if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child3)) vps.push_back(vp);
                         }
+                    }
+                }
+                for (VideoStreamPlayer* vp : vps) {
+                    if (ctrl_id == 0 || !interactive_bouncers[ctrl_id].has_hover) {
+                        vp->set_paused(false);
+                        vp->play();
+                        vp->set_volume_db(0.0f);
                     }
                 }
             }
@@ -465,19 +488,22 @@ void LuaManager::_disable_submenu_deferred(String handle) {
                         break;
                     }
                 }
-                if (ctrl_id != 0) {
-                    VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(ObjectDB::get_instance(ctrl_id));
-                    if (vp) {
-                        vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
-                        vp->set_volume_db(-80.0f);
-                    }
-                } else {
-                    for (int i = 0; i < container->get_child_count(); ++i) {
-                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(container->get_child(i))) {
-                            vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
-                            vp->set_volume_db(-80.0f);
+                std::vector<VideoStreamPlayer*> vps;
+                for (int i = 0; i < container->get_child_count(); ++i) {
+                    Node* child = container->get_child(i);
+                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child)) vps.push_back(vp);
+                    for (int j = 0; j < child->get_child_count(); ++j) {
+                        Node* child2 = child->get_child(j);
+                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child2)) vps.push_back(vp);
+                        for (int k = 0; k < child2->get_child_count(); ++k) {
+                            Node* child3 = child2->get_child(k);
+                            if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child3)) vps.push_back(vp);
                         }
                     }
+                }
+                for (VideoStreamPlayer* vp : vps) {
+                    vp->set_paused(true);
+                    vp->set_volume_db(-80.0f);
                 }
             }
         }
@@ -808,9 +834,19 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         interactive_control = tex_rect;
         visual_item = tex_rect;
     } else if (video_player) {
-        container->add_child(video_player);
-        interactive_control = video_player;
-        visual_item = video_player;
+        ColorRect* pc = memnew(ColorRect);
+        pc->set_color(Color(0, 0, 0, 0));
+        if (rect.x > 0 && rect.y > 0) {
+            pc->set_custom_minimum_size(rect);
+            pc->set_size(rect);
+            video_player->set_custom_minimum_size(rect);
+            video_player->set_size(rect);
+        }
+        video_player->set_mouse_filter(Control::MOUSE_FILTER_IGNORE);
+        pc->add_child(video_player);
+        container->add_child(pc);
+        interactive_control = pc;
+        visual_item = pc;
     } else if (is_hscore) {
         PanelContainer* pc = memnew(PanelContainer);
         Ref<StyleBoxFlat> sb = memnew(StyleBoxFlat);
@@ -939,7 +975,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         submenus[active_building_submenu].all_bouncers.push_back(container->get_instance_id());
         container->hide();
         if (video_player) {
-            video_player->set_process_mode(Node::PROCESS_MODE_DISABLED);
+            /* video_player->set_process_mode(Node::PROCESS_MODE_DISABLED); */
             video_player->set_volume_db(-80.0f);
         }
     }
@@ -1170,9 +1206,20 @@ void LuaManager::_do_clear_and_run(const String& filename) {
         if (obj) {
             Node* node = Object::cast_to<Node>(obj);
             if (node) {
-                TypedArray<Node> vps = node->find_children("*", "VideoStreamPlayer");
-                for (int i = 0; i < vps.size(); ++i) {
-                    VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(vps[i]);
+                std::vector<VideoStreamPlayer*> vps;
+                for (int i = 0; i < node->get_child_count(); ++i) {
+                    Node* child = node->get_child(i);
+                    if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child)) vps.push_back(vp);
+                    for (int j = 0; j < child->get_child_count(); ++j) {
+                        Node* child2 = child->get_child(j);
+                        if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child2)) vps.push_back(vp);
+                        for (int k = 0; k < child2->get_child_count(); ++k) {
+                            Node* child3 = child2->get_child(k);
+                            if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(child3)) vps.push_back(vp);
+                        }
+                    }
+                }
+                for (VideoStreamPlayer* vp : vps) {
                     if (vp) vp->stop();
                 }
                 node->queue_free();
@@ -2062,9 +2109,9 @@ void LuaManager::_process(double delta) {
         Object* obj = ObjectDB::get_instance(*it);
         if (obj) {
             VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(obj);
-            if (vp && vp->is_playing() && vp->get_process_mode() != Node::PROCESS_MODE_DISABLED) {
+            if (vp && vp->is_playing() && !vp->is_paused()) {
                 if (vp->get_stream_position() > 0.05) {
-                    vp->set_process_mode(Node::PROCESS_MODE_DISABLED);
+                    vp->set_paused(true);
                     it = videos_to_preload.erase(it);
                     continue;
                 }
