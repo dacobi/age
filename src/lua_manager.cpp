@@ -91,22 +91,20 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
     
     bool is_main_menu_item = false;
     if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
-        for (uint64_t id : menus[main_menu_index].items) {
-            if (id == control_id) {
+        MenuData& mm = menus[main_menu_index];
+        for (int i = 0; i < (int)mm.items.size(); i++) {
+            if (mm.items[i] == control_id) {
                 is_main_menu_item = true;
+                if (mm.selected_index != i && mm.selected_index >= 0 && mm.selected_index < (int)mm.items.size()) {
+                    _set_bouncer_hover(mm.items[mm.selected_index], false);
+                }
+                mm.selected_index = i;
                 break;
             }
         }
     }
-    if (is_main_menu_item && active_menu_index != main_menu_index) {
-        for (auto& pair : submenus) {
-            if (pair.second.is_active) {
-                _disable_submenu_deferred(pair.first);
-            }
-        }
-    }
     
-    if (active_menu_index >= 0 && active_menu_index < menus.size()) {
+    if (active_menu_index >= 0 && active_menu_index < (int)menus.size()) {
         MenuData& m = menus[active_menu_index];
         for (int i = 0; i < (int)m.items.size(); i++) {
             if (m.items[i] == control_id) {
