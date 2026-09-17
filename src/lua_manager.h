@@ -53,6 +53,7 @@ private:
     std::vector<HighScoreEntry> highscores;
     
     uint64_t audio_player_id = 0;
+    uint64_t ui_audio_player_id = 0;
     godot::Ref<godot::AudioEffectCapture> audio_capture;
 
     struct DynamicLabel {
@@ -61,6 +62,15 @@ private:
     };
     std::vector<DynamicLabel> dynamic_labels;
     String _evaluate_bouncer_text(const String& syntax);
+
+    struct MenuData {
+        std::vector<uint64_t> items;
+        int selected_index = 0;
+        bool is_horizontal = false;
+    };
+    std::vector<MenuData> menus;
+    int active_menu_index = -1;
+    bool is_building_menu = false;
 
     struct InteractiveData {
         Color normal_color;
@@ -87,6 +97,9 @@ private:
     std::map<uint64_t, BouncerPhysics> bouncer_physics;
 
     std::map<uint64_t, InteractiveData> interactive_bouncers;
+
+    void _begin_menu_deferred();
+    void _end_menu_deferred();
 
     void _add_bouncer_deferred(const String& syntax);
     void _del_bouncer_deferred(int index);
@@ -130,9 +143,11 @@ private:
     void _maximize_window_deferred();
     void _quit_deferred();
 
+    void _play_ui_sound(const String& path);
     void _on_bouncer_mouse_entered(uint64_t control_id);
     void _on_bouncer_mouse_exited(uint64_t control_id);
     void _on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id);
+    void _set_bouncer_hover(uint64_t control_id, bool is_hovered);
     void _on_addhscore_submitted(String text, int score, int level, uint64_t bouncer_id);
 
     bool is_preloading() const { return !videos_to_preload.empty(); }
