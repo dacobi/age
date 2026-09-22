@@ -1,5 +1,5 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1789637914
+::res://::1790071551
 aga.gdextension::GDExtension::6091002112854102600::1787220233::0::1::::<><><>0<>0<><>::
 ai_brain_driver.gd::GDScript::6401822491950000156::1788091464::0::1::::<>Node<><>0<>0<><>::
 ai_driver.gd::GDScript::7146605027880264044::1788091464::0::1::::<>Node<><>0<>0<><>::
@@ -95,7 +95,7 @@ kitten12.png::CompressedTexture2D::358451927153510161::1787220216::1787220216::1
 kitten25.png::CompressedTexture2D::2256586528108385081::1787220216::1787220216::1::::<><><>0<>0<>cdf60427959718f244ddbffbb7e2e078<>res://.godot/imported/kitten25.png-3c15edf0e5e4cb468f92ba4c5b687792.ctex::
 kitten50.png::CompressedTexture2D::2853023808116571751::1787220216::1787220216::1::::<><><>0<>0<>de4bc2d11c2027b75db77e37c91d90b8<>res://.godot/imported/kitten50.png-5070758b9c3dcf973a6b77d79965502a.ctex::
 kitten.png::CompressedTexture2D::6029440915424471690::1787220216::1787220216::1::::<><><>0<>0<>e211e9a54ca3005bc0b7f259e232d09f<>res://.godot/imported/kitten.png-3cce062009769a1287e5a5913fb0288a.ctex::
-lemans_area.gd::GDScript::6358167123115056644::1788101109::0::1::::<>Node3D<><>0<>0<><>::
+lemans_area.gd::GDScript::6358167123115056644::1789718762::0::1::::<>Node3D<><>0<>0<><>::
 lemans_area.tscn::PackedScene::5950051137681002406::1787750196::0::1::::<><><>0<>0<><>::uid://cwt7c3u7dviee::::res://lemans_area.gd<>uid://dbolghfp018vm::::res://sky/sky2.hdr<>res://lemans_car.tscn
 lemans_car.gd::GDScript::6539261436119175272::1789475126::0::1::::<>RigidBody3D<><>0<>0<><>::
 lemans_car.tscn::PackedScene::-1::1787231708::0::1::::<><><>0<>0<><>::res://lemans_car.gd
@@ -154,6 +154,7 @@ space_invaders_game.tscn::PackedScene::-1::1787220216::0::1::::<><><>0<>0<><>::r
 spark.gd::GDScript::7012630921727889691::1788091464::0::1::::<>Area3D<><>0<>0<><>::
 spvaders.png::CompressedTexture2D::117159722390387748::1787220216::1787220216::1::::<><><>0<>0<>c5cca8c5f759daa38e2cbf0d6c4d6403<>res://.godot/imported/spvaders.png-f610c31d8e80192e07e75a39854a012b.ctex::
 ssoftcap.png::CompressedTexture2D::7039591763618240408::1787220216::1787220216::1::::<><><>0<>0<>a032afd872d76b252ecda79719f077fb<>res://.godot/imported/ssoftcap.png-c20f06c39fc81d8b0b7223c7b257429f.ctex::
+start.gd::GDScript::4690438059936410297::1789638591::0::1::::<>SceneTree<><>0<>0<><>::
 stencilheart.png::CompressedTexture2D::2983036385993909933::1787220216::1787220216::1::::<><><>0<>0<>4f4122d18e6c7a5fac4d653d0e195132<>res://.godot/imported/stencilheart.png-4b77a2e0ddc7912cb5c16f0719112a35.ctex::
 stencilmoon.png::CompressedTexture2D::2903594120591915328::1787220216::1787220216::1::::<><><>0<>0<>b4986431f9379ebad02179fcaf229f5c<>res://.godot/imported/stencilmoon.png-5eaa3bcba17dca12b8fab775fcd1aa8f.ctex::
 stingray.tscn::PackedScene::8522207159937501382::1789400485::0::1::::<><><>0<>0<><>::uid://b4ar7lq87nvav::::res://models/corvette_c7_stingray/corvette_c7_stingray.blend
@@ -521,7 +522,7 @@ test_track3.json::JSON::-1::1788257582::0::1::::<><><>0<>0<><>::
 test_track4.json::JSON::-1::1788257582::0::1::::<><><>0<>0<><>::
 ::res://Audio/::1787220233
 ::res://Audio/Desktop/::1787220233
-::res://bin/::1789637914
+::res://bin/::1789649768
 ::res://fmoddata/::1787220233
 ::res://fmoddata/CarExamples/::1787332683
 ::res://fmoddata/CarExamples/Assets/::1787252632
@@ -1750,5 +1751,5 @@ milky_way_with_stars.hdr::CompressedTexture2D::6100825906591027145::1787302293::
 rogland_clear_night.hdr::CompressedTexture2D::491127653546223955::1787302627::1787304666::1::::<><><>0<>0<>4df7eac01b8d0a77e328edb377222d5c<>res://.godot/imported/rogland_clear_night.hdr-d7a6250307ff5db250a284c3e02e4ce9.bptc.ctex::
 sky1.hdr::CompressedTexture2D::7872460534491457551::1787253217::1787653954::1::::<><><>0<>0<>a38dbde9b0195b0b6406cacbe723a137<>res://.godot/imported/sky1.hdr-9fb5731395f21a88b93c71db588f64cc.bptc.ctex::
 sky2.hdr::CompressedTexture2D::7259031161061506522::1787253443::1787653962::1::::<><><>0<>0<>a396c5c03454d7015ce56fe0cbc89081<>res://.godot/imported/sky2.hdr-1a1c73b0476fadcb0b7cd32d7a11357d.bptc.ctex::
-::res://src/::1789637913
+::res://src/::1789649768
 ::res://tmp/::1788721963

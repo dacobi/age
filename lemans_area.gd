@@ -1426,15 +1426,15 @@ func setup_ui():
 	add_child(victory_jingle_player)
 
 func get_min_track_y(node: Node) -> float:
-    var min_y = 0.0
-    for child in node.get_children():
-        if child is Node3D:
-            min_y = min(min_y, child.global_position.y)
-        if child is Path3D:
-            var curve = child.curve
-            if curve:
-                for i in range(curve.get_baked_points().size()):
-                    var pt = child.global_transform * curve.get_baked_points()[i]
-                    min_y = min(min_y, pt.y)
-        min_y = min(min_y, get_min_track_y(child))
-    return min_y
+	var min_y = 0.0
+	for child in node.get_children():
+		if child is Node3D:
+			min_y = min(min_y, child.global_position.y)
+		if child is Path3D:
+			var curve = child.curve
+			if curve:
+				for i in range(curve.get_baked_points().size()):
+					var pt = child.global_transform * curve.get_baked_points()[i]
+					min_y = min(min_y, pt.y)
+		min_y = min(min_y, get_min_track_y(child))
+	return min_y

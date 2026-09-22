@@ -1,6 +1,7 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bil6m4xasr6mb"]
 
-[ext_resource type="Script" path="res://lemans_car.gd" id="1"]
+[ext_resource type="Script" uid="uid://c0fwxeuujytga" path="res://lemans_car.gd" id="1"]
+[ext_resource type="Script" uid="uid://drrn4ndldayl0" path="res://setup_car.gd" id="2_0nhqq"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_Car"]
 friction = 0.0
@@ -123,7 +124,6 @@ script = ExtResource("1")
 [node name="BodyCol" type="CollisionShape3D" parent="." unique_id=1117760313]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0.1)
 shape = SubResource("BoxShape3D_Body")
-debug_color = Color(0, 0.6, 0.7, 0.42)
 
 [node name="FrontLeftSteerPivot" type="Node3D" parent="." unique_id=2114906338]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.15, -0.125, -1.7)
@@ -768,7 +768,7 @@ height = 0.8
 sides = 64
 material = SubResource("StandardMaterial3D_gx32f")
 
-[node name="@CSGCylinder3D@18" type="CSGCylinder3D" parent="RearDiffuser" unique_id=544194139]
+[node name="PipeIn2_1" type="CSGCylinder3D" parent="RearDiffuser" unique_id=544194139]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0.50666666, -0.12, 3.45)
 radius = 0.04
 height = 0.2
@@ -790,10 +790,23 @@ height = 0.2
 sides = 64
 material = SubResource("StandardMaterial3D_alatb")
 
-[node name="@CSGCylinder3D@21" type="CSGCylinder3D" parent="RearDiffuser" unique_id=346544968]
+[node name="PipeIn2_2" type="CSGCylinder3D" parent="RearDiffuser" unique_id=346544968]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0.62666667, -0.12, 3.46)
 operation = 2
 radius = 0.03
 height = 0.21
 sides = 64
 material = SubResource("StandardMaterial3D_4xtml")
+
+[node name="CarSetup" type="Node" parent="." unique_id=906717595 node_paths=PackedStringArray("wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR", "Pipe1", "Pipe2", "Pipe3", "Pipe4")]
+script = ExtResource("2_0nhqq")
+wheel_FL = NodePath("../FrontLeftSteerPivot/FrontLeftWheel")
+wheel_FR = NodePath("../FrontRightSteerPivot/FrontRightWheel")
+wheel_RL = NodePath("../RearLeftSteerPivot/RearLeftWheel")
+wheel_RR = NodePath("../RearRightSteerPivot/RearRightWheel")
+NumberOfExaustPipes = 4
+Pipe1 = NodePath("../RearDiffuser/PipeIn1_1")
+Pipe2 = NodePath("../RearDiffuser/PipeIn1_2")
+Pipe3 = NodePath("../RearDiffuser/PipeIn2_1")
+Pipe4 = NodePath("../RearDiffuser/PipeIn2_2")
+metadata/_custom_type_script = "uid://drrn4ndldayl0"

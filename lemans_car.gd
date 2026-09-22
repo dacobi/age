@@ -305,86 +305,88 @@ func _ready():
 			setup.initialize_setup()
 			break
 		for child in current.get_children():
-			to_check.append(child)
+				to_check.append(child)
 	if setup:
-		mount_FL = to_local(setup.pivot_FL.global_position)
-		mount_FR = to_local(setup.pivot_FR.global_position)
-		mount_RL = to_local(setup.pivot_RL.global_position)
-		mount_RR = to_local(setup.pivot_RR.global_position)
-		
-		var comp_m = compressed_travel_cm / 100.0
-		mount_FL.y += comp_m
-		mount_FR.y += comp_m
-		mount_RL.y += comp_m
-		mount_RR.y += comp_m
-		
-		radius_front = setup.wheel_radius_front
-		radius_rear = setup.wheel_radius_rear
-		default_radius_front = radius_front
-		default_radius_rear = radius_rear
-		
-		# Resize the collision shape to prevent bottoming out
-		var dyn_body_col = get_node_or_null("BodyCol")
-		if dyn_body_col and dyn_body_col.shape is BoxShape3D:
-			# Base dimensions on track width and wheel base
-			var width = setup.track_width * 0.85
-			var length = setup.wheel_base * 1.5
-			var height = 0.4
-			# Ensure the collision shape is high enough above the ground!
-			var min_pivot_y = min(mount_FL.y, mount_RL.y)
-			var y_pos = min_pivot_y + 0.05
-			
-			var new_box = BoxShape3D.new()
-			new_box.size = Vector3(width, height, length)
-			dyn_body_col.shape = new_box
-			dyn_body_col.position = Vector3(0, y_pos, 0)
-			
-			# Add 4 perfectly smooth skid spheres at the bottom corners
-			var sphere_radius = 0.3
-			for z_pos in [-length/2.0, length/2.0]:
-				for x_pos in [-width/2.0, width/2.0]:
-					var sphere_col = CollisionShape3D.new()
-					var sphere = SphereShape3D.new()
-					sphere.radius = sphere_radius
-					sphere_col.shape = sphere
-					# spheres sit slightly below the box bottom (-0.05)
-					sphere_col.position = Vector3(x_pos, y_pos, z_pos)
-					
-					# Generate debug visual for the sphere so it works with the toggle
-					var mi = MeshInstance3D.new()
-					mi.name = "CollisionDebugVisual"
-					var sph = SphereMesh.new()
-					sph.radius = sphere_radius
-					sph.height = sphere_radius * 2.0
-					mi.mesh = sph
-					
-					var mat = StandardMaterial3D.new()
-					mat.albedo_color = Color(0, 0.6, 0.7, 0.42)
-					mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-					mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-					mi.material_override = mat
-					
-					# Need to manually manage visibility based on the 'Show Collision Meshes' option
-					var debugger = get_node_or_null("/root/MegaRacerDebugger")
-					if debugger and debugger.show_collision:
-						mi.visible = true
-					else:
-						mi.visible = false
-						
-					sphere_col.add_child(mi)
-					dyn_body_col.get_parent().add_child(sphere_col)
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength
 		suspension_travel_cm = setup.AirborneTravel
 		compressed_travel_cm = setup.CompressedTravel
+		if setup.wheel_FL and setup.pivot_FL:
+			mount_FL = to_local(setup.pivot_FL.global_position)
+			mount_FR = to_local(setup.pivot_FR.global_position)
+			mount_RL = to_local(setup.pivot_RL.global_position)
+			mount_RR = to_local(setup.pivot_RR.global_position)
+			
+			var comp_m = compressed_travel_cm / 100.0
+			mount_FL.y += comp_m
+			mount_FR.y += comp_m
+			mount_RL.y += comp_m
+			mount_RR.y += comp_m
+			
+			radius_front = setup.wheel_radius_front
+			radius_rear = setup.wheel_radius_rear
+			default_radius_front = radius_front
+			default_radius_rear = radius_rear
+			
+			# Resize the collision shape to prevent bottoming out
+			var dyn_body_col = get_node_or_null("BodyCol")
+			if dyn_body_col and dyn_body_col.shape is BoxShape3D:
+				# Base dimensions on track width and wheel base
+				var width = setup.track_width * 0.85
+				var length = setup.wheel_base * 1.5
+				var height = 0.4
+				# Ensure the collision shape is high enough above the ground!
+				var min_pivot_y = min(mount_FL.y, mount_RL.y)
+				var y_pos = min_pivot_y + 0.05
+				
+				var new_box = BoxShape3D.new()
+				new_box.size = Vector3(width, height, length)
+				dyn_body_col.shape = new_box
+				dyn_body_col.position = Vector3(0, y_pos, 0)
+				
+				# Add 4 perfectly smooth skid spheres at the bottom corners
+				var sphere_radius = 0.3
+				for z_pos in [-length/2.0, length/2.0]:
+					for x_pos in [-width/2.0, width/2.0]:
+						var sphere_col = CollisionShape3D.new()
+						var sphere = SphereShape3D.new()
+						sphere.radius = sphere_radius
+						sphere_col.shape = sphere
+						# spheres sit slightly below the box bottom (-0.05)
+						sphere_col.position = Vector3(x_pos, y_pos, z_pos)
+						
+						# Generate debug visual for the sphere so it works with the toggle
+						var mi = MeshInstance3D.new()
+						mi.name = "CollisionDebugVisual"
+						var sph = SphereMesh.new()
+						sph.radius = sphere_radius
+						sph.height = sphere_radius * 2.0
+						mi.mesh = sph
+						
+						var mat = StandardMaterial3D.new()
+						mat.albedo_color = Color(0, 0.6, 0.7, 0.42)
+						mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+						mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+						mi.material_override = mat
+						
+						# Need to manually manage visibility based on the 'Show Collision Meshes' option
+						var debugger = get_node_or_null("/root/MegaRacerDebugger")
+						if debugger and debugger.show_collision:
+							mi.visible = true
+						else:
+							mi.visible = false
+							
+						sphere_col.add_child(mi)
+						dyn_body_col.get_parent().add_child(sphere_col)
 		print("DEBUG: mount_FL = ", mount_FL)
 		print("DEBUG: mount_RL = ", mount_RL)
 		print("DEBUG: radius_front = ", radius_front)
 		print("DEBUG: radius_rear = ", radius_rear)
 		print("DEBUG: track_width = ", setup.track_width)
 		print("DEBUG: wheel_base = ", setup.wheel_base)
-		print("DEBUG: box_size = ", dyn_body_col.shape.size if dyn_body_col and dyn_body_col.shape is BoxShape3D else "N/A")
-		print("DEBUG: box_pos = ", dyn_body_col.position if dyn_body_col else "N/A")
+		var db_col = get_node_or_null("BodyCol")
+		print("DEBUG: box_size = ", db_col.shape.size if db_col and db_col.shape is BoxShape3D else "N/A")
+		print("DEBUG: box_pos = ", db_col.position if db_col else "N/A")
 
 	# Dynamically build wheels at startup
 	var use_shapecast = true

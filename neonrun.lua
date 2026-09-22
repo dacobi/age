@@ -28,6 +28,7 @@ end
 
 function on_play_ground_play()
     print("Play Ground Play clicked!")
+    luaClearAndRun("testphysics.lua")
 end
 
 function on_play_ground_cancel()

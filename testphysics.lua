@@ -182,4 +182,4 @@ while true do
 	delay(1) -- High-frequency input update loop
 end
 
-appQuit()
+luaClearAndRun("neonrun.lua")
