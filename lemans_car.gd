@@ -13,6 +13,10 @@ var mount_FL = Vector3(-1.0, -0.025, -1.7)
 var mount_FR = Vector3(1.0, -0.025, -1.7)
 var mount_RL = Vector3(-1.1, -0.025, 1.75)
 var mount_RR = Vector3(1.1, -0.025, 1.75)
+var base_mount_FL = Vector3.ZERO
+var base_mount_FR = Vector3.ZERO
+var base_mount_RL = Vector3.ZERO
+var base_mount_RR = Vector3.ZERO
 var radius_front = 0.5
 var radius_rear = 0.5
 
@@ -316,12 +320,18 @@ func _ready():
 			mount_FR = to_local(setup.pivot_FR.global_position)
 			mount_RL = to_local(setup.pivot_RL.global_position)
 			mount_RR = to_local(setup.pivot_RR.global_position)
+			base_mount_FL = mount_FL
+			base_mount_FR = mount_FR
+			base_mount_RL = mount_RL
+			base_mount_RR = mount_RR
 			
 			var comp_m = compressed_travel_cm / 100.0
-			mount_FL.y += comp_m
-			mount_FR.y += comp_m
-			mount_RL.y += comp_m
-			mount_RR.y += comp_m
+			var rest_m = suspension_travel_cm / 100.0
+			var offset_y = comp_m
+			mount_FL.y += offset_y
+			mount_FR.y += offset_y
+			mount_RL.y += offset_y
+			mount_RR.y += offset_y
 			
 			radius_front = setup.wheel_radius_front
 			radius_rear = setup.wheel_radius_rear
@@ -621,6 +631,22 @@ func reset_to_track() -> void:
 
 
 func _physics_process(delta: float) -> void:
+
+	if base_mount_FL != Vector3.ZERO:
+		var comp_m = compressed_travel_cm / 100.0
+		var rest_m = suspension_travel_cm / 100.0
+		var offset_y = comp_m
+		
+		mount_FL = base_mount_FL + Vector3(0, offset_y, 0)
+		mount_FR = base_mount_FR + Vector3(0, offset_y, 0)
+		mount_RL = base_mount_RL + Vector3(0, offset_y, 0)
+		mount_RR = base_mount_RR + Vector3(0, offset_y, 0)
+		
+		if wheels.size() == 4:
+			wheels[0].position = mount_FL
+			wheels[1].position = mount_FR
+			wheels[2].position = mount_RL
+			wheels[3].position = mount_RR
 	# --- AUTO-RESET LOGIC ---
 	var is_falling_out = false
 	var is_airborne = false

@@ -23,6 +23,9 @@ var mouse_wheel = 0.0
 var reset_game = false
 var reset_car = false
 var reset_y_threshold: float = -3000.0
+var car_jack: AnimatableBody3D = null
+var is_jacking: bool = false
+var jack_initial_y: float = 0.0
 var powerup_nodes: Array = []
 
 var current_lap: int = 0
@@ -710,6 +713,45 @@ func spawn_barriers():
 	dummy.queue_free()
 
 func _input(event):
+
+	if event is InputEventKey and event.pressed and not event.is_echo() and event.keycode == KEY_J:
+		if is_jacking:
+			is_jacking = false
+			# Properly destroy the jack to reset state completely
+			if car_jack:
+				car_jack.queue_free()
+				car_jack = null
+		else:
+			is_jacking = true
+			car_jack = AnimatableBody3D.new()
+			car_jack.sync_to_physics = false # CRITICAL for lifting RigidBody3D smoothly!
+			car_jack.collision_layer = 1
+			car_jack.collision_mask = 3
+			
+			var col = CollisionShape3D.new()
+			var box = BoxShape3D.new()
+			box.size = Vector3(1, 0.2, 1) # thin pad
+			col.shape = box
+			
+			var mesh_inst = MeshInstance3D.new()
+			var box_mesh = BoxMesh.new()
+			box_mesh.size = Vector3(1, 0.2, 1)
+			var mat = StandardMaterial3D.new()
+			mat.albedo_color = Color(1.0, 0.0, 0.0)
+			box_mesh.material = mat
+			mesh_inst.mesh = box_mesh
+			
+			car_jack.add_child(col)
+			car_jack.add_child(mesh_inst)
+			add_child(car_jack)
+			
+			if supercar:
+				supercar.linear_velocity = Vector3.ZERO
+				supercar.angular_velocity = Vector3.ZERO
+				# Place jack exactly at car's X and Z, and on the floor (Y = 0.1)
+				car_jack.global_position = Vector3(supercar.global_position.x, 0.1, supercar.global_position.z)
+				car_jack.global_rotation = Vector3.ZERO # Perfectly upright
+				jack_initial_y = 0.1
 	if event.is_action_pressed("ui_cancel"):
 		is_paused = not is_paused
 		if is_paused:
@@ -968,6 +1010,17 @@ func _process(delta):
 			camera_node.look_at(supercar.global_position, Vector3.UP)
 
 func _physics_process(delta):
+
+	if car_jack and is_jacking:
+		var target_y = jack_initial_y + 1.0 # Raise exactly 1m
+		car_jack.global_position.y = move_toward(car_jack.global_position.y, target_y, 0.1 * delta)
+		if supercar:
+			# Force jack to stay perfectly centered under the car horizontally
+			car_jack.global_position.x = supercar.global_position.x
+			car_jack.global_position.z = supercar.global_position.z
+			supercar.linear_velocity.x = 0
+			supercar.linear_velocity.z = 0
+			supercar.angular_velocity = Vector3.ZERO
 	var camera_node = get_node_or_null("Camera3D")
 	if camera_node and supercar and not in_edit_mode and not is_paused:
 		current_cam_yaw = lerp(current_cam_yaw, -cam_rx * 2.0, 5.0 * delta)
