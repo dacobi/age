@@ -62,7 +62,7 @@ func _measure_wheel_radius(node: Node3D) -> float:
 	var to_check = [node]
 	while to_check.size() > 0:
 		var n = to_check.pop_back()
-		if n is MeshInstance3D and n.mesh:
+		if (n is MeshInstance3D and n.mesh) or n is CSGShape3D:
 			meshes.append(n)
 		for c in n.get_children():
 			to_check.append(c)
