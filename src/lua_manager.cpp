@@ -57,6 +57,16 @@
 
 using namespace godot;
 
+void UISelector::set_hovered(bool hovered) {
+    if (has_theme_stylebox_override("panel")) {
+        Ref<StyleBoxFlat> style = get_theme_stylebox("panel");
+        if (style.is_valid()) {
+            style->set_border_width_all(hovered ? 4 : 0);
+            style->set_border_color(Color(1.0, 0.0, 1.0, 1.0)); // Neon Purple
+        }
+    }
+}
+
 void LuaManager::_play_ui_sound(const String& path) {
     AudioStreamPlayer* player = nullptr;
     if (ui_audio_player_id != 0) {
@@ -82,6 +92,13 @@ void LuaManager::_set_bouncer_hover(uint64_t control_id, bool is_hovered) {
             RichTextLabel* rtl = Object::cast_to<RichTextLabel>(ObjectDB::get_instance(idata.label_id));
             if (rtl) {
                 rtl->add_theme_color_override("font_outline_color", is_hovered ? idata.graffity_hover : idata.graffity_outer);
+            }
+        }
+        
+        if (idata.is_selector && idata.selector_id != 0) {
+            UISelector* sel = Object::cast_to<UISelector>(ObjectDB::get_instance(idata.selector_id));
+            if (sel) {
+                sel->set_hovered(is_hovered);
             }
         }
         if (idata.has_hover) {
@@ -1003,6 +1020,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         Ref<StyleBoxFlat> panel_style = memnew(StyleBoxFlat);
         panel_style->set_bg_color(Color(0, 0, 0, 0.7)); // Smoked glass
         panel_style->set_corner_radius_all(30);
+        panel_style->set_border_width_all(0);
+        panel_style->set_border_color(Color(1.0, 0.0, 1.0, 1.0));
         selector->add_theme_stylebox_override("panel", panel_style);
         
         HBoxContainer* hbox = memnew(HBoxContainer);

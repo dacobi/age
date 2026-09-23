@@ -40,6 +40,7 @@ public:
     void update_media();
     void _on_left_pressed();
     void _on_right_pressed();
+    void set_hovered(bool hovered);
 };
 
 class LuaManager : public Node {
