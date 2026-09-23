@@ -321,8 +321,8 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("getGlobalVar", lua_getGlobalVar);
     reg("regGlobalFloat", lua_regGlobalFloat);
     reg("unregGlobalFloat", lua_unregGlobalFloat);
-    reg("setGlobalFloat", lua_setGlobalFloat);
-    reg("getGlobalFloat", lua_getGlobalFloat);
+    reg("setGlobalFloat", lua_setGlobalFloat);    reg("setGlobalString", lua_setGlobalString);
+    reg("getGlobalFloat", lua_getGlobalFloat);    reg("getGlobalString", lua_getGlobalString);
 }
 
 void LuaScripting::lua_hook(lua_State* L, lua_Debug* ar) {
@@ -372,7 +372,7 @@ int LuaScripting::lua_godotWatchSignal(lua_State* L) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 3);
         }
 
-        self->godotCmdFunc(GCMD_WATCH_SIGNAL, combined, fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_WATCH_SIGNAL, combined, fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -738,7 +738,17 @@ int LuaScripting::lua_godotLoadScene(lua_State* L) {
         if (self && self->godotCmdFunc) {
             auto sd = std::make_shared<LuaSyncData>();
             float fargs[3] = {0,0,0};
-            self->godotCmdFunc(GCMD_LOAD_SCENE, filename, fargs, sd, nullptr, self);
+            std::map<std::string, std::string> sargs;
+            if (lua_istable(L, 2)) {
+                lua_pushnil(L);
+                while (lua_next(L, 2) != 0) {
+                    if (lua_type(L, -2) == LUA_TSTRING && lua_type(L, -1) == LUA_TSTRING) {
+                        sargs[lua_tostring(L, -2)] = lua_tostring(L, -1);
+                    }
+                    lua_pop(L, 1);
+                }
+            }
+            self->godotCmdFunc(GCMD_LOAD_SCENE, filename, fargs, sargs, sd, nullptr, self);
             
             // Wait for Godot main thread to finish loading scene
             std::unique_lock<std::mutex> lock(sd->mtx);
@@ -1374,7 +1384,7 @@ int LuaScripting::lua_godotGetNodePointer(lua_State* L) {
     if (lua_isstring(L, 1) && self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_GET_NODE_POINTER, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_NODE_POINTER, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1412,7 +1422,7 @@ int LuaScripting::lua_godotSelectRoot(lua_State* L) {
     if (self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_SELECT_ROOT, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SELECT_ROOT, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1426,7 +1436,7 @@ int LuaScripting::lua_godotSelectNode(lua_State* L) {
     if (lua_isstring(L, 1) && self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_SELECT_NODE, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SELECT_NODE, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1442,7 +1452,7 @@ int LuaScripting::lua_godotSearchNode(lua_State* L) {
     if (lua_isstring(L, 1) && self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_SEARCH_NODE, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SEARCH_NODE, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1461,7 +1471,7 @@ int LuaScripting::lua_godotGetNodeType(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_GET_NODE_TYPE, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_NODE_TYPE, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1480,7 +1490,7 @@ int LuaScripting::lua_godotGetName(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_GET_NAME, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_NAME, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1499,7 +1509,7 @@ int LuaScripting::lua_godotGetChildCount(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_GET_CHILD_COUNT, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_CHILD_COUNT, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1515,7 +1525,7 @@ int LuaScripting::lua_godotPrintHierarchy(lua_State* L) {
     if (self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_PRINT_HIERARCHY, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_PRINT_HIERARCHY, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1532,7 +1542,7 @@ int LuaScripting::lua_godotRenameNode(lua_State* L) {
         if (lua_isinteger(L, 2)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 2);
         }
-        self->godotCmdFunc(GCMD_RENAME_NODE, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_RENAME_NODE, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1546,7 +1556,7 @@ int LuaScripting::lua_godotSetCamera(lua_State* L) {
     if (self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_SET_CAMERA, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SET_CAMERA, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1565,7 +1575,7 @@ int LuaScripting::lua_godotGetPos(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_GET_POS, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_POS, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1586,7 +1596,7 @@ int LuaScripting::lua_godotSetPos(lua_State* L) {
         if (lua_isinteger(L, 4)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 4);
         }
-        self->godotCmdFunc(GCMD_SET_POS, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SET_POS, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1603,7 +1613,7 @@ int LuaScripting::lua_godotSetVisible(lua_State* L) {
         if (lua_isinteger(L, 2)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 2);
         }
-        self->godotCmdFunc(GCMD_SET_VISIBLE, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SET_VISIBLE, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1620,7 +1630,7 @@ int LuaScripting::lua_godotGetScale(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_GET_SCALE, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_SCALE, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1641,7 +1651,7 @@ int LuaScripting::lua_godotSetScale(lua_State* L) {
         if (lua_isinteger(L, 4)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 4);
         }
-        self->godotCmdFunc(GCMD_SET_SCALE, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SET_SCALE, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1658,7 +1668,7 @@ int LuaScripting::lua_godotMoveX(lua_State* L) {
         if (lua_isinteger(L, 2)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 2);
         }
-        self->godotCmdFunc(GCMD_MOVE_X, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_MOVE_X, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1675,7 +1685,7 @@ int LuaScripting::lua_godotMoveY(lua_State* L) {
         if (lua_isinteger(L, 2)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 2);
         }
-        self->godotCmdFunc(GCMD_MOVE_Y, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_MOVE_Y, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1692,7 +1702,7 @@ int LuaScripting::lua_godotMoveZ(lua_State* L) {
         if (lua_isinteger(L, 2)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 2);
         }
-        self->godotCmdFunc(GCMD_MOVE_Z, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_MOVE_Z, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1709,7 +1719,7 @@ int LuaScripting::lua_godotMoveAndCollide(lua_State* L) {
         if (lua_isinteger(L, 4)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 4);
         }
-        self->godotCmdFunc(GCMD_MOVE_AND_COLLIDE, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_MOVE_AND_COLLIDE, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1728,7 +1738,7 @@ int LuaScripting::lua_godotGetOverlappingAreas(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_GET_OVERLAPPING_AREAS, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_OVERLAPPING_AREAS, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1749,7 +1759,7 @@ int LuaScripting::lua_godotCreateNode(lua_State* L) {
     if (lua_isstring(L, 1) && self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_CREATE_NODE, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_CREATE_NODE, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1780,7 +1790,7 @@ int LuaScripting::lua_godotLoadNode(lua_State* L) {
         std::string path = lua_tostring(L, 1);
         sd->b_res = (use_pos == 1);
 
-        self->godotCmdFunc(GCMD_LOAD_NODE, path, fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_LOAD_NODE, path, fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1798,7 +1808,7 @@ int LuaScripting::lua_godotDeleteNode(lua_State* L) {
         if (lua_isinteger(L, 1)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 1);
         }
-        self->godotCmdFunc(GCMD_DELETE_NODE, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_DELETE_NODE, "", fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1812,7 +1822,7 @@ int LuaScripting::lua_godotAttachScript(lua_State* L) {
     if (lua_isstring(L, 1) && self && self->godotCmdFunc) {
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_ATTACH_SCRIPT, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_ATTACH_SCRIPT, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1859,7 +1869,7 @@ int LuaScripting::lua_godotSetProperty(lua_State* L) {
             auto sd = std::make_shared<LuaSyncData>();
             sd->object_id_arg = target;
             float fargs[3] = {val, 0.0f, 0.0f}; // 0 = Number
-            self->godotCmdFunc(GCMD_SET_PROPERTY, name, fargs, sd, L, self);
+            self->godotCmdFunc(GCMD_SET_PROPERTY, name, fargs, std::map<std::string, std::string>(), sd, L, self);
             std::unique_lock<std::mutex> lock(sd->mtx);
             while (!sd->done && self && self->systemRunning) {
                 sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1879,7 +1889,7 @@ int LuaScripting::lua_godotSetProperty(lua_State* L) {
             sd->object_id_arg = target;
             float fargs[3] = {0.0f, 1.0f, 0.0f}; // 1 = String
             std::string combined = name + "|" + val;
-            self->godotCmdFunc(GCMD_SET_PROPERTY, combined, fargs, sd, L, self);
+            self->godotCmdFunc(GCMD_SET_PROPERTY, combined, fargs, std::map<std::string, std::string>(), sd, L, self);
             std::unique_lock<std::mutex> lock(sd->mtx);
             while (!sd->done && self && self->systemRunning) {
                 sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1898,7 +1908,7 @@ int LuaScripting::lua_godotSetProperty(lua_State* L) {
             auto sd = std::make_shared<LuaSyncData>();
             sd->object_id_arg = target;
             float fargs[3] = {val ? 1.0f : 0.0f, 2.0f, 0.0f}; // 2 = Bool
-            self->godotCmdFunc(GCMD_SET_PROPERTY, name, fargs, sd, L, self);
+            self->godotCmdFunc(GCMD_SET_PROPERTY, name, fargs, std::map<std::string, std::string>(), sd, L, self);
             std::unique_lock<std::mutex> lock(sd->mtx);
             while (!sd->done && self && self->systemRunning) {
                 sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1916,7 +1926,7 @@ int LuaScripting::lua_godotGetProperty(lua_State* L) {
         if (lua_isinteger(L, 2)) {
             sd->object_id_arg = (uint64_t)lua_tointeger(L, 2);
         }
-        self->godotCmdFunc(GCMD_GET_PROPERTY, lua_tostring(L, 1), fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_GET_PROPERTY, lua_tostring(L, 1), fargs, std::map<std::string, std::string>(), sd, L, self);
         std::unique_lock<std::mutex> lock(sd->mtx);
         while (!sd->done && self && self->systemRunning) {
             sd->cv.wait_for(lock, std::chrono::milliseconds(10));
@@ -1961,7 +1971,7 @@ int LuaScripting::lua_godotWatchProperty(lua_State* L) {
         }
         
         fargs[2] = (float)mode;
-        self->godotCmdFunc(GCMD_WATCH_PROPERTY, combined, fargs, nullptr, L, self);
+        self->godotCmdFunc(GCMD_WATCH_PROPERTY, combined, fargs, std::map<std::string, std::string>(), nullptr, L, self);
     }
     return 0;
 }
@@ -2521,7 +2531,7 @@ int LuaScripting::lua_ioWindowSetFullScreen(lua_State* L) {
         }
         auto sd = std::make_shared<LuaSyncData>();
         float fargs[3] = {fullscreen ? 1.0f : 0.0f, 0, 0};
-        self->godotCmdFunc(GCMD_SET_FULLSCREEN, "", fargs, sd, L, self);
+        self->godotCmdFunc(GCMD_SET_FULLSCREEN, "", fargs, std::map<std::string, std::string>(), sd, L, self);
     }
     return 0;
 }
@@ -2534,3 +2544,35 @@ int LuaScripting::lua_nextAudio(lua_State* L) {
 
 
 
+
+void LuaScripting::setGlobalString(const std::string& name, const std::string& val) {
+    std::lock_guard<std::mutex> lock(globals_mutex);
+    global_strings[name] = val;
+}
+
+std::string LuaScripting::getGlobalString(const std::string& name) {
+    std::lock_guard<std::mutex> lock(globals_mutex);
+    auto it = global_strings.find(name);
+    if (it != global_strings.end()) {
+        return it->second;
+    }
+    return "";
+}
+
+int LuaScripting::lua_setGlobalString(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && lua_isstring(L, 1) && lua_isstring(L, 2)) {
+        self->setGlobalString(lua_tostring(L, 1), lua_tostring(L, 2));
+    }
+    return 0;
+}
+
+int LuaScripting::lua_getGlobalString(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && lua_isstring(L, 1)) {
+        std::string val = self->getGlobalString(lua_tostring(L, 1));
+        lua_pushstring(L, val.c_str());
+        return 1;
+    }
+    return 0;
+}

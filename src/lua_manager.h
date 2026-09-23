@@ -56,6 +56,7 @@ private:
         int cmd; // Cast from LuaScripting::GodotCmd
         String name;
         float args[3];
+        std::map<std::string, std::string> sargs;
         uint64_t object_id;
         std::shared_ptr<LuaSyncData> sd;
     };
@@ -226,6 +227,8 @@ public:
     void set_global_int(const String& name, int val);
     int get_global_int(const String& name);
     void set_global_float(const String& name, float val);
+    void set_global_string(const String& name, const String& val);
+    String get_global_string(const String& name);
     float get_global_float(const String& name);
 };
 

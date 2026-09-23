@@ -376,6 +376,8 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_global_int", "name", "val"), &LuaManager::set_global_int);
     ClassDB::bind_method(D_METHOD("get_global_int", "name"), &LuaManager::get_global_int);
     ClassDB::bind_method(D_METHOD("set_global_float", "name", "val"), &LuaManager::set_global_float);
+    ClassDB::bind_method(D_METHOD("set_global_string", "name", "val"), &LuaManager::set_global_string);
+    ClassDB::bind_method(D_METHOD("get_global_string", "name"), &LuaManager::get_global_string);
     ClassDB::bind_method(D_METHOD("get_global_float", "name"), &LuaManager::get_global_float);
 }
 
@@ -2044,7 +2046,7 @@ void LuaManager::_ready() {
             }
         },
         // godotCmdFunc
-        [this](LuaScripting::GodotCmd cmd, const std::string& name, float args[3], std::shared_ptr<LuaSyncData> sd, void* thread, LuaScripting*) {
+        [this](LuaScripting::GodotCmd cmd, const std::string& name, float args[3], std::map<std::string, std::string> sargs, std::shared_ptr<LuaSyncData> sd, void* thread, LuaScripting*) {
             if (sd) {
                 std::lock_guard<std::mutex> lock(this->cmd_mutex);
                 GodotCommand gcmd;
@@ -2052,7 +2054,9 @@ void LuaManager::_ready() {
                 gcmd.name = String(name.c_str());
                 gcmd.args[0] = args[0]; gcmd.args[1] = args[1]; gcmd.args[2] = args[2];
                 gcmd.object_id = sd->object_id_arg;
+                gcmd.sargs = sargs;
                 gcmd.sd = sd;
+                
                 this->cmd_queue.push_back(gcmd);
             }
         },
@@ -2413,7 +2417,11 @@ void LuaManager::_process(double delta) {
                 
                 Node* ls = get_tree()->get_root()->get_node_or_null("LoadingScreen");
                 if (ls) {
-                    ls->call("switch_to_level", full_path);
+                    Dictionary dict;
+                    for (const auto& p : cmd.sargs) {
+                        dict[String(p.first.c_str())] = String(p.second.c_str());
+                    }
+                    ls->call("switch_to_level", full_path, dict);
                 } else {
                     UtilityFunctions::printerr("LoadingScreen autoload not found!");
                 }
@@ -2750,3 +2758,16 @@ void UISelector::update_media() {
     }
 }
 
+
+void LuaManager::set_global_string(const String& name, const String& val) {
+    if (lua_engine) {
+        lua_engine->setGlobalString(name.utf8().get_data(), val.utf8().get_data());
+    }
+}
+
+String LuaManager::get_global_string(const String& name) {
+    if (lua_engine) {
+        return String(lua_engine->getGlobalString(name.utf8().get_data()).c_str());
+    }
+    return "";
+}

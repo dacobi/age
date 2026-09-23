@@ -2,11 +2,14 @@ ioWindowSetFullScreen(true)
 local is_fullscreen = true
 
 -- godotLoadScene("assets/tools/test_track/test_track.tscn")
-local car_name = getGlobalString("current_car_name")
-if not car_name or car_name == "" then
-    car_name = "lemans_car"
+local car_name2 = getGlobalString("current_car_name")
+if not car_name2 or car_name2 == "" then
+    car_name2 = "lemans_car"
 end
-godotLoadScene("assets/tracks/track1/track1.tscn", { car_name = car_name })
+
+print(car_name2)
+
+godotLoadScene("assets/tracks/track1/track1.tscn", { car_name = car_name2 })
 delay(200) -- give it a moment to load
 
 print("\n=== MegaRacer Synthwave Test Track ===")

@@ -95,7 +95,7 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
 #ifdef USE_USD
     using SetUSDParamFunc = std::function<void(const std::string& name, double value)>;
 #endif
-    using GodotCmdFunc = std::function<void(GodotCmd cmd, const std::string& str_arg, float f_args[3], std::shared_ptr<LuaSyncData> sync_data, void* thread, LuaScripting* engine)>;
+    using GodotCmdFunc = std::function<void(GodotCmd cmd, const std::string& str_arg, float f_args[3], std::map<std::string, std::string> sargs, std::shared_ptr<LuaSyncData> sync_data, void* thread, LuaScripting* engine)>;
     using QuitFunc = std::function<void(std::shared_ptr<LuaSyncData> sync_data)>;
     using SetImGuiVisibleFunc = std::function<void(bool visible)>;
     using ClearAndRunFunc = std::function<void(const std::string& filename, std::shared_ptr<LuaSyncData> sync_data)>;
@@ -166,6 +166,8 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
 
     void setGlobalFloat(const std::string& name, float val);
     float getGlobalFloat(const std::string& name);
+    void setGlobalString(const std::string& name, const std::string& val);
+    std::string getGlobalString(const std::string& name);
     void regGlobalFloat(const std::string& name, float val);
     void unregGlobalFloat(const std::string& name);
 
@@ -175,6 +177,7 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
 
     std::unordered_map<std::string, int> global_ints;
     std::unordered_map<std::string, float> global_floats;
+    std::unordered_map<std::string, std::string> global_strings;
 
 private:
     static int lua_addBouncer(lua_State* L);
@@ -237,6 +240,8 @@ private:
 
     static int lua_setGlobalFloat(lua_State* L);
     static int lua_getGlobalFloat(lua_State* L);
+    static int lua_setGlobalString(lua_State* L);
+    static int lua_getGlobalString(lua_State* L);
     static int lua_regGlobalFloat(lua_State* L);
     static int lua_unregGlobalFloat(lua_State* L);
     

@@ -1,136 +1,219 @@
-	godotLoadScene("neonrun.tscn")
+regGlobalFloat("editor_param_5", 80.0) -- End Width
+regGlobalFloat("editor_param_6", 45.0)  -- Ramp Angle
+regGlobalFloat("editor_param_gap_length", 50.0) -- Gap Length
+regGlobalFloat("editor_param_ramp_size", 20.0) -- Ramp Size
+regGlobalFloat("editor_action", 0.0)
 
-local inner = "0, 255, 255"       -- White inner
-local hover = "0, 0, 0"             -- Black border
-local outer = "255, 0, 255"         -- Neon purple hover
+regGlobalFloat("editor_param_length", 90.0)
+regGlobalFloat("editor_param_angle", 90.0)
+regGlobalFloat("editor_param_2", 80.0)  -- Width
+regGlobalFloat("editor_param_3", 100.0) -- Radius (for curves)
+regGlobalFloat("editor_param_incline", 0.0)
+regGlobalFloat("editor_swap_angle", 0.0)
+regGlobalFloat("editor_swap_incline", 0.0)
+regGlobalFloat("editor_param_drop", 0.0)
 
-local g_tag = "[graffity: " .. inner .. ", " .. outer .. ", " .. hover .. "]"
+regGlobalFloat("editor_clear", 0.0)
+regGlobalFloat("editor_show_final", 0.0)
+regGlobalFloat("editor_show_ai_wall", 0.0)
 
-function on_time_trial()
-    print("Time Trial clicked!")
-    ageEnableSubMenu("TimeT")
+print("Starting Track Editor UI...")
+godotLoadScene("track_editor.tscn")
+
+function renderEditorUI()
+    imguiBegin("Track Editor")
+    
+    imguiText("Procedural Track Builder")
+    imguiSeparator()
+    
+    imguiText("Element Parameters:")
+    imguiSliderFloat("Length", "editor_param_length", 1.0, 500.0)
+    imguiSliderFloat("Angle", "editor_param_angle", -180.0, 180.0)
+    imguiSameLine()
+    imguiButton("Swap Angle", "editor_swap_angle")
+    
+    imguiSliderFloat("Width (Start)", "editor_param_2", 10.0, 200.0)
+    imguiSliderFloat("Width (End)", "editor_param_5", 10.0, 200.0)
+    imguiSliderFloat("Radius (Curve)", "editor_param_3", 10.0, 500.0)
+    
+    imguiSliderFloat("Incline", "editor_param_incline", -90.0, 90.0)
+    imguiSameLine()
+    imguiButton("Swap Incline", "editor_swap_incline")
+    imguiSliderFloat("Drop", "editor_param_drop", -100.0, 0.0)
+    
+    imguiSliderFloat("Ramp Angle", "editor_param_6", 0.0, 60.0)
+    imguiSliderFloat("Gap Length", "editor_param_gap_length", 10.0, 300.0)
+    imguiSliderFloat("Ramp Size", "editor_param_ramp_size", 5.0, 100.0)
+    
+    imguiSeparator()
+    imguiText("Add Elements:")
+    
+    imguiButton("Add Straight", "editor_action_straight")
+    
+    imguiSameLine()
+    
+    imguiButton("Add Curve", "editor_action_curve")
+    
+    imguiButton("Right Angle Left", "editor_action_ral")
+    imguiSameLine()
+    imguiButton("Right Angle Right", "editor_action_rar")
+    
+    imguiSameLine()
+    imguiButton("Add Drop", "editor_action_drop")
+    
+    
+    imguiButton("Add Transition", "editor_action_trans")
+    imguiSameLine()
+    imguiButton("Bank Trans", "editor_action_bank_trans")
+    
+    
+    imguiSameLine()
+    imguiButton("Add Gate", "editor_action_gate")
+    imguiSameLine()
+    imguiButton("Flip Gate", "editor_action_flip_gate")
+    imguiSameLine()
+    imguiButton("Add Gap", "editor_action_gap")
+    
+    imguiSameLine()
+    imguiButton("Close Loop", "editor_action_close")
+        
+    imguiSeparator()
+    imguiSeparator()
+    imguiSeparator()
+    imguiText("Hole Mode Controls:")
+    imguiCheckbox("Select Undo Mode", "editor_select_undo_mode")
+    imguiSameLine()
+    imguiButton("Flip Build Dir", "editor_action_flip_dir")
+    imguiButton("Close Hole", "editor_action_spline_trans")
+    imguiSeparator()
+    imguiButton("Save JSON", "editor_action_save")
+    imguiSameLine()
+    imguiButton("Load JSON", "editor_action_load")
+    
+    
+    imguiButton("Clear Track", "editor_clear")
+    imguiSameLine()
+    imguiButton("Undo", "editor_action_undo")
+    imguiSameLine()
+    imguiButton("Redo", "editor_action_redo")
+    
+    imguiSeparator()
+    imguiCheckbox("Show Final", "editor_show_final")
+    imguiSameLine()
+    if getGlobalFloat("editor_show_final") > 0.5 then
+        imguiCheckbox("Show AI Wall", "editor_show_ai_wall")
+    end
+    
+    imguiEnd()
 end
-
-function on_time_trial_play()
-    print("Time Trial Play clicked!")
-end
-
-function on_time_trial_cancel()
-    print("Time Trial Canceled")
-    ageDisableSubMenu("TimeT")
-end
-
-
-function on_play_ground()
-    print("Play Ground clicked!")
-    ageEnableSubMenu("PlayG")
-end
-
-function on_play_ground_play()
-    print("Play Ground Play clicked!")
-    luaClearAndRun("testphysics.lua")
-end
-
-function on_play_ground_cancel()
-    print("Play Ground Canceled")
-    ageDisableSubMenu("PlayG")
-end
-
-
-function on_settings()
-    print("Settings clicked!")
-end
-
-function on_about()
-    print("About clicked!")
-end
-
-function on_arcade()
-    print("Arcade clicked!")
-end
-
-function on_quit()
-    ageEnableSubMenu("Quit")
-    -- appQuit() or similar
-end
-
-function on_sub_quit()
-    print("Quit clicked!")
-    appQuit()
-end
-
-function on_sub_cancel()
-    print("Quit clicked")
-    ageDisableSubMenu("Quit")
-end
-
-function on_race()
-    ageEnableSubMenu("Race")    
-    print("Race clicked!")
-end
-
-function on_race_play()
-    print("Race Play clicked!")
-end
-
-function on_race_cancel()
-    print("Race Canceled")
-    ageDisableSubMenu("Race")
-end
-
--- Create the submenu
-ageCreateSubMenu("Quit")
-ageBeginSubMenu("Quit")
-ageBeginMenu()
-addBouncer(g_tag .. "[pos:700, 700][fontsize:1.5][clicked:on_sub_quit][layer:1]Quit")
-addBouncer(g_tag .. "[pos:900, 700][fontsize:1.5][clicked:on_sub_cancel][layer:1]Cancel")
-ageEndMenu()
-ageEndSubMenu("Quit")
-
-
-ageCreateSubMenu("Race")
-ageBeginSubMenu("Race")
-addBouncer("[pos:700,350][rect:400,300][hover:255,255,255][clicked:on_race_play][layer:1][video:track.ogv]")
-ageBeginMenu("RaceSub1",2)
-ageBeginRow("RaceSub1",1)
-addBouncer(g_tag .. "[pos:600, 700][fontsize:1.5][clicked:on_race_play][layer:1]Play")
-addBouncer(g_tag .. "[pos:900, 700][fontsize:1.5][clicked:on_race_cancel][layer:1]Cancel")
-ageEndRow("RaceSub1")
-ageBeginRow("RaceSub1",2)
-addBouncer("[pos:550, 850][layer:1][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
-ageEndRow("RaceSub1")
-ageEndMenu()
-ageEndSubMenu("Race")
-
-
-ageCreateSubMenu("TimeT")
-ageBeginSubMenu("TimeT")
-addBouncer("[pos:700,400][rect:400,300][hover:255,255,255][clicked:on_time_trial_play][layer:1][layer:1][video:track.ogv]")
-ageBeginMenu()
-addBouncer(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_time_trial_play][layer:1]Play")
-addBouncer(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_time_trial_cancel][layer:1]Cancel")
-ageEndMenu()
-ageEndSubMenu("TimeT")
-
-ageCreateSubMenu("PlayG")
-ageBeginSubMenu("PlayG")
-addBouncer("[pos:700,400][rect:400,300][hover:255,255,255][clicked:on_play_ground_play][layer:1][layer:1][video:area.ogv]")
-ageBeginMenu()
-addBouncer(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_play_ground_play][layer:1]Play")
-addBouncer(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_play_ground_cancel][layer:1]Cancel")
-ageEndMenu()
-ageEndSubMenu("PlayG")
-
-ageBeginMenu()
-addBouncer(g_tag .. "[pos:100, 400][fontsize:1.5][clicked:on_race][layer:1]Race")
-addBouncer(g_tag .. "[pos:100, 500][fontsize:1.5][clicked:on_time_trial][layer:1]Time Trial")
-addBouncer(g_tag .. "[pos:100, 600][fontsize:1.5][clicked:on_play_ground][layer:1]Play Ground")
-addBouncer(g_tag .. "[pos:100, 700][fontsize:1.5][clicked:on_settings][layer:1]Settings")
-addBouncer(g_tag .. "[pos:100, 800][fontsize:1.5][clicked:on_about][layer:1]About")
-addBouncer(g_tag .. "[pos:100, 900][fontsize:1.5][clicked:on_arcade][layer:1]Arcade")
-addBouncer(g_tag .. "[pos:100, 1000][fontsize:1.5][clicked:on_quit][layer:1]Quit")
-ageEndMenu()
 
 while true do
-    delay(16)
+    renderEditorUI()
+
+
+    local btn_flip = getGlobalFloat("editor_action_flip_dir")
+    if btn_flip > 0.5 then
+        setGlobalFloat("editor_action", 15.0)
+        setGlobalFloat("editor_action_flip_dir", 0.0)
+    end
+
+    local btn_spline = getGlobalFloat("editor_action_spline_trans")
+    if btn_spline > 0.5 then
+        setGlobalFloat("editor_action", 16.0)
+        setGlobalFloat("editor_action_spline_trans", 0.0)
+    end
+
+    local btn_straight = getGlobalFloat("editor_action_straight")
+    if btn_straight > 0.5 then
+        setGlobalFloat("editor_action", 1.0)
+        setGlobalFloat("editor_action_straight", 0.0)
+    end
+
+    local swap_a = getGlobalFloat("editor_swap_angle")
+    if swap_a > 0.5 then
+        setGlobalFloat("editor_param_angle", -getGlobalFloat("editor_param_angle"))
+        setGlobalFloat("editor_swap_angle", 0.0)
+    end
+
+    local swap_i = getGlobalFloat("editor_swap_incline")
+    if swap_i > 0.5 then
+        setGlobalFloat("editor_param_incline", -getGlobalFloat("editor_param_incline"))
+        setGlobalFloat("editor_swap_incline", 0.0)
+    end
+
+    local btn_curve = getGlobalFloat("editor_action_curve")
+    if btn_curve > 0.5 then
+        setGlobalFloat("editor_action", 2.0)
+        setGlobalFloat("editor_action_curve", 0.0)
+    end   
+
+    local btn_drop = getGlobalFloat("editor_action_drop")
+    if btn_drop > 0.5 then
+        setGlobalFloat("editor_action", 3.0)
+        setGlobalFloat("editor_action_drop", 0.0)
+    end
+
+    local btn_trans = getGlobalFloat("editor_action_trans")
+    if btn_trans > 0.5 then
+        setGlobalFloat("editor_action", 4.0)
+        setGlobalFloat("editor_action_trans", 0.0)
+    end
+
+    local btn_bank = getGlobalFloat("editor_action_bank_trans")
+    if btn_bank > 0.5 then
+        setGlobalFloat("editor_action", 9.0)
+        setGlobalFloat("editor_action_bank_trans", 0.0)
+    end
+
+    local btn_gap = getGlobalFloat("editor_action_gap")
+    if btn_gap > 0.5 then
+        setGlobalFloat("editor_action", 6.0)
+        setGlobalFloat("editor_action_gap", 0.0)
+    end
+
+    local btn_close = getGlobalFloat("editor_action_close")
+    if btn_close > 0.5 then
+        setGlobalFloat("editor_action", 7.0)
+        setGlobalFloat("editor_action_close", 0.0)
+    end
+
+    local btn_gate = getGlobalFloat("editor_action_gate")
+    if btn_gate > 0.5 then
+        setGlobalFloat("editor_action", 5.0)
+        setGlobalFloat("editor_action_gate", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_flip_gate") > 0.5 then
+        setGlobalFloat("editor_action", 15.0)
+        setGlobalFloat("editor_action_flip_gate", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_save") > 0.5 then
+        setGlobalFloat("editor_action", 10.0)
+        setGlobalFloat("editor_action_save", 0.0)
+    end
+    if getGlobalFloat("editor_action_load") > 0.5 then
+        setGlobalFloat("editor_action", 11.0)
+        setGlobalFloat("editor_action_load", 0.0)
+    end
+    if getGlobalFloat("editor_action_undo") > 0.5 then
+        setGlobalFloat("editor_action", 12.0)
+        setGlobalFloat("editor_action_undo", 0.0)
+    end
+    if getGlobalFloat("editor_action_redo") > 0.5 then
+        setGlobalFloat("editor_action", 17.0)
+        setGlobalFloat("editor_action_redo", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_ral") > 0.5 then
+        setGlobalFloat("editor_action", 13.0)
+        setGlobalFloat("editor_action_ral", 0.0)
+    end
+
+    if getGlobalFloat("editor_action_rar") > 0.5 then
+        setGlobalFloat("editor_action", 14.0)
+        setGlobalFloat("editor_action_rar", 0.0)
+    end
+
+    delay(1)
 end
