@@ -63,7 +63,9 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("show_fps_hud", 0.0)
 
 	-- Load saved car settings on startup if present
-	-- godotLoadCarSettings()
+	-- local car_name = godotGetProperty("CarSetup", "car_name")
+			if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+			godotLoadCarSettings(car_name)
 end
 
 function renderCarPhysicsUI()
@@ -138,11 +140,15 @@ function renderCarPhysicsUI()
 		
 		if getGlobalFloat("save_settings_clicked") > 0.5 then
 			setGlobalFloat("save_settings_clicked", 0.0)
-			godotSaveCarSettings()
+			local car_name = godotGetProperty("CarSetup", "car_name")
+			if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+			godotSaveCarSettings(car_name)
 		end
 		if getGlobalFloat("load_settings_clicked") > 0.5 then
 			setGlobalFloat("load_settings_clicked", 0.0)
-			godotLoadCarSettings()
+			local car_name = godotGetProperty("CarSetup", "car_name")
+			if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+			godotLoadCarSettings(car_name)
 		end
 	end
 end

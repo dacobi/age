@@ -1,8 +1,8 @@
 	godotLoadScene("neonrun.tscn")
 
-local inner = "255, 0, 255"       -- White inner
-local outer = "0, 0, 0"             -- Black border
-local hover = "0, 255, 255"         -- Neon purple hover
+local inner = "0, 255, 255"       -- White inner
+local hover = "0, 0, 0"             -- Black border
+local outer = "255, 0, 255"         -- Neon purple hover
 
 local g_tag = "[graffity: " .. inner .. ", " .. outer .. ", " .. hover .. "]"
 
@@ -82,7 +82,6 @@ end
 ageCreateSubMenu("Quit")
 ageBeginSubMenu("Quit")
 ageBeginMenu()
--- addBouncer("[ SUBMENU: SETTINGS ]", 400, 100, 0, 0, 0, 0, "font=docallismeonstreet.otf;size=50;color=FFFF00", nil)
 addBouncer(g_tag .. "[pos:700, 700][fontsize:1.5][clicked:on_sub_quit][layer:1]Quit")
 addBouncer(g_tag .. "[pos:900, 700][fontsize:1.5][clicked:on_sub_cancel][layer:1]Cancel")
 ageEndMenu()
@@ -93,6 +92,7 @@ ageCreateSubMenu("Race")
 ageBeginSubMenu("Race")
 addBouncer("[pos:700,400][rect:400,300][hover:255,255,255][clicked:on_race_play][layer:1][layer:1][video:track.ogv]")
 ageBeginMenu()
+luaCreateSelector("assets/cars", "car.png", "current_car_name")
 addBouncer(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_race_play][layer:1]Play")
 addBouncer(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_race_cancel][layer:1]Cancel")
 ageEndMenu()

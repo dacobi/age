@@ -1,7 +1,7 @@
 ioWindowSetFullScreen(true)
 local is_fullscreen = true
 
-godotLoadScene("lemans_area.tscn")
+godotLoadScene("assets/areas/lemans_area/lemans_area.tscn")
 delay(200) -- give it a moment to load
 
 print("\n=== MegaRacer Synthwave Driving Demo Loaded ===")

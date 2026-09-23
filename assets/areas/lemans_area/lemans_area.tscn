@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://cq1iqcx2ych0i"]
 
-[ext_resource type="Script" path="res://test_track.gd" id="1_track_script"]
+[ext_resource type="Script" uid="uid://cwt7c3u7dviee" path="res://assets/areas/lemans_area/lemans_area.gd" id="1_track_script"]
 [ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="2_7dgu3"]
 [ext_resource type="PackedScene" path="res://lemans_car.tscn" id="2_supercar"]
+[ext_resource type="Script" path="res://setup_track.gd" id="setup_track_script"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ouvil"]
 panorama = ExtResource("2_7dgu3")
@@ -14,11 +15,11 @@ sky_material = SubResource("PanoramaSkyMaterial_ouvil")
 background_mode = 2
 sky = SubResource("Sky_cyber")
 ambient_light_source = 2
-ambient_light_color = Color(0.2, 0.2, 0.2, 1)
+ambient_light_color = Color(0.2, 0.1, 0.3, 1)
 tonemap_mode = 2
 glow_enabled = true
-glow_intensity = 0.2
-glow_bloom = 0.01
+glow_intensity = 0.8
+glow_bloom = 0.1
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Road"]
 albedo_color = Color(0.04, 0.04, 0.06, 1)
@@ -53,4 +54,19 @@ transform = Transform3D(1, 0, 0, 0, 0.939693, 0.34202, 0, -0.34202, 0.939693, 0,
 current = true
 fov = 60.0
 
-[node name="SuperCar" parent="." unique_id=603969191 instance=ExtResource("2_supercar")]
+[node name="Path3D" type="Path3D" parent="." unique_id=1326366657]
+
+[node name="RoadBed" type="CSGPolygon3D" parent="Path3D" unique_id=1839230760]
+material = SubResource("StandardMaterial3D_Road")
+
+[node name="BorderL" type="CSGPolygon3D" parent="Path3D" unique_id=1852948304]
+material = SubResource("StandardMaterial3D_NeonCyan")
+
+[node name="BorderR" type="CSGPolygon3D" parent="Path3D" unique_id=1887648627]
+material = SubResource("StandardMaterial3D_NeonCyan")
+
+[node name="CenterLine" type="CSGPolygon3D" parent="Path3D" unique_id=890079534]
+material = SubResource("StandardMaterial3D_GridLine")
+
+[node name="TrackSetup" type="Node" parent="."]
+script = ExtResource("setup_track_script")

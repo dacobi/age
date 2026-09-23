@@ -14,8 +14,32 @@
 #include <vector>
 #include <map>
 #include <godot_cpp/classes/audio_effect_capture.hpp>
+#include <godot_cpp/classes/canvas_layer.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
+#include <godot_cpp/classes/video_stream_player.hpp>
+#include <godot_cpp/classes/button.hpp>
+
 
 namespace godot {
+
+
+class UISelector : public CanvasLayer {
+    GDCLASS(UISelector, CanvasLayer);
+protected:
+    static void _bind_methods();
+public:
+    String folder;
+    String filename;
+    String global_var_name;
+    std::vector<String> subfolders;
+    int current_index = 0;
+    
+    Node* media_node = nullptr;
+
+    void update_media();
+    void _on_left_pressed();
+    void _on_right_pressed();
+};
 
 class LuaManager : public Node {
     GDCLASS(LuaManager, Node)
@@ -83,6 +107,9 @@ private:
     int main_menu_index = -1;
     
     void _create_submenu_deferred(String handle);
+    void _create_selector_deferred(String combined);
+    void _destroy_selector_deferred();
+    UISelector* current_selector = nullptr;
     void _begin_submenu_deferred(String handle);
     void _end_submenu_deferred(String handle);
     void _enable_submenu_deferred(String handle);

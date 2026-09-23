@@ -64,7 +64,9 @@ public:
         GCMD_WATCH_PROPERTY,
         GCMD_WATCH_SIGNAL,
         GCMD_LOAD_SCENE,
-        GCMD_SET_FULLSCREEN
+        GCMD_SET_FULLSCREEN,
+        GCMD_CREATE_SELECTOR,
+        GCMD_DESTROY_SELECTOR
     };
 
     using AddBouncerFunc = std::function<void(const std::string&)>;
@@ -293,6 +295,8 @@ private:
     static int lua_godotSaveHighScore(lua_State* L);
     static int lua_godotLoadCarSettings(lua_State* L);
     static int lua_godotSaveCarSettings(lua_State* L);
+    static int lua_createSelector(lua_State* L);
+    static int lua_destroySelector(lua_State* L);
     static int lua_godotRegisterImpulseProperty(lua_State* L);
 
     static void lua_hook(lua_State* L, lua_Debug* ar);

@@ -1,7 +1,7 @@
 ioWindowSetFullScreen(true)
 local is_fullscreen = true
 
-godotLoadScene("test_track.tscn")
+godotLoadScene("assets/tracks/test_track/test_track.tscn")
 delay(200) -- give it a moment to load
 
 print("\n=== MegaRacer Synthwave Test Track ===")
@@ -22,7 +22,9 @@ print("SUPERCAR POINTER IS: ", supercar)
 -- Include shared car physics and controls
 dofile("car_common.lua")
 initCarPhysicsDefaults(supercar)
-	godotLoadCarSettings()
+	local car_name = godotGetProperty("CarSetup", "car_name")
+if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+godotLoadCarSettings(car_name)
 
 local joy_handle = ioJoystickOpen(0)
 if joy_handle >= 0 then

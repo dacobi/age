@@ -24,11 +24,24 @@
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/display_server.hpp>
 #include "lua_manager.h"
+#include <filesystem>
+#include <godot_cpp/classes/panel_container.hpp>
+#include <godot_cpp/classes/style_box_flat.hpp>
+#include <godot_cpp/classes/h_box_container.hpp>
+#include <godot_cpp/classes/texture2d.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/image.hpp>
+#include <godot_cpp/classes/video_stream.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/sprite2d.hpp>
 #include <godot_cpp/classes/texture2d.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/input.hpp>
@@ -279,6 +292,8 @@ void LuaManager::finish_gdscript_load() {
 }
 
 void LuaManager::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("_create_selector_deferred", "combined"), &LuaManager::_create_selector_deferred);
+    ClassDB::bind_method(D_METHOD("_destroy_selector_deferred"), &LuaManager::_destroy_selector_deferred);
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_entered", "control_id"), &LuaManager::_on_bouncer_mouse_entered);
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
     ClassDB::bind_method(D_METHOD("_on_bouncer_gui_input", "event", "control_id"), &LuaManager::_on_bouncer_gui_input);
@@ -2183,6 +2198,14 @@ void LuaManager::_process(double delta) {
                 }
                 break;
             }
+                        case LuaScripting::GCMD_CREATE_SELECTOR: {
+                call_deferred("_create_selector_deferred", cmd.name);
+                break;
+            }
+            case LuaScripting::GCMD_DESTROY_SELECTOR: {
+                call_deferred("_destroy_selector_deferred");
+                break;
+            }
             case LuaScripting::GCMD_LOAD_SCENE: {                String full_path = "res://" + cmd.name;
                 UtilityFunctions::print("LuaManager delegating scene load to GDScript (Gemini Web approach): ", full_path);
                 
@@ -2464,4 +2487,172 @@ float LuaManager::get_global_float(const String& name) {
         return lua_engine->getGlobalFloat(name.utf8().get_data());
     }
     return 0.0f;
+}
+
+
+void UISelector::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("_on_left_pressed"), &UISelector::_on_left_pressed);
+    ClassDB::bind_method(D_METHOD("_on_right_pressed"), &UISelector::_on_right_pressed);
+}
+
+void UISelector::_on_left_pressed() {
+    if (subfolders.empty()) return;
+    current_index--;
+    if (current_index < 0) current_index = subfolders.size() - 1;
+    update_media();
+}
+
+void UISelector::_on_right_pressed() {
+    if (subfolders.empty()) return;
+    current_index++;
+    if (current_index >= subfolders.size()) current_index = 0;
+    update_media();
+}
+
+void UISelector::update_media() {
+    if (subfolders.empty() || !media_node) return;
+    
+    String current_sub = subfolders[current_index];
+    String full_path = "res://" + folder + "/" + current_sub + "/" + filename;
+    
+    if (TextureRect* tr = Object::cast_to<TextureRect>(media_node)) {
+        if (ResourceLoader::get_singleton()->exists(full_path)) {
+            Ref<Texture2D> tex = ResourceLoader::get_singleton()->load(full_path);
+            if (tex.is_valid()) {
+                tr->set_texture(tex);
+            }
+        } else {
+            // Try loading it raw from filesystem
+            Ref<Image> img = Image::create_empty(1, 1, false, Image::FORMAT_RGBA8);
+            if (img->load(full_path) == godot::OK) {
+                Ref<ImageTexture> itex = ImageTexture::create_from_image(img);
+                if (itex.is_valid()) tr->set_texture(itex);
+            }
+        }
+    } else if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(media_node)) {
+        Ref<VideoStream> stream = ResourceLoader::get_singleton()->load(full_path);
+        if (stream.is_valid()) {
+            vp->set_stream(stream);
+            vp->play();
+        }
+    }
+    
+    if (!global_var_name.is_empty()) {
+        Node* lua_mgr = get_tree()->get_root()->get_node_or_null(NodePath("LuaManager"));
+        if (lua_mgr) {
+            lua_mgr->call("set_global_string", global_var_name, current_sub);
+        }
+    }
+}
+
+void LuaManager::_create_selector_deferred(String combined) {
+    if (current_selector) {
+        current_selector->queue_free();
+        current_selector = nullptr;
+    }
+    
+    PackedStringArray parts = combined.split("|");
+    if (parts.size() < 3) return;
+    String folder = parts[0];
+    String filename = parts[1];
+    String global_var_name = parts[2];
+    
+    UISelector* selector = memnew(UISelector);
+    selector->folder = folder;
+    selector->filename = filename;
+    selector->global_var_name = global_var_name;
+    
+    std::string sys_folder = folder.utf8().get_data();
+    if (std::filesystem::exists(sys_folder) && std::filesystem::is_directory(sys_folder)) {
+        for (const auto& entry : std::filesystem::directory_iterator(sys_folder)) {
+            if (entry.is_directory()) {
+                selector->subfolders.push_back(String(entry.path().filename().string().c_str()));
+            }
+        }
+    }
+    
+    PanelContainer* panel = memnew(PanelContainer);
+    Ref<StyleBoxFlat> panel_style = memnew(StyleBoxFlat);
+    panel_style->set_bg_color(Color(0, 0, 0, 0.7)); // Smoked glass
+    panel_style->set_corner_radius_all(30);
+    // No content margin so buttons hug the edges
+    panel->add_theme_stylebox_override("panel", panel_style);
+    
+    panel->set_anchors_and_offsets_preset(Control::PRESET_CENTER);
+    
+    HBoxContainer* hbox = memnew(HBoxContainer);
+    // Remove spacing between buttons and image
+    hbox->add_theme_constant_override("separation", 0);
+    hbox->set_alignment(BoxContainer::ALIGNMENT_CENTER);
+    
+    // Left Button Style
+    Ref<StyleBoxFlat> left_style = memnew(StyleBoxFlat);
+    left_style->set_bg_color(Color(0.1, 0.1, 0.1, 0.9));
+    left_style->set_corner_radius(godot::CORNER_TOP_LEFT, 30);
+    left_style->set_corner_radius(godot::CORNER_BOTTOM_LEFT, 30);
+    
+    Ref<StyleBoxFlat> left_hover = memnew(StyleBoxFlat);
+    left_hover->set_bg_color(Color(0.3, 0.3, 0.3, 0.9));
+    left_hover->set_corner_radius(godot::CORNER_TOP_LEFT, 30);
+    left_hover->set_corner_radius(godot::CORNER_BOTTOM_LEFT, 30);
+
+    Button* left_btn = memnew(Button);
+    left_btn->set_text("<");
+    left_btn->set_custom_minimum_size(Vector2(50, 0));
+    left_btn->add_theme_stylebox_override("normal", left_style);
+    left_btn->add_theme_stylebox_override("hover", left_hover);
+    left_btn->add_theme_stylebox_override("pressed", left_style);
+    left_btn->connect("pressed", Callable(selector, "_on_left_pressed"));
+    
+    // Right Button Style
+    Ref<StyleBoxFlat> right_style = memnew(StyleBoxFlat);
+    right_style->set_bg_color(Color(0.1, 0.1, 0.1, 0.9));
+    right_style->set_corner_radius(godot::CORNER_TOP_RIGHT, 30);
+    right_style->set_corner_radius(godot::CORNER_BOTTOM_RIGHT, 30);
+    
+    Ref<StyleBoxFlat> right_hover = memnew(StyleBoxFlat);
+    right_hover->set_bg_color(Color(0.3, 0.3, 0.3, 0.9));
+    right_hover->set_corner_radius(godot::CORNER_TOP_RIGHT, 30);
+    right_hover->set_corner_radius(godot::CORNER_BOTTOM_RIGHT, 30);
+
+    Button* right_btn = memnew(Button);
+    right_btn->set_text(">");
+    right_btn->set_custom_minimum_size(Vector2(50, 0));
+    right_btn->add_theme_stylebox_override("normal", right_style);
+    right_btn->add_theme_stylebox_override("hover", right_hover);
+    right_btn->add_theme_stylebox_override("pressed", right_style);
+    right_btn->connect("pressed", Callable(selector, "_on_right_pressed"));
+    
+    bool is_video = filename.ends_with(".ogv");
+    if (is_video) {
+        VideoStreamPlayer* vp = memnew(VideoStreamPlayer);
+        vp->set_custom_minimum_size(Vector2(640, 360));
+        vp->set_expand(true);
+        selector->media_node = vp;
+    } else {
+        TextureRect* tr = memnew(TextureRect);
+        tr->set_custom_minimum_size(Vector2(640, 360));
+        tr->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
+        tr->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
+        selector->media_node = tr;
+    }
+    
+    hbox->add_child(left_btn);
+    hbox->add_child(selector->media_node);
+    hbox->add_child(right_btn);
+    
+    panel->add_child(hbox);
+    selector->add_child(panel);
+    
+    add_child(selector);
+    current_selector = selector;
+    
+    selector->update_media();
+}
+
+void LuaManager::_destroy_selector_deferred() {
+    if (current_selector) {
+        current_selector->queue_free();
+        current_selector = nullptr;
+    }
 }

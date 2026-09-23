@@ -15,6 +15,7 @@ void initialize_aga_module(ModuleInitializationLevel p_level) {
         return;
     }
 
+    ClassDB::register_class<UISelector>();
     ClassDB::register_class<LuaManager>();
     ClassDB::register_class<CarBrain>();
 }

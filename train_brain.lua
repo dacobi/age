@@ -1,4 +1,4 @@
-godotLoadScene("training_track.tscn")
+godotLoadScene("assets/tracks/training_track/training_track.tscn")
 delay(50)
 
 while true do

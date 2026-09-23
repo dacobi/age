@@ -1,4 +1,4 @@
-godotLoadScene("race_track.tscn")
+godotLoadScene("assets/tracks/race_track/race_track.tscn")
 
 delay(200)
 

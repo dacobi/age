@@ -1,4 +1,6 @@
 extends Node
+
+@export var car_name: String = "lemans_car"
 class_name CarSetup
 
 @export_group("Wheels")

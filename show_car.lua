@@ -42,7 +42,9 @@ setGlobalFloat("telemetry_slip_RR", 0.0)
 setGlobalFloat("show_collision_debug", 0.0)
 
 -- Load car settings on startup if present
-godotLoadCarSettings()
+local car_name = godotGetProperty("CarSetup", "car_name")
+if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+godotLoadCarSettings(car_name)
 
 local joy_handle = ioJoystickOpen(0)
 if joy_handle >= 0 then
@@ -105,11 +107,15 @@ while true do
 		
 		if getGlobalFloat("save_settings_clicked") > 0.5 then
 			setGlobalFloat("save_settings_clicked", 0.0)
-			godotSaveCarSettings()
+			local car_name = godotGetProperty("CarSetup", "car_name")
+if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+godotSaveCarSettings(car_name)
 		end
 		if getGlobalFloat("load_settings_clicked") > 0.5 then
 			setGlobalFloat("load_settings_clicked", 0.0)
-			godotLoadCarSettings()
+			local car_name = godotGetProperty("CarSetup", "car_name")
+if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+godotLoadCarSettings(car_name)
 		end
 	end
 

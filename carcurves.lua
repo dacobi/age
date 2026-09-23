@@ -1,7 +1,7 @@
 ioWindowSetFullScreen(true)
 local is_fullscreen = true
 
-godotLoadScene("lemans_track.tscn")
+godotLoadScene("assets/tracks/lemans_track/lemans_track.tscn")
 
 
 
