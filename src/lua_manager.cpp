@@ -1070,6 +1070,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
 
         Button* left_btn = memnew(Button);
         left_btn->set_text("<");
+        left_btn->set_focus_mode(Control::FOCUS_NONE);
         left_btn->set_custom_minimum_size(Vector2(50, 0));
         left_btn->add_theme_stylebox_override("normal", left_style);
         left_btn->add_theme_stylebox_override("hover", left_hover);
@@ -1089,6 +1090,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
 
         Button* right_btn = memnew(Button);
         right_btn->set_text(">");
+        right_btn->set_focus_mode(Control::FOCUS_NONE);
         right_btn->set_custom_minimum_size(Vector2(50, 0));
         right_btn->add_theme_stylebox_override("normal", right_style);
         right_btn->add_theme_stylebox_override("hover", right_hover);
