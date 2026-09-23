@@ -1,7 +1,9 @@
 extends Node
 
-@export var car_name: String = "lemans_car"
+
 class_name CarSetup
+
+@export var car_name: String = "lemans_car"
 
 @export_group("Wheels")
 @export var wheel_FL : Node3D
