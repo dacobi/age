@@ -15,6 +15,7 @@
 #include <map>
 #include <godot_cpp/classes/audio_effect_capture.hpp>
 #include <godot_cpp/classes/canvas_layer.hpp>
+#include <godot_cpp/classes/panel_container.hpp>
 #include <godot_cpp/classes/texture_rect.hpp>
 #include <godot_cpp/classes/video_stream_player.hpp>
 #include <godot_cpp/classes/button.hpp>
@@ -23,8 +24,8 @@
 namespace godot {
 
 
-class UISelector : public CanvasLayer {
-    GDCLASS(UISelector, CanvasLayer);
+class UISelector : public PanelContainer {
+    GDCLASS(UISelector, PanelContainer);
 protected:
     static void _bind_methods();
 public:
@@ -107,9 +108,7 @@ private:
     int main_menu_index = -1;
     
     void _create_submenu_deferred(String handle);
-    void _create_selector_deferred(String combined);
-    void _destroy_selector_deferred();
-    UISelector* current_selector = nullptr;
+    
     void _begin_submenu_deferred(String handle);
     void _end_submenu_deferred(String handle);
     void _enable_submenu_deferred(String handle);

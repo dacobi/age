@@ -297,8 +297,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("godotSaveHighScore", lua_godotSaveHighScore);
     reg("godotLoadCarSettings", lua_godotLoadCarSettings);
     reg("godotSaveCarSettings", lua_godotSaveCarSettings);
-    reg("luaCreateSelector", lua_createSelector);
-    reg("luaDestroySelector", lua_destroySelector);
+    
 
     // ImGui bindings
     reg("imguiBegin", lua_imguiBegin);
@@ -2507,33 +2506,4 @@ int LuaScripting::lua_nextAudio(lua_State* L) {
 }
 
 
-int LuaScripting::lua_createSelector(lua_State* L) {
-    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self && self->godotCmdFunc) {
-        std::string folder = lua_isstring(L, 1) ? lua_tostring(L, 1) : "";
-        std::string filename = lua_isstring(L, 2) ? lua_tostring(L, 2) : "";
-        std::string global_var = lua_isstring(L, 3) ? lua_tostring(L, 3) : "";
-        
-        auto sd = std::make_shared<LuaSyncData>();
-        float fargs[3] = {0,0,0};
-        
-        // Pass folder and global_var somehow?
-        // We can pass folder via name, and global_var via ptr or something?
-        // Wait, GodotCmdFunc takes name and a vector of args?
-        // signature: void(int cmd, const std::string& name, float args[3], std::shared_ptr<LuaSyncData> sd, void* ptr, void* ls)
-        // We can pass "folder|filename|global_var" as name!
-        std::string combined = folder + "|" + filename + "|" + global_var;
-        self->godotCmdFunc(GCMD_CREATE_SELECTOR, combined, fargs, sd, nullptr, self);
-    }
-    return 0;
-}
 
-int LuaScripting::lua_destroySelector(lua_State* L) {
-    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self && self->godotCmdFunc) {
-        auto sd = std::make_shared<LuaSyncData>();
-        float fargs[3] = {0,0,0};
-        self->godotCmdFunc(GCMD_DESTROY_SELECTOR, "", fargs, sd, nullptr, self);
-    }
-    return 0;
-}

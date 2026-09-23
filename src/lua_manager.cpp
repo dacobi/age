@@ -292,8 +292,6 @@ void LuaManager::finish_gdscript_load() {
 }
 
 void LuaManager::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("_create_selector_deferred", "combined"), &LuaManager::_create_selector_deferred);
-    ClassDB::bind_method(D_METHOD("_destroy_selector_deferred"), &LuaManager::_destroy_selector_deferred);
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_entered", "control_id"), &LuaManager::_on_bouncer_mouse_entered);
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
     ClassDB::bind_method(D_METHOD("_on_bouncer_gui_input", "event", "control_id"), &LuaManager::_on_bouncer_gui_input);
@@ -560,6 +558,10 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     Vector2 pos(0, 0);
     String image_path = "";
     String video_path = "";
+    bool is_selector = false;
+    String sel_folder;
+    String sel_filename;
+    String sel_var;
     bool is_stencil = false;
     String scene_path = "";
     String text = "";
@@ -632,6 +634,12 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         } else if (tag.begins_with("video:")) {
             int colon = tag.find(":");
             video_path = tag.substr(colon + 1).strip_edges();
+        } else if (tag.begins_with("selector:")) {
+            is_selector = true;
+            PackedStringArray p = tag.substr(9).split(",");
+            if (p.size() >= 1) sel_folder = p[0].strip_edges().replace("\"", "").replace("'", "");
+            if (p.size() >= 2) sel_filename = p[1].strip_edges().replace("\"", "").replace("'", "");
+            if (p.size() >= 3) sel_var = p[2].strip_edges().replace("\"", "").replace("'", "");
         } else if (tag.begins_with("ttscn:")) {
             scene_path = tag.substr(6).strip_edges();
         } else if (tag.begins_with("rect:")) {
@@ -931,6 +939,95 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         visual_item = vbox;
         
         le->connect("text_submitted", Callable(this, "_on_addhscore_submitted").bind(addhscore_score, addhscore_level, container->get_instance_id()));
+    } else if (is_selector) {
+        UISelector* selector = memnew(UISelector);
+        selector->folder = sel_folder;
+        selector->filename = sel_filename;
+        selector->global_var_name = sel_var;
+        
+        std::string sys_folder = sel_folder.utf8().get_data();
+        if (std::filesystem::exists(sys_folder) && std::filesystem::is_directory(sys_folder)) {
+            for (const auto& entry : std::filesystem::directory_iterator(sys_folder)) {
+                if (entry.is_directory()) {
+                    selector->subfolders.push_back(String(entry.path().filename().string().c_str()));
+                }
+            }
+        }
+        
+        Ref<StyleBoxFlat> panel_style = memnew(StyleBoxFlat);
+        panel_style->set_bg_color(Color(0, 0, 0, 0.7)); // Smoked glass
+        panel_style->set_corner_radius_all(30);
+        selector->add_theme_stylebox_override("panel", panel_style);
+        
+        HBoxContainer* hbox = memnew(HBoxContainer);
+        hbox->add_theme_constant_override("separation", 0);
+        hbox->set_alignment(BoxContainer::ALIGNMENT_CENTER);
+        
+        // Left Button Style
+        Ref<StyleBoxFlat> left_style = memnew(StyleBoxFlat);
+        left_style->set_bg_color(Color(0.1, 0.1, 0.1, 0.9));
+        left_style->set_corner_radius(godot::CORNER_TOP_LEFT, 30);
+        left_style->set_corner_radius(godot::CORNER_BOTTOM_LEFT, 30);
+        
+        Ref<StyleBoxFlat> left_hover = memnew(StyleBoxFlat);
+        left_hover->set_bg_color(Color(0.3, 0.3, 0.3, 0.9));
+        left_hover->set_corner_radius(godot::CORNER_TOP_LEFT, 30);
+        left_hover->set_corner_radius(godot::CORNER_BOTTOM_LEFT, 30);
+
+        Button* left_btn = memnew(Button);
+        left_btn->set_text("<");
+        left_btn->set_custom_minimum_size(Vector2(50, 0));
+        left_btn->add_theme_stylebox_override("normal", left_style);
+        left_btn->add_theme_stylebox_override("hover", left_hover);
+        left_btn->add_theme_stylebox_override("pressed", left_style);
+        left_btn->connect("pressed", Callable(selector, "_on_left_pressed"));
+        
+        // Right Button Style
+        Ref<StyleBoxFlat> right_style = memnew(StyleBoxFlat);
+        right_style->set_bg_color(Color(0.1, 0.1, 0.1, 0.9));
+        right_style->set_corner_radius(godot::CORNER_TOP_RIGHT, 30);
+        right_style->set_corner_radius(godot::CORNER_BOTTOM_RIGHT, 30);
+        
+        Ref<StyleBoxFlat> right_hover = memnew(StyleBoxFlat);
+        right_hover->set_bg_color(Color(0.3, 0.3, 0.3, 0.9));
+        right_hover->set_corner_radius(godot::CORNER_TOP_RIGHT, 30);
+        right_hover->set_corner_radius(godot::CORNER_BOTTOM_RIGHT, 30);
+
+        Button* right_btn = memnew(Button);
+        right_btn->set_text(">");
+        right_btn->set_custom_minimum_size(Vector2(50, 0));
+        right_btn->add_theme_stylebox_override("normal", right_style);
+        right_btn->add_theme_stylebox_override("hover", right_hover);
+        right_btn->add_theme_stylebox_override("pressed", right_style);
+        right_btn->connect("pressed", Callable(selector, "_on_right_pressed"));
+        
+        bool is_video = sel_filename.ends_with(".ogv");
+        Vector2 media_size = (rect.x > 0 && rect.y > 0) ? rect : Vector2(640, 360);
+        
+        if (is_video) {
+            VideoStreamPlayer* vp = memnew(VideoStreamPlayer);
+            vp->set_custom_minimum_size(media_size);
+            vp->set_expand(true);
+            selector->media_node = vp;
+        } else {
+            TextureRect* tr = memnew(TextureRect);
+            tr->set_custom_minimum_size(media_size);
+            tr->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
+            tr->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
+            selector->media_node = tr;
+        }
+        
+        hbox->add_child(left_btn);
+        hbox->add_child(selector->media_node);
+        hbox->add_child(right_btn);
+        
+        selector->add_child(hbox);
+        selector->update_media();
+        
+        interactive_control = selector;
+    
+        container->add_child(selector);
+        visual_item = selector;
     } else if (plasma_idx >= 0) {
         ColorRect* cr = memnew(ColorRect);
         if (rect.x > 0 && rect.y > 0) {
@@ -2198,14 +2295,7 @@ void LuaManager::_process(double delta) {
                 }
                 break;
             }
-                        case LuaScripting::GCMD_CREATE_SELECTOR: {
-                call_deferred("_create_selector_deferred", cmd.name);
-                break;
-            }
-            case LuaScripting::GCMD_DESTROY_SELECTOR: {
-                call_deferred("_destroy_selector_deferred");
-                break;
-            }
+            
             case LuaScripting::GCMD_LOAD_SCENE: {                String full_path = "res://" + cmd.name;
                 UtilityFunctions::print("LuaManager delegating scene load to GDScript (Gemini Web approach): ", full_path);
                 
@@ -2538,121 +2628,13 @@ void UISelector::update_media() {
     }
     
     if (!global_var_name.is_empty()) {
-        Node* lua_mgr = get_tree()->get_root()->get_node_or_null(NodePath("LuaManager"));
-        if (lua_mgr) {
-            lua_mgr->call("set_global_string", global_var_name, current_sub);
-        }
-    }
-}
-
-void LuaManager::_create_selector_deferred(String combined) {
-    if (current_selector) {
-        current_selector->queue_free();
-        current_selector = nullptr;
-    }
-    
-    PackedStringArray parts = combined.split("|");
-    if (parts.size() < 3) return;
-    String folder = parts[0];
-    String filename = parts[1];
-    String global_var_name = parts[2];
-    
-    UISelector* selector = memnew(UISelector);
-    selector->folder = folder;
-    selector->filename = filename;
-    selector->global_var_name = global_var_name;
-    
-    std::string sys_folder = folder.utf8().get_data();
-    if (std::filesystem::exists(sys_folder) && std::filesystem::is_directory(sys_folder)) {
-        for (const auto& entry : std::filesystem::directory_iterator(sys_folder)) {
-            if (entry.is_directory()) {
-                selector->subfolders.push_back(String(entry.path().filename().string().c_str()));
+        SceneTree* tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        if (tree) {
+            Node* lua_mgr = tree->get_root()->get_node_or_null(NodePath("LuaManager"));
+            if (lua_mgr) {
+                lua_mgr->call("set_global_string", global_var_name, current_sub);
             }
         }
     }
-    
-    PanelContainer* panel = memnew(PanelContainer);
-    Ref<StyleBoxFlat> panel_style = memnew(StyleBoxFlat);
-    panel_style->set_bg_color(Color(0, 0, 0, 0.7)); // Smoked glass
-    panel_style->set_corner_radius_all(30);
-    // No content margin so buttons hug the edges
-    panel->add_theme_stylebox_override("panel", panel_style);
-    
-    panel->set_anchors_and_offsets_preset(Control::PRESET_CENTER);
-    
-    HBoxContainer* hbox = memnew(HBoxContainer);
-    // Remove spacing between buttons and image
-    hbox->add_theme_constant_override("separation", 0);
-    hbox->set_alignment(BoxContainer::ALIGNMENT_CENTER);
-    
-    // Left Button Style
-    Ref<StyleBoxFlat> left_style = memnew(StyleBoxFlat);
-    left_style->set_bg_color(Color(0.1, 0.1, 0.1, 0.9));
-    left_style->set_corner_radius(godot::CORNER_TOP_LEFT, 30);
-    left_style->set_corner_radius(godot::CORNER_BOTTOM_LEFT, 30);
-    
-    Ref<StyleBoxFlat> left_hover = memnew(StyleBoxFlat);
-    left_hover->set_bg_color(Color(0.3, 0.3, 0.3, 0.9));
-    left_hover->set_corner_radius(godot::CORNER_TOP_LEFT, 30);
-    left_hover->set_corner_radius(godot::CORNER_BOTTOM_LEFT, 30);
-
-    Button* left_btn = memnew(Button);
-    left_btn->set_text("<");
-    left_btn->set_custom_minimum_size(Vector2(50, 0));
-    left_btn->add_theme_stylebox_override("normal", left_style);
-    left_btn->add_theme_stylebox_override("hover", left_hover);
-    left_btn->add_theme_stylebox_override("pressed", left_style);
-    left_btn->connect("pressed", Callable(selector, "_on_left_pressed"));
-    
-    // Right Button Style
-    Ref<StyleBoxFlat> right_style = memnew(StyleBoxFlat);
-    right_style->set_bg_color(Color(0.1, 0.1, 0.1, 0.9));
-    right_style->set_corner_radius(godot::CORNER_TOP_RIGHT, 30);
-    right_style->set_corner_radius(godot::CORNER_BOTTOM_RIGHT, 30);
-    
-    Ref<StyleBoxFlat> right_hover = memnew(StyleBoxFlat);
-    right_hover->set_bg_color(Color(0.3, 0.3, 0.3, 0.9));
-    right_hover->set_corner_radius(godot::CORNER_TOP_RIGHT, 30);
-    right_hover->set_corner_radius(godot::CORNER_BOTTOM_RIGHT, 30);
-
-    Button* right_btn = memnew(Button);
-    right_btn->set_text(">");
-    right_btn->set_custom_minimum_size(Vector2(50, 0));
-    right_btn->add_theme_stylebox_override("normal", right_style);
-    right_btn->add_theme_stylebox_override("hover", right_hover);
-    right_btn->add_theme_stylebox_override("pressed", right_style);
-    right_btn->connect("pressed", Callable(selector, "_on_right_pressed"));
-    
-    bool is_video = filename.ends_with(".ogv");
-    if (is_video) {
-        VideoStreamPlayer* vp = memnew(VideoStreamPlayer);
-        vp->set_custom_minimum_size(Vector2(640, 360));
-        vp->set_expand(true);
-        selector->media_node = vp;
-    } else {
-        TextureRect* tr = memnew(TextureRect);
-        tr->set_custom_minimum_size(Vector2(640, 360));
-        tr->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
-        tr->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
-        selector->media_node = tr;
-    }
-    
-    hbox->add_child(left_btn);
-    hbox->add_child(selector->media_node);
-    hbox->add_child(right_btn);
-    
-    panel->add_child(hbox);
-    selector->add_child(panel);
-    
-    add_child(selector);
-    current_selector = selector;
-    
-    selector->update_media();
 }
 
-void LuaManager::_destroy_selector_deferred() {
-    if (current_selector) {
-        current_selector->queue_free();
-        current_selector = nullptr;
-    }
-}
