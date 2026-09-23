@@ -601,6 +601,32 @@ void LuaManager::_end_menu_deferred() {
     if (active_menu_index >= 0 && active_menu_index < menus.size()) {
         MenuData& m = menus[active_menu_index];
         if (!m.rows.empty()) {
+            // Auto-detect legacy vertical menus and split them into rows
+            if (m.rows.size() == 1 && m.rows[0].items.size() > 1) {
+                float min_y = 1e9, max_y = -1e9;
+                for (uint64_t ctrl_id : m.rows[0].items) {
+                    if (interactive_bouncers.find(ctrl_id) != interactive_bouncers.end()) {
+                        uint64_t cont_id = interactive_bouncers[ctrl_id].container_id;
+                        Node2D* n = Object::cast_to<Node2D>(ObjectDB::get_instance(cont_id));
+                        if (n) {
+                            float y = n->get_position().y;
+                            if (y < min_y) min_y = y;
+                            if (y > max_y) max_y = y;
+                        }
+                    }
+                }
+                
+                if ((max_y - min_y) >= 10.0f) {
+                    std::vector<uint64_t> items = m.rows[0].items;
+                    m.rows.clear();
+                    for (uint64_t ctrl_id : items) {
+                        MenuRow r;
+                        r.items.push_back(ctrl_id);
+                        m.rows.push_back(r);
+                    }
+                }
+            }
+
             for (auto& row : m.rows) {
                 for (uint64_t ctrl_id : row.items) {
                     _set_bouncer_hover(ctrl_id, false);
