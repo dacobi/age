@@ -41,6 +41,7 @@ public:
     void _on_left_pressed();
     void _on_right_pressed();
     void set_hovered(bool hovered);
+    Color hover_border_color = Color(1.0, 0.0, 1.0, 1.0);
 };
 
 class LuaManager : public Node {

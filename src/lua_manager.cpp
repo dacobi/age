@@ -62,7 +62,7 @@ void UISelector::set_hovered(bool hovered) {
         Ref<StyleBoxFlat> style = get_theme_stylebox("panel");
         if (style.is_valid()) {
             style->set_border_width_all(hovered ? 4 : 0);
-            style->set_border_color(Color(1.0, 0.0, 1.0, 1.0)); // Neon Purple
+            style->set_border_color(hover_border_color);
         }
     }
 }
@@ -1007,6 +1007,11 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         selector->folder = sel_folder;
         selector->filename = sel_filename;
         selector->global_var_name = sel_var;
+        selector->hover_border_color = color;
+        
+        // Offset position to compensate for hover border width
+        pos.x -= 4;
+        pos.y -= 4;
         
         std::string sys_folder = sel_folder.utf8().get_data();
         if (std::filesystem::exists(sys_folder) && std::filesystem::is_directory(sys_folder)) {
