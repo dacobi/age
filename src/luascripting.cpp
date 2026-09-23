@@ -186,6 +186,8 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("delBouncer", lua_delBouncer);
     reg("ageBeginMenu", lua_ageBeginMenu);
     reg("ageEndMenu", lua_ageEndMenu);
+    reg("ageBeginRow", lua_ageBeginRow);
+    reg("ageEndRow", lua_ageEndRow);
     reg("ageCreateSubMenu", lua_ageCreateSubMenu);
     reg("ageBeginSubMenu", lua_ageBeginSubMenu);
     reg("ageEndSubMenu", lua_ageEndSubMenu);
@@ -543,7 +545,32 @@ int LuaScripting::lua_getGlobalFloat(lua_State* L) {
 int LuaScripting::lua_ageBeginMenu(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (self && self->beginMenuFunc) {
-        self->beginMenuFunc();
+        if (lua_gettop(L) >= 2) {
+            std::string name = lua_tostring(L, 1);
+            int rows = lua_tointeger(L, 2);
+            self->beginMenuFunc(name, rows);
+        } else {
+            self->beginMenuFunc("", 1);
+        }
+    }
+    return 0;
+}
+
+int LuaScripting::lua_ageBeginRow(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->beginRowFunc && lua_gettop(L) >= 2) {
+        std::string name = lua_tostring(L, 1);
+        int row = lua_tointeger(L, 2);
+        self->beginRowFunc(name, row);
+    }
+    return 0;
+}
+
+int LuaScripting::lua_ageEndRow(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && self->endRowFunc && lua_gettop(L) >= 1) {
+        std::string name = lua_tostring(L, 1);
+        self->endRowFunc(name);
     }
     return 0;
 }

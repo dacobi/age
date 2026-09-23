@@ -122,14 +122,21 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
     void stop();
     
     // Menu callbacks
-    using BeginMenuFunc = std::function<void()>;
+    using BeginMenuFunc = std::function<void(const std::string&, int)>;
     using EndMenuFunc = std::function<void()>;
-    void setMenuCallbacks(BeginMenuFunc beginFunc, EndMenuFunc endFunc) {
+    using BeginRowFunc = std::function<void(const std::string&, int)>;
+    using EndRowFunc = std::function<void(const std::string&)>;
+
+    void setMenuCallbacks(BeginMenuFunc beginFunc, EndMenuFunc endFunc, BeginRowFunc beginRow, EndRowFunc endRow) {
         beginMenuFunc = beginFunc;
         endMenuFunc = endFunc;
+        beginRowFunc = beginRow;
+        endRowFunc = endRow;
     }
     BeginMenuFunc beginMenuFunc;
     EndMenuFunc endMenuFunc;
+    BeginRowFunc beginRowFunc;
+    EndRowFunc endRowFunc;
 
     using StringCallback = std::function<void(const std::string&)>;
     StringCallback createSubMenuFunc;
@@ -174,6 +181,8 @@ private:
     static int lua_delBouncer(lua_State* L);
     static int lua_ageBeginMenu(lua_State* L);
     static int lua_ageEndMenu(lua_State* L);
+    static int lua_ageBeginRow(lua_State* L);
+    static int lua_ageEndRow(lua_State* L);
     static int lua_ageCreateSubMenu(lua_State* L);
     static int lua_ageBeginSubMenu(lua_State* L);
     static int lua_ageEndSubMenu(lua_State* L);

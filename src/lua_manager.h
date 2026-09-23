@@ -88,14 +88,21 @@ private:
     std::vector<DynamicLabel> dynamic_labels;
     String _evaluate_bouncer_text(const String& syntax);
 
-    struct MenuData {
+    struct MenuRow {
+        String name;
         std::vector<uint64_t> items;
-        int selected_index = 0;
+        int selected_col = 0;
+    };
+    struct MenuData {
+        String name;
+        std::vector<MenuRow> rows;
+        int selected_row = 0;
         bool is_horizontal = false;
     };
     std::vector<MenuData> menus;
     int active_menu_index = -1;
     bool is_building_menu = false;
+    int active_building_row = 0;
     
     struct SubMenuData {
         String handle;
@@ -120,11 +127,12 @@ private:
         bool has_hover = false;
         String clicked_script;
         uint64_t container_id = 0;
-        
         bool is_graffity = false;
         Color graffity_outer;
         Color graffity_hover;
         uint64_t label_id = 0;
+        bool is_selector = false;
+        uint64_t selector_id = 0;
     };
     struct BouncerPhysics {
         bool enabled = false;
@@ -140,7 +148,9 @@ private:
 
     std::map<uint64_t, InteractiveData> interactive_bouncers;
 
-    void _begin_menu_deferred();
+    void _begin_menu_deferred(String name, int rows);
+    void _begin_row_deferred(String name, int row);
+    void _end_row_deferred(String name);
     void _end_menu_deferred();
 
     void _add_bouncer_deferred(const String& syntax);

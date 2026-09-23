@@ -122,29 +122,47 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
     bool is_main_menu_item = false;
     if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
         MenuData& mm = menus[main_menu_index];
-        for (int i = 0; i < (int)mm.items.size(); i++) {
-            if (mm.items[i] == control_id) {
-                is_main_menu_item = true;
-                if (active_menu_index == main_menu_index) {
-                    if (mm.selected_index != i && mm.selected_index >= 0 && mm.selected_index < (int)mm.items.size()) {
-                        _set_bouncer_hover(mm.items[mm.selected_index], false);
+        for (int r = 0; r < mm.rows.size(); r++) {
+            for (int c = 0; c < mm.rows[r].items.size(); c++) {
+                if (mm.rows[r].items[c] == control_id) {
+                    is_main_menu_item = true;
+                    if (active_menu_index == main_menu_index) {
+                        if (mm.selected_row >= 0 && mm.selected_row < mm.rows.size()) {
+                            MenuRow& old_r = mm.rows[mm.selected_row];
+                            if (old_r.selected_col >= 0 && old_r.selected_col < old_r.items.size()) {
+                                uint64_t old_id = old_r.items[old_r.selected_col];
+                                if (old_id != control_id) {
+                                    _set_bouncer_hover(old_id, false);
+                                }
+                            }
+                        }
+                        mm.selected_row = r;
+                        mm.rows[r].selected_col = c;
                     }
-                    mm.selected_index = i;
+                    break;
                 }
-                break;
             }
         }
     }
     
     if (active_menu_index >= 0 && active_menu_index < (int)menus.size()) {
         MenuData& m = menus[active_menu_index];
-        for (int i = 0; i < (int)m.items.size(); i++) {
-            if (m.items[i] == control_id) {
-                if (m.selected_index != i && m.selected_index >= 0 && m.selected_index < (int)m.items.size()) {
-                    _set_bouncer_hover(m.items[m.selected_index], false);
+        for (int r = 0; r < m.rows.size(); r++) {
+            for (int c = 0; c < m.rows[r].items.size(); c++) {
+                if (m.rows[r].items[c] == control_id) {
+                    if (m.selected_row >= 0 && m.selected_row < m.rows.size()) {
+                        MenuRow& old_r = m.rows[m.selected_row];
+                        if (old_r.selected_col >= 0 && old_r.selected_col < old_r.items.size()) {
+                            uint64_t old_id = old_r.items[old_r.selected_col];
+                            if (old_id != control_id) {
+                                _set_bouncer_hover(old_id, false);
+                            }
+                        }
+                    }
+                    m.selected_row = r;
+                    m.rows[r].selected_col = c;
+                    break;
                 }
-                m.selected_index = i;
-                break;
             }
         }
     }
@@ -156,10 +174,13 @@ void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
     bool is_selected = false;
     for (int m_idx = 0; m_idx < (int)menus.size(); m_idx++) {
         MenuData& m = menus[m_idx];
-        if (m.selected_index >= 0 && m.selected_index < (int)m.items.size()) {
-            if (m.items[m.selected_index] == control_id) {
-                is_selected = true;
-                break;
+        if (m.selected_row >= 0 && m.selected_row < m.rows.size()) {
+            MenuRow& r = m.rows[m.selected_row];
+            if (r.selected_col >= 0 && r.selected_col < r.items.size()) {
+                if (r.items[r.selected_col] == control_id) {
+                    is_selected = true;
+                    break;
+                }
             }
         }
     }
@@ -177,30 +198,34 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
             
             bool is_main_menu_item = false;
             if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
-                for (uint64_t id : menus[main_menu_index].items) {
-                    if (id == control_id) {
-                        is_main_menu_item = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (is_main_menu_item) {
-                for (auto& pair : submenus) {
-                    if (pair.second.is_active) {
-                        _disable_submenu_deferred(pair.first);
-                    }
-                }
-                
                 MenuData& mm = menus[main_menu_index];
-                for (int i = 0; i < (int)mm.items.size(); i++) {
-                    if (mm.items[i] == control_id) {
-                        if (mm.selected_index != i && mm.selected_index >= 0 && mm.selected_index < (int)mm.items.size()) {
-                            _set_bouncer_hover(mm.items[mm.selected_index], false);
+                for (int r = 0; r < mm.rows.size(); r++) {
+                    for (int c = 0; c < mm.rows[r].items.size(); c++) {
+                        if (mm.rows[r].items[c] == control_id) {
+                            is_main_menu_item = true;
+                            
+                            for (auto& pair : submenus) {
+                                if (pair.second.is_active) {
+                                    _disable_submenu_deferred(pair.first);
+                                }
+                            }
+                            
+                            if (mm.selected_row >= 0 && mm.selected_row < mm.rows.size()) {
+                                MenuRow& old_r = mm.rows[mm.selected_row];
+                                if (old_r.selected_col >= 0 && old_r.selected_col < old_r.items.size()) {
+                                    uint64_t old_id = old_r.items[old_r.selected_col];
+                                    if (old_id != control_id) {
+                                        _set_bouncer_hover(old_id, false);
+                                    }
+                                }
+                            }
+                            
+                            mm.selected_row = r;
+                            mm.rows[r].selected_col = c;
+                            break;
                         }
-                        mm.selected_index = i;
-                        break;
                     }
+                    if (is_main_menu_item) break;
                 }
             }
 
@@ -296,7 +321,9 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
     ClassDB::bind_method(D_METHOD("_on_bouncer_gui_input", "event", "control_id"), &LuaManager::_on_bouncer_gui_input);
     ClassDB::bind_method(D_METHOD("_on_addhscore_submitted", "text", "score", "level", "bouncer_id"), &LuaManager::_on_addhscore_submitted);
-    ClassDB::bind_method(D_METHOD("_begin_menu_deferred"), &LuaManager::_begin_menu_deferred);
+    ClassDB::bind_method(D_METHOD("_begin_menu_deferred", "name", "rows"), &LuaManager::_begin_menu_deferred);
+    ClassDB::bind_method(D_METHOD("_begin_row_deferred", "name", "row"), &LuaManager::_begin_row_deferred);
+    ClassDB::bind_method(D_METHOD("_end_row_deferred", "name"), &LuaManager::_end_row_deferred);
     ClassDB::bind_method(D_METHOD("_end_menu_deferred"), &LuaManager::_end_menu_deferred);
     ClassDB::bind_method(D_METHOD("_create_submenu_deferred", "handle"), &LuaManager::_create_submenu_deferred);
     ClassDB::bind_method(D_METHOD("_begin_submenu_deferred", "handle"), &LuaManager::_begin_submenu_deferred);
@@ -406,16 +433,31 @@ LuaManager::~LuaManager() {
 #include <thread>
 
 
-void LuaManager::_begin_menu_deferred() {
+void LuaManager::_begin_menu_deferred(String name, int rows) {
     is_building_menu = true;
     MenuData m;
+    m.name = name;
+    m.rows.resize(rows);
     menus.push_back(m);
     active_menu_index = menus.size() - 1;
+    active_building_row = 0; // Default to row 0 for legacy menus
     if (!active_building_submenu.is_empty()) {
         submenus[active_building_submenu].menu_index = active_menu_index;
     } else {
         main_menu_index = active_menu_index;
     }
+}
+
+void LuaManager::_begin_row_deferred(String name, int row) {
+    if (is_building_menu && active_menu_index >= 0) {
+        if (row >= 1 && row <= menus[active_menu_index].rows.size()) {
+            active_building_row = row - 1; // 1-based index from Lua
+        }
+    }
+}
+
+void LuaManager::_end_row_deferred(String name) {
+    // No-op for now, just logical closure
 }
 
 void LuaManager::_create_submenu_deferred(String handle) {
@@ -475,12 +517,17 @@ void LuaManager::_enable_submenu_deferred(String handle) {
         }
         if (sm.menu_index >= 0) {
             active_menu_index = sm.menu_index;
-            if (active_menu_index < (int)menus.size() && !menus[active_menu_index].items.empty()) {
-                for (uint64_t id : menus[active_menu_index].items) {
-                    _set_bouncer_hover(id, false);
+            if (active_menu_index < (int)menus.size() && !menus[active_menu_index].rows.empty()) {
+                for (auto& row : menus[active_menu_index].rows) {
+                    for (uint64_t id : row.items) {
+                        _set_bouncer_hover(id, false);
+                    }
                 }
-                menus[active_menu_index].selected_index = 0;
-                _set_bouncer_hover(menus[active_menu_index].items[0], true);
+                menus[active_menu_index].selected_row = 0;
+                if (!menus[active_menu_index].rows[0].items.empty()) {
+                    menus[active_menu_index].rows[0].selected_col = 0;
+                    _set_bouncer_hover(menus[active_menu_index].rows[0].items[0], true);
+                }
             }
         }
     }
@@ -522,8 +569,11 @@ void LuaManager::_disable_submenu_deferred(String handle) {
         }
         if (sm.menu_index >= 0 && active_menu_index == sm.menu_index) {
             active_menu_index = main_menu_index;
-            if (active_menu_index >= 0 && active_menu_index < (int)menus.size() && !menus[active_menu_index].items.empty()) {
-                _set_bouncer_hover(menus[active_menu_index].items[menus[active_menu_index].selected_index], true);
+            if (active_menu_index >= 0 && active_menu_index < (int)menus.size() && !menus[active_menu_index].rows.empty()) {
+                MenuData& m = menus[active_menu_index];
+                if (m.selected_row >= 0 && m.selected_row < m.rows.size() && !m.rows[m.selected_row].items.empty()) {
+                    _set_bouncer_hover(m.rows[m.selected_row].items[m.rows[m.selected_row].selected_col], true);
+                }
             }
         }
     }
@@ -533,22 +583,17 @@ void LuaManager::_end_menu_deferred() {
     is_building_menu = false;
     if (active_menu_index >= 0 && active_menu_index < menus.size()) {
         MenuData& m = menus[active_menu_index];
-        if (m.items.size() > 0) {
-            float min_y = 1e9, max_y = -1e9;
-            for (uint64_t ctrl_id : m.items) {
-                if (interactive_bouncers.find(ctrl_id) != interactive_bouncers.end()) {
-                    uint64_t cont_id = interactive_bouncers[ctrl_id].container_id;
-                    Node2D* n = Object::cast_to<Node2D>(ObjectDB::get_instance(cont_id));
-                    if (n) {
-                        float y = n->get_position().y;
-                        if (y < min_y) min_y = y;
-                        if (y > max_y) max_y = y;
-                    }
+        if (!m.rows.empty()) {
+            for (auto& row : m.rows) {
+                for (uint64_t ctrl_id : row.items) {
+                    _set_bouncer_hover(ctrl_id, false);
                 }
             }
-            m.is_horizontal = (max_y - min_y) < 10.0f;
-            m.selected_index = 0;
-            _set_bouncer_hover(m.items[0], true);
+            m.selected_row = 0;
+            if (!m.rows[0].items.empty()) {
+                m.rows[0].selected_col = 0;
+                _set_bouncer_hover(m.rows[0].items[0], true);
+            }
         }
     }
 }
@@ -559,6 +604,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     String image_path = "";
     String video_path = "";
     bool is_selector = false;
+    uint64_t current_selector_id = 0;
     String sel_folder;
     String sel_filename;
     String sel_var;
@@ -1023,6 +1069,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         
         selector->add_child(hbox);
         selector->update_media();
+        current_selector_id = selector->get_instance_id();
         
         interactive_control = selector;
     
@@ -1053,7 +1100,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         }
     }
     
-    if (interactive_control && (has_hover || !clicked_script.is_empty() || is_graffity)) {
+    if (interactive_control && (has_hover || !clicked_script.is_empty() || is_graffity || is_selector)) {
         interactive_control->set_mouse_filter(Control::MOUSE_FILTER_STOP);
         uint64_t ctrl_id = interactive_control->get_instance_id();
         
@@ -1067,6 +1114,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         idata.graffity_outer = graffity_outer;
         idata.graffity_hover = graffity_hover;
         idata.label_id = label ? label->get_instance_id() : 0;
+        idata.is_selector = is_selector;
+        idata.selector_id = current_selector_id;
         interactive_bouncers[ctrl_id] = idata;
         
         interactive_control->connect("mouse_entered", Callable(this, "_on_bouncer_mouse_entered").bind(ctrl_id));
@@ -1074,7 +1123,9 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         interactive_control->connect("gui_input", Callable(this, "_on_bouncer_gui_input").bind(ctrl_id));
         
         if (is_building_menu && active_menu_index >= 0) {
-            menus[active_menu_index].items.push_back(ctrl_id);
+            if (active_building_row < menus[active_menu_index].rows.size()) {
+                menus[active_menu_index].rows[active_building_row].items.push_back(ctrl_id);
+            }
         }
     }
     
@@ -2058,8 +2109,10 @@ void LuaManager::_ready() {
     };
 
     lua_engine->setMenuCallbacks(
-        [this]() { call_deferred("_begin_menu_deferred"); },
-        [this]() { call_deferred("_end_menu_deferred"); }
+        [this](const std::string& name, int rows) { call_deferred("_begin_menu_deferred", String(name.c_str()), rows); },
+        [this]() { call_deferred("_end_menu_deferred"); },
+        [this](const std::string& name, int row) { call_deferred("_begin_row_deferred", String(name.c_str()), row); },
+        [this](const std::string& name) { call_deferred("_end_row_deferred", String(name.c_str())); }
     );
     lua_engine->setSubMenuCallbacks(
         [this](const std::string& h) { call_deferred("_create_submenu_deferred", String(h.c_str())); },
@@ -2098,8 +2151,8 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
             if (!closed_submenu) {
                 if (main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
                     MenuData& main_menu = menus[main_menu_index];
-                    if (!main_menu.items.empty()) {
-                        uint64_t quit_id = main_menu.items.back();
+                    if (!main_menu.rows.empty() && !main_menu.rows.back().items.empty()) {
+                        uint64_t quit_id = main_menu.rows.back().items.back();
                         if (interactive_bouncers.find(quit_id) != interactive_bouncers.end()) {
                             String script = interactive_bouncers[quit_id].clicked_script;
                             if (!script.is_empty()) {
@@ -2118,58 +2171,67 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
 
         if (active_menu_index >= 0 && active_menu_index < menus.size()) {
             MenuData& m = menus[active_menu_index];
-            if (!m.items.empty()) {
+            if (!m.rows.empty()) {
                 Key k = key_event->get_keycode();
-                int old_idx = m.selected_index;
                 bool handled = false;
-
-                int new_idx = m.selected_index;
-                if (m.is_horizontal) {
-                    if (k == Key::KEY_LEFT) { new_idx--; handled = true; }
-                    else if (k == Key::KEY_RIGHT) { new_idx++; handled = true; }
-                } else {
-                    if (k == Key::KEY_UP) { new_idx--; handled = true; }
-                    else if (k == Key::KEY_DOWN) { new_idx++; handled = true; }
-                }
-
-                if (handled) {
-                    if (new_idx < 0) new_idx = m.items.size() - 1;
-                    if (new_idx >= (int)m.items.size()) new_idx = 0;
-                    
-                    _on_bouncer_mouse_entered(m.items[new_idx]);
-                } else if (active_menu_index != main_menu_index && main_menu_index >= 0 && main_menu_index < (int)menus.size()) {
-                    MenuData& mm = menus[main_menu_index];
-                    int new_mm_idx = mm.selected_index;
-                    bool mm_handled = false;
-                    if (mm.is_horizontal) {
-                        if (k == Key::KEY_LEFT) { new_mm_idx--; mm_handled = true; }
-                        else if (k == Key::KEY_RIGHT) { new_mm_idx++; mm_handled = true; }
-                    } else {
-                        if (k == Key::KEY_UP) { new_mm_idx--; mm_handled = true; }
-                        else if (k == Key::KEY_DOWN) { new_mm_idx++; mm_handled = true; }
-                    }
-                    
-                    if (mm_handled) {
-                        for (auto& pair : submenus) {
-                            if (pair.second.is_active) {
-                                _disable_submenu_deferred(pair.first);
-                            }
-                        }
-                        if (new_mm_idx < 0) new_mm_idx = mm.items.size() - 1;
-                        if (new_mm_idx >= (int)mm.items.size()) new_mm_idx = 0;
-                        _on_bouncer_mouse_entered(mm.items[new_mm_idx]);
-                    }
-                }
                 
-                if (k == Key::KEY_ENTER || k == Key::KEY_SPACE) {
-                    uint64_t ctrl_id = m.items[m.selected_index];
-                    if (interactive_bouncers.find(ctrl_id) != interactive_bouncers.end()) {
-                        String script = interactive_bouncers[ctrl_id].clicked_script;
-                        if (!script.is_empty()) {
-                            if (script.ends_with(".lua")) {
-                                call_deferred("_clear_and_run_deferred", script);
-                            } else {
-                                if (lua_engine) lua_engine->triggerCallback(script.utf8().get_data());
+                int new_row = m.selected_row;
+                
+                if (k == Key::KEY_UP) { new_row--; handled = true; }
+                else if (k == Key::KEY_DOWN) { new_row++; handled = true; }
+                
+                if (handled) {
+                    if (new_row < 0) new_row = m.rows.size() - 1;
+                    if (new_row >= (int)m.rows.size()) new_row = 0;
+                    
+                    // Keep finding a row that actually has items
+                    int start_row = new_row;
+                    while (m.rows[new_row].items.empty()) {
+                        if (k == Key::KEY_UP) new_row--;
+                        else new_row++;
+                        
+                        if (new_row < 0) new_row = m.rows.size() - 1;
+                        if (new_row >= (int)m.rows.size()) new_row = 0;
+                        if (new_row == start_row) break;
+                    }
+                    
+                    if (!m.rows[new_row].items.empty()) {
+                        int current_col = m.rows[new_row].selected_col;
+                        _on_bouncer_mouse_entered(m.rows[new_row].items[current_col]);
+                    }
+                } else if (k == Key::KEY_LEFT || k == Key::KEY_RIGHT) {
+                    if (m.selected_row >= 0 && m.selected_row < m.rows.size() && !m.rows[m.selected_row].items.empty()) {
+                        MenuRow& r = m.rows[m.selected_row];
+                        uint64_t current_id = r.items[r.selected_col];
+                        
+                        if (interactive_bouncers.count(current_id) && interactive_bouncers[current_id].is_selector) {
+                            UISelector* selector = Object::cast_to<UISelector>(ObjectDB::get_instance(interactive_bouncers[current_id].selector_id));
+                            if (selector) {
+                                if (k == Key::KEY_LEFT) selector->_on_left_pressed();
+                                else selector->_on_right_pressed();
+                            }
+                        } else {
+                            int new_col = r.selected_col;
+                            if (k == Key::KEY_LEFT) new_col--;
+                            else new_col++;
+                            
+                            if (new_col < 0) new_col = r.items.size() - 1;
+                            if (new_col >= (int)r.items.size()) new_col = 0;
+                            
+                            _on_bouncer_mouse_entered(r.items[new_col]);
+                        }
+                    }
+                } else if (k == Key::KEY_ENTER || k == Key::KEY_SPACE) {
+                    if (m.selected_row >= 0 && m.selected_row < m.rows.size() && !m.rows[m.selected_row].items.empty()) {
+                        uint64_t current_id = m.rows[m.selected_row].items[m.rows[m.selected_row].selected_col];
+                        if (interactive_bouncers.find(current_id) != interactive_bouncers.end()) {
+                            String script = interactive_bouncers[current_id].clicked_script;
+                            if (!script.is_empty()) {
+                                if (script.ends_with(".lua")) {
+                                    call_deferred("_clear_and_run_deferred", script);
+                                } else {
+                                    if (lua_engine) lua_engine->triggerCallback(script.utf8().get_data());
+                                }
                             }
                         }
                     }
