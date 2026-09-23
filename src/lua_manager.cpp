@@ -61,8 +61,8 @@ void UISelector::set_hovered(bool hovered) {
     if (has_theme_stylebox_override("panel")) {
         Ref<StyleBoxFlat> style = get_theme_stylebox("panel");
         if (style.is_valid()) {
-            style->set_border_width_all(hovered ? 4 : 0);
-            style->set_border_color(hover_border_color);
+            style->set_border_width_all(4);
+            style->set_border_color(hovered ? hover_border_color : Color(0, 0, 0, 0));
         }
     }
 }
@@ -629,6 +629,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     String scene_path = "";
     String text = "";
     Color color(1, 1, 1, 1);
+    Color parsed_rgb(1, 0, 1, 1);
     Vector2 rect(0, 0);
     int layer_idx = 0;
     float font_size = 1.0;
@@ -720,6 +721,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
                 } else {
                     color = c;
                 }
+                parsed_rgb = c;
             }
         } else if (tag.begins_with("layer:")) {
             layer_idx = tag.substr(6).to_int();
@@ -875,7 +877,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     }
     
     RichTextLabel* label = nullptr;
-    if (!text.is_empty() && !is_hscore && !is_addhscore) {
+    if (!text.is_empty() && !is_hscore && !is_addhscore && !is_selector) {
         label = memnew(RichTextLabel);
         label->set_use_bbcode(true);
         label->set_text(text);
@@ -1007,11 +1009,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         selector->folder = sel_folder;
         selector->filename = sel_filename;
         selector->global_var_name = sel_var;
-        selector->hover_border_color = color;
-        
-        // Offset position to compensate for hover border width
-        pos.x -= 4;
-        pos.y -= 4;
+        selector->hover_border_color = parsed_rgb;
         
         std::string sys_folder = sel_folder.utf8().get_data();
         if (std::filesystem::exists(sys_folder) && std::filesystem::is_directory(sys_folder)) {
@@ -1025,8 +1023,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         Ref<StyleBoxFlat> panel_style = memnew(StyleBoxFlat);
         panel_style->set_bg_color(Color(0, 0, 0, 0.7)); // Smoked glass
         panel_style->set_corner_radius_all(30);
-        panel_style->set_border_width_all(0);
-        panel_style->set_border_color(Color(1.0, 0.0, 1.0, 1.0));
+        panel_style->set_border_width_all(4);
+        panel_style->set_border_color(Color(0, 0, 0, 0));
         selector->add_theme_stylebox_override("panel", panel_style);
         
         HBoxContainer* hbox = memnew(HBoxContainer);
