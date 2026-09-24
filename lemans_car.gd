@@ -1339,12 +1339,44 @@ func is_grounded() -> bool:
 	return is_grounded_state
 
 func _exit_tree() -> void:
+	print("--- LEMANS CAR _exit_tree CALLED ---")
+	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
+		var fmod_instance = Engine.get_singleton("FmodServer")
+		if fmod_instance:
+			fmod_instance.get_bus("bus:/").stop_all_events(1)
+			fmod_instance.update()
 	if fmod_event != null:
-		if fmod_event.has_method("stop"): fmod_event.stop(0) # 0 = IMMEDIATE
-		if fmod_event.has_method("release"): fmod_event.release()
+		print("fmod_event is NOT null. Stopping and releasing...")
+		if fmod_event.has_method("stop"): 
+			fmod_event.stop(1)
+			print("Called stop(1) on fmod_event")
+		if fmod_event.has_method("release"): 
+			fmod_event.release()
+			print("Called release() on fmod_event")
 		fmod_event = null
+	else:
+		print("fmod_event IS NULL!")
 		
 	if tire_fmod_event != null:
-		if tire_fmod_event.has_method("stop"): tire_fmod_event.stop(0)
+		if tire_fmod_event.has_method("stop"): tire_fmod_event.stop(1)
 		if tire_fmod_event.has_method("release"): tire_fmod_event.release()
 		tire_fmod_event = null
+		
+	if ClassDB.class_exists("FmodServer"):
+		if FmodServer.has_method("remove_listener"):
+			FmodServer.call("remove_listener", 0, self)
+						
+	if ClassDB.class_exists("FmodServer") and DisplayServer.get_name() != "headless":
+		var fmod_instance = Engine.get_singleton("FmodServer")
+		if fmod_instance:			
+			if "fmod_banks" in self and fmod_banks is Array and not fmod_banks.is_empty():
+				print("Unloading ", fmod_banks.size(), " banks from array references.")
+			
+			# Clearing the array drops the RefCounted references to zero.
+			# Godot automatically unloads the banks from memory.
+				fmod_banks.clear() 
+			
+			# Force FMOD to flush memory changes and drop the soundbanks
+			fmod_instance.update()
+			print("FMOD context cleaned successfully.")
+

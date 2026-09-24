@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" path="res://neonrun.png" id="1_cmsnd"]
 
-[node name="NeonRunBg" type="TextureRect" unique_id=552743697]
+[node name="NeonRunBg" type="TextureRect" unique_id=226180517]
 anchor_right = 1.0
 anchor_bottom = 1.0
 texture = ExtResource("1_cmsnd")

@@ -1,16 +1,8 @@
-extends Node
-
-func _ready():
-    print("TESTING FMOD LOAD BANK...")
-    print("Trying load_bank res://Audio/Master.strings.bank")
-    FmodServer.load_bank("res://Audio/Master.strings.bank", 0)
-    FmodServer.load_bank("res://Audio/Master.bank", 0)
-    FmodServer.load_bank("res://Audio/Vehicles.bank", 0)
-    
-    var events = FmodServer.get_all_event_descriptions()
-    print("FMOD EVENTS SIZE: ", events.size())
-    for e in events:
-        print("FMOD EVENT: ", e.get_path())
-    
-    print("TEST COMPLETE")
-    get_tree().quit()
+extends SceneTree
+func _init():
+    var fmod = Engine.get_singleton("FmodServer")
+    if fmod:
+        for m in fmod.get_method_list():
+            if "stop" in m["name"] or "shutdown" in m["name"] or "pause" in m["name"] or "mute" in m["name"]:
+                print(m["name"])
+    quit()

@@ -53,11 +53,15 @@ func start_loading(script_name: String):
 	lua_manager._do_clear_and_run(script_name)
 	checking_load = true
 
-func switch_to_level(target_path: String) -> void:
+var current_scene_args: Dictionary = {}
+
+func switch_to_level(target_path: String, args: Dictionary = {}) -> void:
+	print("ARGS RECEIVED: ", args)
+	current_scene_args = args
 	current_target_scene = target_path
 	load_progress.resize(1)
 	
-	var error = ResourceLoader.load_threaded_request(target_path)
+	var error = ResourceLoader.load_threaded_request(target_path, "PackedScene")
 	if error != OK:
 		print("Error: Scene file path could not be loaded into memory.")
 		lua_manager.finish_gdscript_load()
@@ -88,7 +92,17 @@ func _process(_delta: float) -> void:
 			active = false
 			
 			var packed_scene = ResourceLoader.load_threaded_get(current_target_scene)
-			get_tree().change_scene_to_packed(packed_scene)
+			var inst = packed_scene.instantiate()
+			
+			for key in current_scene_args:
+				if key in inst:
+					inst.set(key, current_scene_args[key])
+			
+			var old_scene = get_tree().current_scene
+			get_tree().root.add_child(inst)
+			get_tree().current_scene = inst
+			if old_scene:
+				old_scene.queue_free()
 			
 			# Wait for Godot to finish the synchronous instantiation freeze
 			await get_tree().process_frame

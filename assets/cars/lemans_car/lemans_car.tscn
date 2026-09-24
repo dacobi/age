@@ -400,7 +400,6 @@ material = SubResource("StandardMaterial3D_0nhqq")
 
 [node name="BottomCutter" type="CSGBox3D" parent="LeMansCombiner" unique_id=1839585143]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.4, 0)
-visible = false
 operation = 2
 size = Vector3(4, 10, 12)
 
@@ -802,13 +801,11 @@ material = SubResource("StandardMaterial3D_4xtml")
 
 [node name="CarSetup" type="Node" parent="." unique_id=906717595 node_paths=PackedStringArray("wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR", "Pipe1", "Pipe2", "Pipe3", "Pipe4")]
 script = ExtResource("2_0nhqq")
-wheel_diameter_front = 1.0
-wheel_diameter_rear = 1.0
-NumberOfExaustPipes = 4
 wheel_FL = NodePath("../FrontLeftSteerPivot/FrontLeftWheel")
 wheel_FR = NodePath("../FrontRightSteerPivot/FrontRightWheel")
 wheel_RL = NodePath("../RearLeftSteerPivot/RearLeftWheel")
 wheel_RR = NodePath("../RearRightSteerPivot/RearRightWheel")
+NumberOfExaustPipes = 4
 Pipe1 = NodePath("../RearDiffuser/PipeIn1_1")
 Pipe2 = NodePath("../RearDiffuser/PipeIn1_2")
 Pipe3 = NodePath("../RearDiffuser/PipeIn2_1")

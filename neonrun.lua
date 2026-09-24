@@ -1,10 +1,13 @@
-	godotLoadScene("neonrun.tscn")
+godotLoadScene("neonrun.tscn")
 
 local inner = "0, 255, 255"       -- White inner
 local hover = "0, 0, 0"             -- Black border
 local outer = "255, 0, 255"         -- Neon purple hover
 
 local g_tag = "[graffity: " .. inner .. ", " .. outer .. ", " .. hover .. "]"
+
+
+setGlobalString(current_car_name, "car_stingray")
 
 function on_time_trial()
     print("Time Trial clicked!")
@@ -13,6 +16,7 @@ end
 
 function on_time_trial_play()
     print("Time Trial Play clicked!")
+    luaClearAndRun("./assets/scripts/play_track.lua")
 end
 
 function on_time_trial_cancel()
@@ -97,7 +101,7 @@ addBouncer(g_tag .. "[pos:600, 700][fontsize:1.5][clicked:on_race_play][layer:1]
 addBouncer(g_tag .. "[pos:900, 700][fontsize:1.5][clicked:on_race_cancel][layer:1]Cancel")
 ageEndRow("RaceSub1")
 ageBeginRow("RaceSub1",2)
-addBouncer("[pos:550, 850][layer:1][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
+addBouncer("[pos:550, 850][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
 ageEndRow("RaceSub1")
 ageEndMenu()
 ageEndSubMenu("Race")
@@ -106,9 +110,13 @@ ageEndSubMenu("Race")
 ageCreateSubMenu("TimeT")
 ageBeginSubMenu("TimeT")
 addBouncer("[pos:700,400][rect:400,300][hover:255,255,255][clicked:on_time_trial_play][layer:1][layer:1][video:track.ogv]")
-ageBeginMenu()
+ageBeginMenu("TimeTSub1",2)
+ageBeginRow("TimeTSub1",1)
 addBouncer(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_time_trial_play][layer:1]Play")
 addBouncer(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_time_trial_cancel][layer:1]Cancel")
+ageEndRow("TimeTSub1")
+ageBeginRow("TimeTSub1",2)
+addBouncer("[pos:550, 850][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
 ageEndMenu()
 ageEndSubMenu("TimeT")
 

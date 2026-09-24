@@ -2,14 +2,18 @@
     {
         "gate_width": 80.0,
         "length": 90.0,
+        "start_flipped": false,
         "track_width": 80.0,
-        "type": "gate",
-        "start_flipped": false
+        "type": "gate"
     },
     {
-        "incline": 0.0,
-        "length": 90.0,
-        "type": "straight",
+        "target_pos_x": 0.0,
+        "target_pos_y": 0.0,
+        "target_pos_z": -122.0,
+        "target_rot_x": 0.0,
+        "target_rot_y": 0.0,
+        "target_rot_z": 0.0,
+        "type": "spline_transition",
         "width": 80.0
     },
     {
@@ -82,14 +86,24 @@
         "width": 80.0
     },
     {
-        "length": 90.0,
+        "length": 180.0,
         "type": "bank_transition",
         "width": 80.0
     },
     {
         "incline": 0.0,
-        "length": 90.0,
+        "length": 5.0,
         "type": "straight",
+        "width": 80.0
+    },
+    {
+        "target_pos_x": 0.0,
+        "target_pos_y": 0.0,
+        "target_pos_z": 0.0,
+        "target_rot_x": 0.0,
+        "target_rot_y": 0.0,
+        "target_rot_z": 0.0,
+        "type": "spline_transition",
         "width": 80.0
     },
     {
