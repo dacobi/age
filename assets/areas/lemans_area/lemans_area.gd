@@ -729,11 +729,12 @@ func _input(event):
 			if car_jack:
 				car_jack.queue_free()
 				car_jack = null
+				print("Jack freed")
 		else:
 			is_jacking = true
 			car_jack = AnimatableBody3D.new()
-			car_jack.sync_to_physics = false # CRITICAL for lifting RigidBody3D smoothly!
-			car_jack.collision_layer = 1
+			# car_jack.sync_to_physics = false # CRITICAL for lifting RigidBody3D smoothly!
+			car_jack.collision_layer = 2
 			car_jack.collision_mask = 3
 			
 			var col = CollisionShape3D.new()
@@ -743,15 +744,19 @@ func _input(event):
 			
 			var mesh_inst = MeshInstance3D.new()
 			var box_mesh = BoxMesh.new()
-			box_mesh.size = Vector3(1, 0.2, 1)
+			box_mesh.size = Vector3(1, 2, 1)
 			var mat = StandardMaterial3D.new()
 			mat.albedo_color = Color(1.0, 0.0, 0.0)
 			box_mesh.material = mat
 			mesh_inst.mesh = box_mesh
 			
+			mesh_inst.global_position.y = -1
+
 			car_jack.add_child(col)
 			car_jack.add_child(mesh_inst)
 			add_child(car_jack)
+
+			car_jack.sync_to_physics = false
 			
 			if supercar:
 				supercar.linear_velocity = Vector3.ZERO
@@ -1021,7 +1026,14 @@ func _physics_process(delta):
 
 	if car_jack and is_jacking:
 		var target_y = jack_initial_y + 1.0 # Raise exactly 1m
-		car_jack.global_position.y = move_toward(car_jack.global_position.y, target_y, 0.1 * delta)
+		# print(target_y)
+		# print(jack_initial_y)
+		# car_jack.sync_to_physics = false	
+		# var tmpmove
+		car_jack.global_position.y = move_toward(car_jack.global_position.y, target_y, delta * 0.2)
+		# print (tmpmove)
+		# = tmpmove
+		print(car_jack.global_position.y)
 		if supercar:
 			# Force jack to stay perfectly centered under the car horizontally
 			car_jack.global_position.x = supercar.global_position.x
