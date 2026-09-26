@@ -5,7 +5,8 @@ extends Node3D
 @onready var border_l = $Path3D/BorderL
 @onready var border_r = $Path3D/BorderR
 @onready var center_line = $Path3D/CenterLine
-@onready var supercar = $SuperCar
+var car_name: String = "lemans_car"
+var supercar: Node3D = null
 
 var is_paused = false
 var previous_paused = false
@@ -81,6 +82,13 @@ var height_offset = 56.0
 var t_car = 0.15
 
 func _ready():
+
+	# Dynamically instance the car based on car_name
+	var car_scene = load("res://assets/cars/" + car_name + "/" + car_name + ".tscn")
+	if car_scene:
+		supercar = car_scene.instantiate()
+		supercar.name = "SuperCar"
+		add_child(supercar)
 	is_square = true
 
 	if is_square:

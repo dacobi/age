@@ -107,22 +107,21 @@ var wheels: Array = []
 var start_transform: Transform3D
 
 func _ready():
+	# Flexible setup hook
+	var setup = null
+	var to_check = [self]
+	while to_check.size() > 0:
+		var current = to_check.pop_back()
+		if current.has_method("initialize_setup"):
+			setup = current
+			setup.initialize_setup()
+			break
+		for child in current.get_children():
+				to_check.append(child)
 	# Configure Main Hull layer and mask
 	collision_layer = 2 # Car layer
 	collision_mask = 3  # Hits World (1) and Cars (2)
 	
-	# AI Vision Hitbox
-	var ai_vision = Area3D.new()
-	ai_vision.name = "AIVisionArea"
-	ai_vision.collision_layer = 128
-	ai_vision.collision_mask = 128
-	var ai_vision_col = CollisionShape3D.new()
-	var ai_vision_box = BoxShape3D.new()
-	ai_vision_box.size = Vector3(2.5, 2.0, 5.0)
-	ai_vision_col.shape = ai_vision_box
-	ai_vision_col.position = Vector3(0.0, 0.5, 0.0)
-	ai_vision.add_child(ai_vision_col)
-	add_child(ai_vision)
 
 
 	default_radius_front = radius_front
@@ -146,170 +145,10 @@ func _ready():
 	max_contacts_reported = 4
 	body_entered.connect(_on_prop_collided)
 	
-	# Create visual debug meshes for CollisionShape3D children
-	for child in get_children():
-		if child is CollisionShape3D:
-			var mi = MeshInstance3D.new()
-			mi.name = "CollisionDebugVisual"
-			var shape = child.shape
-			if shape is BoxShape3D:
-				var box = BoxMesh.new()
-				box.size = shape.size
-				mi.mesh = box
-			elif shape is SphereShape3D:
-				var sph = SphereMesh.new()
-				sph.radius = shape.radius
-				sph.height = shape.radius * 2.0
-				mi.mesh = sph
-			elif shape is CylinderShape3D:
-				var cyl = CylinderMesh.new()
-				cyl.top_radius = shape.radius
-				cyl.bottom_radius = shape.radius
-				cyl.height = shape.height
-				mi.mesh = cyl
-			elif shape is CapsuleShape3D:
-				var cap = CapsuleMesh.new()
-				cap.radius = shape.radius
-				cap.height = shape.height
-				mi.mesh = cap
-				
-			var mat = StandardMaterial3D.new()
-			mat.albedo_color = Color(1, 0, 0, 0.4)
-			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			mi.material_override = mat
-			mi.visible = false
-			child.add_child(mi)
+
 			
-	# --- PROP-ONLY ANGLED BUMPER ---
-	# We use an AnimatableBody3D so it perfectly inherits parent teleportation without physics desync
-	var bumper = AnimatableBody3D.new()
-	bumper.name = "AngledBumper"
-	bumper.sync_to_physics = false
-	bumper.collision_layer = 2 # Car layer
-	bumper.collision_mask = 4  # Prop layer
 	
-	var bumper_area = Area3D.new()
-	bumper_area.collision_layer = 0
-	bumper_area.collision_mask = 4
-	bumper_area.body_entered.connect(_on_prop_collided)
-	bumper.add_child(bumper_area)
 	
-	var bumper_col = CollisionShape3D.new()
-	var bumper_shape = BoxShape3D.new()
-	bumper_shape.size = Vector3(3.0, 1.0, 2.0)
-	bumper_col.shape = bumper_shape
-	# Slant it forwards like a plow! (Negative X rotation tilts it down)
-	bumper_col.rotation_degrees.x = -45.0
-	# Position it at the very front of the car
-	bumper_col.position = Vector3(0.0, -0.2, -2.5)
-	
-	var bumper_mi = MeshInstance3D.new()
-	bumper_mi.name = "CollisionDebugVisual"
-	var bumper_mesh = BoxMesh.new()
-	bumper_mesh.size = bumper_shape.size
-	bumper_mi.mesh = bumper_mesh
-	var bumper_mat = StandardMaterial3D.new()
-	bumper_mat.albedo_color = Color(0, 0, 1, 0.4) # BLUE
-	bumper_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	bumper_mi.material_override = bumper_mat
-	bumper_mi.visible = false
-	
-	bumper_col.add_child(bumper_mi)
-	bumper.add_child(bumper_col)
-	
-	var bumper_area_col = bumper_col.duplicate()
-	bumper_area.add_child(bumper_area_col)
-	
-	add_child(bumper)
-	
-	# --- PROP-ONLY REAR BUMPER ---
-	var rear_bumper = AnimatableBody3D.new()
-	rear_bumper.name = "RearBumper"
-	rear_bumper.sync_to_physics = false
-	rear_bumper.collision_layer = 2 # Car layer
-	rear_bumper.collision_mask = 4  # Prop layer
-	
-	var rear_bumper_area = Area3D.new()
-	rear_bumper_area.collision_layer = 0
-	rear_bumper_area.collision_mask = 4
-	rear_bumper_area.body_entered.connect(_on_prop_collided)
-	rear_bumper.add_child(rear_bumper_area)
-	
-	var rear_bumper_col = CollisionShape3D.new()
-	var rear_bumper_shape = BoxShape3D.new()
-	rear_bumper_shape.size = Vector3(3.0, 1.0, 1.0) # Flat wall
-	rear_bumper_col.shape = rear_bumper_shape
-	rear_bumper_col.position = Vector3(0.0, -0.2, 3.0) # Placed further back at the tail lights
-	
-	var rear_bumper_mi = MeshInstance3D.new()
-	rear_bumper_mi.name = "CollisionDebugVisual"
-	var rear_bumper_mesh = BoxMesh.new()
-	rear_bumper_mesh.size = rear_bumper_shape.size
-	rear_bumper_mi.mesh = rear_bumper_mesh
-	var rear_bumper_mat = StandardMaterial3D.new()
-	rear_bumper_mat.albedo_color = Color(0, 0, 1, 0.4) # BLUE
-	rear_bumper_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	rear_bumper_mi.material_override = rear_bumper_mat
-	rear_bumper_mi.visible = false
-	
-	rear_bumper_col.add_child(rear_bumper_mi)
-	rear_bumper.add_child(rear_bumper_col)
-	
-	var rear_bumper_area_col = rear_bumper_col.duplicate()
-	rear_bumper_area.add_child(rear_bumper_area_col)
-	
-	add_child(rear_bumper)
-	
-	# Prevent the car from colliding with its own bumpers if car-to-car collision is enabled
-	add_collision_exception_with(bumper)
-	add_collision_exception_with(rear_bumper)
-	
-	# --- NITRO MAGNET AREA ---
-	# A wide Area3D to catch nitros that the car grazes or sideswipes
-	var magnet_area = Area3D.new()
-	magnet_area.name = "NitroMagnetArea"
-	magnet_area.collision_layer = 0
-	magnet_area.collision_mask = 4
-	magnet_area.body_entered.connect(_on_prop_collided)
-	
-	var magnet_col = CollisionShape3D.new()
-	var magnet_shape = BoxShape3D.new()
-	# 6 meters wide! Gives the car a 1.5m buffer on each side to magnetically grab nitros
-	magnet_shape.size = Vector3(6.0, 2.0, 6.0) 
-	magnet_col.shape = magnet_shape
-	magnet_col.position = Vector3(0, 1.0, 0) # Shifted up slightly to perfectly align with nitros
-	
-	var magnet_mi = MeshInstance3D.new()
-	var magnet_mesh = BoxMesh.new()
-	magnet_mesh.size = magnet_shape.size
-	magnet_mi.mesh = magnet_mesh
-	var magnet_mat = StandardMaterial3D.new()
-	magnet_mat.albedo_color = Color(1.0, 0.0, 1.0, 0.2) # Translucent MAGENTA
-	magnet_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	magnet_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	magnet_mi.material_override = magnet_mat
-	
-	# Only render the pink box when training!
-	if get_tree().current_scene and get_tree().current_scene.has_node("GeneticManager"):
-		magnet_mi.visible = true
-	else:
-		magnet_mi.visible = false
-		
-	magnet_col.add_child(magnet_mi)
-	
-	magnet_area.add_child(magnet_col)
-	add_child(magnet_area)
-	# Flexible setup hook
-	var setup = null
-	var to_check = [self]
-	while to_check.size() > 0:
-		var current = to_check.pop_back()
-		if current.has_method("initialize_setup"):
-			setup = current
-			setup.initialize_setup()
-			break
-		for child in current.get_children():
-				to_check.append(child)
 	if setup:
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength
@@ -338,56 +177,6 @@ func _ready():
 			default_radius_front = radius_front
 			default_radius_rear = radius_rear
 			
-			# Resize the collision shape to prevent bottoming out
-			var dyn_body_col = get_node_or_null("BodyCol")
-			if dyn_body_col and dyn_body_col.shape is BoxShape3D:
-				# Base dimensions on track width and wheel base
-				var width = setup.track_width * 0.85
-				var length = setup.wheel_base * 1.5
-				var height = 0.4
-				# Ensure the collision shape is high enough above the ground!
-				var min_pivot_y = min(mount_FL.y, mount_RL.y)
-				var y_pos = min_pivot_y + 0.05
-				
-				var new_box = BoxShape3D.new()
-				new_box.size = Vector3(width, height, length)
-				dyn_body_col.shape = new_box
-				dyn_body_col.position = Vector3(0, y_pos, 0)
-				
-				# Add 4 perfectly smooth skid spheres at the bottom corners
-				var sphere_radius = 0.3
-				for z_pos in [-length/2.0, length/2.0]:
-					for x_pos in [-width/2.0, width/2.0]:
-						var sphere_col = CollisionShape3D.new()
-						var sphere = SphereShape3D.new()
-						sphere.radius = sphere_radius
-						sphere_col.shape = sphere
-						# spheres sit slightly below the box bottom (-0.05)
-						sphere_col.position = Vector3(x_pos, y_pos, z_pos)
-						
-						# Generate debug visual for the sphere so it works with the toggle
-						var mi = MeshInstance3D.new()
-						mi.name = "CollisionDebugVisual"
-						var sph = SphereMesh.new()
-						sph.radius = sphere_radius
-						sph.height = sphere_radius * 2.0
-						mi.mesh = sph
-						
-						var mat = StandardMaterial3D.new()
-						mat.albedo_color = Color(0, 0.6, 0.7, 0.42)
-						mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-						mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-						mi.material_override = mat
-						
-						# Need to manually manage visibility based on the 'Show Collision Meshes' option
-						var debugger = get_node_or_null("/root/MegaRacerDebugger")
-						if debugger and debugger.show_collision:
-							mi.visible = true
-						else:
-							mi.visible = false
-							
-						sphere_col.add_child(mi)
-						dyn_body_col.get_parent().add_child(sphere_col)
 		print("DEBUG: mount_FL = ", mount_FL)
 		print("DEBUG: mount_RL = ", mount_RL)
 		print("DEBUG: radius_front = ", radius_front)
@@ -497,16 +286,6 @@ func _ready():
 			hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 			canvas.add_child(hud)
 		
-	var cp_area = Area3D.new()
-	cp_area.name = "CheckpointSphere"
-	cp_area.collision_layer = 16
-	cp_area.collision_mask = 16
-	var cp_col = CollisionShape3D.new()
-	var cp_shape = SphereShape3D.new()
-	cp_shape.radius = 2.0 # Sphere in center of car
-	cp_col.shape = cp_shape
-	cp_area.add_child(cp_col)
-	add_child(cp_area)
 	
 	_setup_nitro_flames()
 func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, is_drive: bool, use_shapecast: bool, setup: Node = null) -> RayCast3D:
@@ -1039,28 +818,13 @@ func _physics_process(delta: float) -> void:
 
 	# Update collision debug visual visibility
 	var show_debug = show_collision_debug > 0.5
-	for child in get_children():
-		if child is CollisionShape3D:
-			var mi = child.get_node_or_null("CollisionDebugVisual")
-			if mi:
-				mi.visible = show_debug
-				
-	# Also update the bumper's debug visual
-	var bumper = get_node_or_null("AngledBumper")
-	if bumper:
-		for child in bumper.get_children():
-			if child is CollisionShape3D:
-				var mi = child.get_node_or_null("CollisionDebugVisual")
-				if mi:
-					mi.visible = show_debug
-					
-	var rear_bumper = get_node_or_null("RearBumper")
-	if rear_bumper:
-		for child in rear_bumper.get_children():
-			if child is CollisionShape3D:
-				var mi = child.get_node_or_null("CollisionDebugVisual")
-				if mi:
-					mi.visible = show_debug
+	var to_check = [self]
+	while to_check.size() > 0:
+		var current = to_check.pop_back()
+		if current.name == "CollisionDebugVisual":
+			current.visible = show_debug
+		for child in current.get_children():
+			to_check.append(child)
 					
 	# --- FAKE GEAR RPM LOGIC FOR FMOD ---
 	# Calculate horizontal speed to prevent downshifting while drifting sideways!

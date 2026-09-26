@@ -1,7 +1,12 @@
 ioWindowSetFullScreen(true)
 local is_fullscreen = true
 
-godotLoadScene("assets/areas/lemans_area/lemans_area.tscn")
+local car_name2 = getGlobalString("current_car_name")
+if not car_name2 or car_name2 == "" then
+    car_name2 = "lemans_car"
+end
+print("Loading area with car: " .. car_name2)
+godotLoadScene("assets/areas/lemans_area/lemans_area.tscn", { car_name = car_name2 })
 delay(200) -- give it a moment to load
 
 print("\n=== MegaRacer Synthwave Driving Demo Loaded ===")
@@ -23,7 +28,10 @@ print("SUPERCAR POINTER IS: ", supercar)
 
 -- Include shared car physics and controls
 dofile("car_common.lua")
-initCarPhysicsDefaults()
+initCarPhysicsDefaults(supercar)
+local car_name = car_name2
+if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+godotLoadCarSettings(car_name)
 
 local joy_handle = ioJoystickOpen(0)
 if joy_handle >= 0 then
@@ -45,6 +53,7 @@ local frame_count = 0
 --startRecord("area.ogv")
 
 
+local has_disabled_auto_reset = false
 while true do
 	-- Draw Car Physics dialog if show_car_physics_ui is enabled
 	renderCarPhysicsUI()

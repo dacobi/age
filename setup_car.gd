@@ -46,6 +46,7 @@ func initialize_setup():
 	if is_initialized: return
 	_calculate_dimensions()
 	_automate_pivots()
+	_generate_dynamic_collisions()
 	is_initialized = true
 
 func _ready():
@@ -66,16 +67,26 @@ func _measure_wheel_radius(node: Node3D) -> float:
 	var to_check = [node]
 	while to_check.size() > 0:
 		var n = to_check.pop_back()
+		var skip_children = false
 		if (n is MeshInstance3D and n.mesh) or n is CSGShape3D:
 			meshes.append(n)
-		for c in n.get_children():
-			to_check.append(c)
+			if n is CSGShape3D:
+				skip_children = true
+		if not skip_children:
+			for c in n.get_children():
+				to_check.append(c)
 	if meshes.is_empty(): return 0.35
 	
 	var first = true
 	for m in meshes:
 		var local_trans = _get_transform_relative_to(m, node)
 		var m_aabb = m.get_aabb()
+		if m is CSGShape3D:
+			if m.has_method("_update_shape"):
+				m._update_shape()
+			var arr = m.get_meshes()
+			if arr.size() > 1 and arr[1] is Mesh:
+				m_aabb = arr[1].get_aabb()
 		var t_aabb = local_trans * m_aabb
 		if first:
 			aabb = t_aabb
@@ -199,3 +210,196 @@ func get_exhaust_global_positions() -> Array[Vector3]:
 			positions.append(global_pos)
 			
 	return positions
+
+
+func _generate_dynamic_collisions():
+	var car = get_parent()
+	if not car is RigidBody3D: return
+	
+	# Let's get the AABB of the entire visual root
+	var visual_root = get_parent()
+	var meshes = []
+	var to_check = [visual_root]
+	while to_check.size() > 0:
+		var n = to_check.pop_back()
+		var skip_children = false
+		if (n is MeshInstance3D and n.mesh) or n is CSGShape3D:
+			if n.name != "CollisionDebugVisual":
+				meshes.append(n)
+			if n is CSGShape3D:
+				skip_children = true
+				
+		if not skip_children:
+			for c in n.get_children():
+				if c != self:
+					to_check.append(c)
+				
+	var aabb = AABB()
+	var first = true
+	for m in meshes:
+		var local_trans = _get_transform_relative_to(m, visual_root)
+		var m_aabb = m.get_aabb()
+		if m is CSGShape3D:
+			if m.has_method("_update_shape"):
+				m._update_shape()
+			var arr = m.get_meshes()
+			if arr.size() > 1 and arr[1] is Mesh:
+				m_aabb = arr[1].get_aabb()
+		var t_aabb = local_trans * m_aabb
+		if first:
+			aabb = t_aabb
+			first = false
+		else:
+			aabb = aabb.merge(t_aabb)
+			
+	var width = aabb.size.x * 0.9
+	var length = aabb.size.z * 0.95
+	var height = aabb.size.y * 0.8
+	
+	var center = aabb.get_center()
+	var fixture_offset_y = 0.5
+	var base_pos = center + Vector3(0, fixture_offset_y, 0)
+	
+	# 1. Main Body Box
+	var body_col = CollisionShape3D.new()
+	body_col.name = "BodyCol"
+	var box = BoxShape3D.new()
+	box.size = Vector3(width, height, length)
+	body_col.shape = box
+	body_col.position = base_pos
+	_generate_debug_mesh(body_col, Color(1, 0, 0, 0.4))
+	car.add_child(body_col)
+	
+	# 2. 4 Corner Skid Spheres
+	var sphere_radius = 0.3
+	for z_pos in [-length/2.0, length/2.0]:
+		for x_pos in [-width/2.0, width/2.0]:
+			var sphere_col = CollisionShape3D.new()
+			var sphere = SphereShape3D.new()
+			sphere.radius = sphere_radius
+			sphere_col.shape = sphere
+			sphere_col.position = base_pos + Vector3(x_pos, -height/2.0, z_pos)
+			_generate_debug_mesh(sphere_col, Color(0, 0.6, 0.7, 0.42))
+			car.add_child(sphere_col)
+			
+	# 3. Prop Angled Bumper (Front)
+	var bumper = AnimatableBody3D.new()
+	bumper.name = "AngledBumper"
+	bumper.sync_to_physics = false
+	bumper.collision_layer = 2
+	bumper.collision_mask = 4
+	
+	var bumper_area = Area3D.new()
+	bumper_area.collision_layer = 0
+	bumper_area.collision_mask = 4
+	if car.has_method("_on_prop_collided"):
+		bumper_area.body_entered.connect(car._on_prop_collided)
+	bumper.add_child(bumper_area)
+	
+	var bumper_col = CollisionShape3D.new()
+	var bumper_shape = BoxShape3D.new()
+	bumper_shape.size = Vector3(width + 0.5, height*2.0, 2.0)
+	bumper_col.shape = bumper_shape
+	bumper_col.rotation_degrees.x = 45.0
+	# Extended to 2m deep, pushed down and back to perfectly blend into the ground and hood
+	bumper_col.position = base_pos + Vector3(0, -height*1.3, -length/2.0 + 0.6)
+	
+	_generate_debug_mesh(bumper_col, Color(0, 0, 1, 0.4))
+	bumper.add_child(bumper_col)
+	bumper_area.add_child(bumper_col.duplicate())
+	car.add_child(bumper)
+	car.add_collision_exception_with(bumper)
+	
+	# 4. Prop Rear Bumper
+	var rear_bumper = AnimatableBody3D.new()
+	rear_bumper.name = "RearBumper"
+	rear_bumper.sync_to_physics = false
+	rear_bumper.collision_layer = 2
+	rear_bumper.collision_mask = 4
+	
+	var rear_bumper_area = Area3D.new()
+	rear_bumper_area.collision_layer = 0
+	rear_bumper_area.collision_mask = 4
+	if car.has_method("_on_prop_collided"):
+		rear_bumper_area.body_entered.connect(car._on_prop_collided)
+	rear_bumper.add_child(rear_bumper_area)
+	
+	var rear_col = CollisionShape3D.new()
+	var rear_shape = BoxShape3D.new()
+	rear_shape.size = Vector3(width + 0.5, height*2, 1.0)
+	rear_col.shape = rear_shape
+	# Moved further down and deeper into the car body
+	rear_col.position = base_pos + Vector3(0, -1.0, length/2.0 - 0.4)
+	
+	_generate_debug_mesh(rear_col, Color(0, 0, 1, 0.4))
+	rear_bumper.add_child(rear_col)
+	rear_bumper_area.add_child(rear_col.duplicate())
+	car.add_child(rear_bumper)
+	car.add_collision_exception_with(rear_bumper)
+	
+	# 5. Nitro Magnet Area
+	var magnet_area = Area3D.new()
+	magnet_area.name = "NitroMagnetArea"
+	magnet_area.collision_layer = 0
+	magnet_area.collision_mask = 4
+	if car.has_method("_on_prop_collided"):
+		magnet_area.body_entered.connect(car._on_prop_collided)
+	
+	var magnet_col = CollisionShape3D.new()
+	var magnet_shape = BoxShape3D.new()
+	magnet_shape.size = Vector3(width + 3.0, height + 1.0, length + 2.0) 
+	magnet_col.shape = magnet_shape
+	magnet_col.position = base_pos
+	
+	_generate_debug_mesh(magnet_col, Color(1, 0, 1, 0.2))
+	magnet_area.add_child(magnet_col)
+	car.add_child(magnet_area)
+	
+	# 6. Checkpoint Area
+	var cp_area = Area3D.new()
+	cp_area.name = "CheckpointSphere"
+	cp_area.collision_layer = 16
+	cp_area.collision_mask = 16
+	var cp_col = CollisionShape3D.new()
+	var cp_shape = SphereShape3D.new()
+	cp_shape.radius = 1.0
+	cp_col.shape = cp_shape
+	cp_col.position = car.center_of_mass
+	_generate_debug_mesh(cp_col, Color(0, 1, 0, 0.4))
+	cp_area.add_child(cp_col)
+	car.add_child(cp_area)
+	
+	# 7. AI Vision Area
+	var ai_vision = Area3D.new()
+	ai_vision.name = "AIVisionArea"
+	ai_vision.collision_layer = 128
+	ai_vision.collision_mask = 128
+	var ai_vision_col = CollisionShape3D.new()
+	var ai_vision_box = BoxShape3D.new()
+	ai_vision_box.size = Vector3(width + 0.5, height + 1.0, length + 2.0)
+	ai_vision_col.shape = ai_vision_box
+	ai_vision_col.position = base_pos
+	_generate_debug_mesh(ai_vision_col, Color(1, 1, 0, 0.2))
+	ai_vision.add_child(ai_vision_col)
+	car.add_child(ai_vision)
+
+func _generate_debug_mesh(col_shape: CollisionShape3D, color: Color = Color(1, 0, 0, 0.4)):
+	var mi = MeshInstance3D.new()
+	mi.name = "CollisionDebugVisual"
+	var shape = col_shape.shape
+	if shape is BoxShape3D:
+		var box = BoxMesh.new()
+		box.size = shape.size
+		mi.mesh = box
+	elif shape is SphereShape3D:
+		var sph = SphereMesh.new()
+		sph.radius = shape.radius
+		sph.height = shape.radius * 2.0
+		mi.mesh = sph
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mi.material_override = mat
+	mi.visible = false
+	col_shape.add_child(mi)

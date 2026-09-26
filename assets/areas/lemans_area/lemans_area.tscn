@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cwt7c3u7dviee" path="res://assets/areas/lemans_area/lemans_area.gd" id="1_track_script"]
 [ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="2_7dgu3"]
-[ext_resource type="PackedScene" path="res://lemans_car.tscn" id="2_supercar"]
-[ext_resource type="Script" path="res://setup_track.gd" id="setup_track_script"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ouvil"]
 panorama = ExtResource("2_7dgu3")
@@ -68,5 +66,3 @@ material = SubResource("StandardMaterial3D_NeonCyan")
 [node name="CenterLine" type="CSGPolygon3D" parent="Path3D" unique_id=890079534]
 material = SubResource("StandardMaterial3D_GridLine")
 
-[node name="TrackSetup" type="Node" parent="."]
-script = ExtResource("setup_track_script")
