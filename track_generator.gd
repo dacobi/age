@@ -30,7 +30,7 @@ static func get_cyan_mat() -> Material:
 static func _build_bank_transition(root: Node3D, length: float, width: float, start_tilt: float, end_tilt: float):
     var path = Path3D.new()
     var curve = Curve3D.new()
-    curve.bake_interval = 0.01
+    curve.bake_interval = 0.5
     
     var num_points = max(20, int(length / 2.0))
     for i in range(num_points + 1):
@@ -65,10 +65,10 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
         csg.path_local = true
         csg.path_continuous_u = true
         csg.path_u_distance = 16.0
-        csg.path_interval = 0.25
+        csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+        csg.path_interval = 2.0
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 0
         csg.use_collision = use_col
         csg.material = mat
         if c_layer != 1:
@@ -216,7 +216,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
     else:
         var path = Path3D.new()
         var curve = Curve3D.new()
-        curve.bake_interval = 0.01
+        curve.bake_interval = 0.5
         
         var theta = deg_to_rad(incline)
         var R = length / abs(theta)
@@ -594,7 +594,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     var path = Path3D.new()
     path.name = "Path3D"
     var curve = Curve3D.new()
-    curve.bake_interval = 0.01
+    curve.bake_interval = 0.5
     
     var num_points = max(32, int(abs(angle) * 1.5))
     var angle_rad = deg_to_rad(abs(angle))
@@ -661,10 +661,10 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
         csg.path_local = true
         csg.path_continuous_u = true
         csg.path_u_distance = 16.0
-        csg.path_interval = 0.25
+        csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+        csg.path_interval = 2.0
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 0
         csg.use_collision = use_col
         csg.material = mat
         if c_layer != 1:
@@ -909,7 +909,7 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     
     var path = Path3D.new()
     var curve = Curve3D.new()
-    curve.bake_interval = 0.01
+    curve.bake_interval = 0.5
     
     var h_len = radius * 0.552 # Approx circle bezier
     if is_left:
@@ -941,7 +941,7 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
     var handle_len = max(dist * 0.4, width * 0.8)
     var path = Path3D.new()
     path.curve = Curve3D.new()
-    path.curve.bake_interval = 0.01
+    path.curve.bake_interval = 0.5
     path.curve.add_point(start_pos_local, Vector3.ZERO, start_dir_local * handle_len)
     path.curve.add_point(end_pos_local, -end_dir_local * handle_len, Vector3.ZERO)
     
@@ -956,10 +956,10 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
         csg.path_local = true
         csg.path_continuous_u = true
         csg.path_u_distance = 16.0
-        csg.path_interval = 0.25
+        csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+        csg.path_interval = 2.0
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
-        csg.path_interval_type = 0
         csg.use_collision = use_col
         csg.material = mat
         if c_layer != 1:
