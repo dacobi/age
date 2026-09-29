@@ -27,9 +27,10 @@ var max_steer = 1.2
 var wheel_friction_slip = 1.5
 var suspension_travel = 0.25
 var suspension_stiffness = 350.0
-var suspension_travel_cm = 25.0
-var compressed_travel_cm = 15.0
-var suspension_max_force = 15000.0
+var total_travel_cm = 12.0
+var spring_stiffness_kn_m = 25.0
+var static_compression_m = 0.15
+var suspension_max_force = 100000.0
 var damping_compression = 12.0
 var damping_relaxation = 15.0
 var downforce_multiplier = 180.0
@@ -107,7 +108,8 @@ var wheels: Array = []
 var start_transform: Transform3D
 
 func _ready():
-	# Flexible setup hook
+	# Flexible setup hook	
+	Engine.physics_ticks_per_second = 120
 	var setup = null
 	var to_check = [self]
 	while to_check.size() > 0:
@@ -152,8 +154,9 @@ func _ready():
 	if setup:
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength
-		suspension_travel_cm = setup.AirborneTravel
-		compressed_travel_cm = setup.CompressedTravel
+		total_travel_cm = setup.TotalTravel
+		spring_stiffness_kn_m = setup.SpringStiffness
+		static_compression_m = setup.static_compression_m
 		if setup.wheel_FL and setup.pivot_FL:
 			mount_FL = to_local(setup.pivot_FL.global_position)
 			mount_FR = to_local(setup.pivot_FR.global_position)
@@ -164,9 +167,7 @@ func _ready():
 			base_mount_RL = mount_RL
 			base_mount_RR = mount_RR
 			
-			var comp_m = compressed_travel_cm / 100.0
-			var rest_m = suspension_travel_cm / 100.0
-			var offset_y = comp_m
+			var offset_y = suspension_travel - static_compression_m
 			mount_FL.y += offset_y
 			mount_FR.y += offset_y
 			mount_RL.y += offset_y
@@ -297,7 +298,8 @@ func create_wheel(w_name: String, pos: Vector3, radius: float, is_front: bool, i
 	w.wheel_radius = radius
 	w.rest_dist = suspension_travel
 	w.spring_strength = suspension_stiffness
-	w.spring_damping = damping_compression * 15.0
+	w.damping_compression = damping_compression * 15.0
+	w.damping_relaxation = damping_relaxation * 15.0
 	w.max_spring_force = suspension_max_force
 	w.over_extend = 0.05
 	w.enabled = true
@@ -412,9 +414,7 @@ func reset_to_track() -> void:
 func _physics_process(delta: float) -> void:
 
 	if base_mount_FL != Vector3.ZERO:
-		var comp_m = compressed_travel_cm / 100.0
-		var rest_m = suspension_travel_cm / 100.0
-		var offset_y = comp_m
+		var offset_y = suspension_travel - static_compression_m
 		
 		mount_FL = base_mount_FL + Vector3(0, offset_y, 0)
 		mount_FR = base_mount_FR + Vector3(0, offset_y, 0)
@@ -704,7 +704,7 @@ func _physics_process(delta: float) -> void:
 		
 		w.rest_dist = suspension_travel
 		w.spring_strength = suspension_stiffness
-		w.spring_damping = damping_compression * 200.0
+		w.damping_compression = damping_compression * 200.0
 		
 		var r = radius_front if i < 2 else radius_rear
 		w.wheel_radius = r

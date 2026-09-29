@@ -22,9 +22,9 @@ class_name CarSetup
 @export var Pipe5 : Node3D
 @export var Pipe6 : Node3D
 
-@export_group("Suspension (cm)")
-@export_range(0.0, 40.0) var CompressedTravel : float = 15.0
-@export_range(0.0, 40.0) var AirborneTravel : float = 25.0
+@export_group("Suspension")
+@export_range(0.0, 40.0) var TotalTravel : float = 12.0
+@export_range(10.0, 200.0) var SpringStiffness : float = 25.0
 
 # Calculated Properties
 var wheel_base : float
@@ -39,6 +39,7 @@ var pivot_RR : Node3D
 
 var spring_strength : float
 var rest_dist : float
+var static_compression_m : float
 
 var is_initialized = false # Trigger Godot UI reload
 
@@ -136,17 +137,13 @@ func _calculate_dimensions():
 	var car = get_parent()
 	while car and not car is RigidBody3D:
 		car = car.get_parent()
-	rest_dist = AirborneTravel / 100.0
-	var compressed_m = CompressedTravel / 100.0
-	var travel_diff = rest_dist - compressed_m
-	
-	if car and travel_diff > 0.001:
-		# spring_strength * travel_diff = (mass * gravity) / 4.0
+	rest_dist = TotalTravel / 100.0
+	spring_strength = SpringStiffness * 1000.0
+	static_compression_m = 0.0
+	if car:
 		var gravity = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 		var weight_per_wheel = (car.mass * gravity) / 4.0
-		spring_strength = weight_per_wheel / travel_diff
-	else:
-		spring_strength = 17500.0 # Fallback
+		static_compression_m = weight_per_wheel / spring_strength
 
 func _automate_pivots():
 	pivot_FL = _create_pivot(wheel_FL, "PivotFL")
@@ -257,30 +254,36 @@ func _generate_dynamic_collisions():
 	var height = aabb.size.y * 0.8
 	
 	var center = aabb.get_center()
-	var fixture_offset_y = 0.5
+	var fixture_offset_y = 1.0
 	var base_pos = center + Vector3(0, fixture_offset_y, 0)
 	
 	# 1. Main Body Box
 	var body_col = CollisionShape3D.new()
 	body_col.name = "BodyCol"
 	var box = BoxShape3D.new()
-	box.size = Vector3(width, height, length)
+	box.size = Vector3(track_width, height, wheel_base)
 	body_col.shape = box
-	body_col.position = base_pos
+	
+	# Center the box exactly between the 4 wheels in X and Z
+	var cx = (pivot_FL.position.x + pivot_FR.position.x + pivot_RL.position.x + pivot_RR.position.x) / 4.0
+	var cz = (pivot_FL.position.z + pivot_FR.position.z + pivot_RL.position.z + pivot_RR.position.z) / 4.0
+	body_col.position = Vector3(cx, base_pos.y, cz)
+	
 	_generate_debug_mesh(body_col, Color(1, 0, 0, 0.4))
 	car.add_child(body_col)
 	
-	# 2. 4 Corner Skid Spheres
+	# 2. 4 Corner Skid Spheres (Hovering above wheel centers)
 	var sphere_radius = 0.3
-	for z_pos in [-length/2.0, length/2.0]:
-		for x_pos in [-width/2.0, width/2.0]:
-			var sphere_col = CollisionShape3D.new()
-			var sphere = SphereShape3D.new()
-			sphere.radius = sphere_radius
-			sphere_col.shape = sphere
-			sphere_col.position = base_pos + Vector3(x_pos, -height/2.0, z_pos)
-			_generate_debug_mesh(sphere_col, Color(0, 0.6, 0.7, 0.42))
-			car.add_child(sphere_col)
+	var wheel_pivots = [pivot_FL, pivot_FR, pivot_RL, pivot_RR]
+	for wp in wheel_pivots:
+		var sphere_col = CollisionShape3D.new()
+		var sphere = SphereShape3D.new()
+		sphere.radius = sphere_radius
+		sphere_col.shape = sphere
+		# Use wheel center for X and Z, and the bottom of the raised body box for Y
+		sphere_col.position = Vector3(wp.position.x, base_pos.y - height/2.0, wp.position.z)
+		_generate_debug_mesh(sphere_col, Color(0, 0.6, 0.7, 0.42))
+		car.add_child(sphere_col)
 			
 	# 3. Prop Angled Bumper (Front)
 	var bumper = AnimatableBody3D.new()

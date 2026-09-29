@@ -6,7 +6,8 @@ class_name RaycastWheel
 
 @export_group("Wheel properties")
 @export var spring_strength := 5000.0
-@export var spring_damping := 150.0
+@export var damping_compression := 150.0
+@export var damping_relaxation := 150.0
 @export var max_spring_force : float = INF
 @export var rest_dist := 0.25
 @export var over_extend := 0.05
@@ -77,7 +78,9 @@ func apply_wheel_physics(car: RigidBody3D) -> void:
 	## Spring forces
 	var spring_force  := spring_strength * offset
 	var tire_vel      := car.linear_velocity + car.angular_velocity.cross(contact - car.global_position)
-	var spring_damp_f := spring_damping * global_basis.y.dot(tire_vel)
+	var tire_y_vel: float = global_basis.y.dot(tire_vel)
+	var active_damping: float = damping_compression if tire_y_vel < 0.0 else damping_relaxation
+	var spring_damp_f: float = active_damping * tire_y_vel
 
 	var y_force       := (spring_force - spring_damp_f) * get_collision_normal()
 

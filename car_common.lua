@@ -22,9 +22,9 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("brake_force_value", 400.0)
 	setGlobalFloat("max_steer", 1.2)
 	setGlobalFloat("wheel_friction_slip", 1.5)
-	setGlobalFloat("suspension_travel", 0.25)
-	setGlobalFloat("suspension_stiffness", 220.0)
-	setGlobalFloat("suspension_max_force", 15000.0)
+	setGlobalFloat("total_travel_cm", 12.0)
+	setGlobalFloat("spring_stiffness_kn_m", 25.0)
+	setGlobalFloat("suspension_max_force", 100000.0)
 	setGlobalFloat("damping_compression", 8.0)
 	setGlobalFloat("damping_relaxation", 10.0)
 	setGlobalFloat("downforce_multiplier", 180.0)
@@ -91,12 +91,9 @@ function renderCarPhysicsUI()
 		imguiSliderFloat("Brake Force", "brake_force_value", 50.0, 1000.0)
 		imguiSliderFloat("Max Steer", "max_steer", 0.1, 1.5)
 		imguiSliderFloat("Wheel Friction", "wheel_friction_slip", 1.0, 20.0)
-		imguiSliderFloat("Suspension Travel (cm)", "suspension_travel_cm", 5.0, 60.0)
-		imguiSliderFloat("Compressed Travel (cm)", "compressed_travel_cm", 2.0, 50.0)
-		
-		imguiText(string.format("Calculated Stiffness: %.1f N/m", getGlobalFloat("suspension_stiffness")))
-		imguiProgressBar("Stiffness", "suspension_stiffness_normalized")
-		imguiSliderFloat("Susp. Max Force", "suspension_max_force", 1000.0, 30000.0)
+		imguiSliderFloat("Total Travel (cm)", "total_travel_cm", 5.0, 40.0)
+		imguiSliderFloat("Spring Stiffness (kN/m)", "spring_stiffness_kn_m", 10.0, 200.0)
+		imguiSliderFloat("Susp. Max Force", "suspension_max_force", 1000.0, 200000.0)
 		imguiSliderFloat("Damp Compress", "damping_compression", 1.0, 20.0)
 		imguiSliderFloat("Damp Relax", "damping_relaxation", 1.0, 20.0)
 		imguiSliderFloat("Downforce Mult", "downforce_multiplier", 0.0, 500.0)
@@ -300,31 +297,22 @@ function updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_nam
 	godotSetProperty("brake_force_value", getGlobalFloat("brake_force_value"), supercar)
 	godotSetProperty("max_steer", getGlobalFloat("max_steer"), supercar)
 	godotSetProperty("wheel_friction_slip", getGlobalFloat("wheel_friction_slip"), supercar)
-	local air_cm = getGlobalFloat("suspension_travel_cm")
-	local comp_cm = getGlobalFloat("compressed_travel_cm")
+	local total_travel_cm = getGlobalFloat("total_travel_cm")
+	local spring_stiffness_kn_m = getGlobalFloat("spring_stiffness_kn_m")
 	
-	-- Keep compressed less than airborne
-	if comp_cm >= air_cm then
-		comp_cm = air_cm - 1.0
-		setGlobalFloat("compressed_travel_cm", comp_cm)
-	end
-	
-	local travel_m = air_cm / 100.0
-	local diff_m = (air_cm - comp_cm) / 100.0
+	local travel_m = total_travel_cm / 100.0
+	local stiffness_n_m = spring_stiffness_kn_m * 1000.0
 	local mass = getGlobalFloat("car_mass")
 	local gravity = 9.8
 	local weight_per_wheel = (mass * gravity) / 4.0
-	local stiffness = weight_per_wheel / diff_m
+	local static_comp = weight_per_wheel / stiffness_n_m
 	
 	godotSetProperty("suspension_travel", travel_m, supercar)
-	godotSetProperty("suspension_stiffness", stiffness, supercar)
+	godotSetProperty("suspension_stiffness", stiffness_n_m, supercar)
 	
-	setGlobalFloat("suspension_stiffness", stiffness)
-	setGlobalFloat("suspension_stiffness_normalized", math.min(1.0, stiffness / 50000.0))
-	
-	-- Push back to node so saving car.ini writes the UI parameters
-	godotSetProperty("suspension_travel_cm", air_cm, supercar)
-	godotSetProperty("compressed_travel_cm", comp_cm, supercar)
+	godotSetProperty("total_travel_cm", total_travel_cm, supercar)
+	godotSetProperty("spring_stiffness_kn_m", spring_stiffness_kn_m, supercar)
+	godotSetProperty("static_compression_m", static_comp, supercar)
 	godotSetProperty("suspension_max_force", getGlobalFloat("suspension_max_force"), supercar)
 	godotSetProperty("damping_compression", getGlobalFloat("damping_compression"), supercar)
 	godotSetProperty("damping_relaxation", getGlobalFloat("damping_relaxation"), supercar)
