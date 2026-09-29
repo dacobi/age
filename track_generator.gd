@@ -30,7 +30,7 @@ static func get_cyan_mat() -> Material:
 static func _build_bank_transition(root: Node3D, length: float, width: float, start_tilt: float, end_tilt: float):
     var path = Path3D.new()
     var curve = Curve3D.new()
-    curve.bake_interval = 0.5
+    curve.bake_interval = 0.1
     
     var num_points = max(20, int(length / 2.0))
     for i in range(num_points + 1):
@@ -66,7 +66,7 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
         csg.path_continuous_u = true
         csg.path_u_distance = 16.0
         csg.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
-        csg.path_interval = 2.0
+        csg.path_interval = 0.25
         csg.path_rotation_accurate = true
         csg.path_simplify_angle = 0.0
         csg.use_collision = use_col
@@ -89,7 +89,7 @@ static func _build_bank_transition(root: Node3D, length: float, width: float, st
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
     create_path_csg.call(road_poly, 1, get_road_mat())
     
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)])
     create_path_csg.call(c_line, 1, get_centerline_mat(), false)
     
     var w = 2.0
@@ -130,7 +130,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         c_line.mode = CSGPolygon3D.MODE_DEPTH
         c_line.depth = max(0.1, length)
         c_line.polygon = PackedVector2Array([
-            Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)
+            Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)
         ])
         c_line.use_collision = false
         c_line.material = get_centerline_mat()
@@ -273,7 +273,7 @@ static func _build_straight(root: Node3D, length: float, width: float, incline: 
         var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
         create_path_csg.call(road_poly, 1, get_road_mat())
         
-        var c_line_poly = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+        var c_line_poly = PackedVector2Array([Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)])
         create_path_csg.call(c_line_poly, 1, get_centerline_mat(), false)
         
         var w = 2.0
@@ -315,7 +315,7 @@ static func _build_transition(root: Node3D, length: float, sw: float, ew: float)
         Vector2(-1.2, 0), Vector2(-1.2, length), Vector2(1.2, length), Vector2(1.2, 0)
     ])
     c_line.rotation_degrees.x = -90
-    c_line.position.y = 0.35
+    c_line.position.y = 0.15
     c_line.use_collision = false
     c_line.material = get_centerline_mat()
     root.add_child(c_line)
@@ -465,7 +465,7 @@ static func _build_curved_ramp(root: Node3D, width: float, ramp_angle: float, ra
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
     create_csg.call(road_poly, 1, get_road_mat())
     
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)])
     create_csg.call(c_line, 1, get_centerline_mat(), false)
     
     var w = 2.0
@@ -685,7 +685,7 @@ static func _build_curve(root: Node3D, angle: float, radius: float, width: float
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
     create_path_csg.call(road_poly, 1, get_road_mat())
     
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)])
     create_path_csg.call(c_line, 1, get_centerline_mat(), false)
     
     var w = 2.0
@@ -761,7 +761,7 @@ static func _build_right_angle(root: Node3D, radius: float, width: float, is_lef
     cline.use_collision = false
     cline.material = get_centerline_mat()
     cline.rotation_degrees = Vector3(-90, 0, 0)
-    cline.position = Vector3(0, 0.35, 0)
+    cline.position = Vector3(0, 0.15, 0)
     root.add_child(cline)
     
     var bw = 1.0 # Half width of border
@@ -980,7 +980,7 @@ static func _build_close_loop(root: Node3D, current_transform: Transform3D, widt
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
     create_path_csg.call(road_poly, 1, get_road_mat())
     
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)])
     create_path_csg.call(c_line, 1, get_centerline_mat(), false)
     
     var w = 2.0
@@ -1331,7 +1331,7 @@ static func _build_spline_transition(piece: Dictionary, current_transform: Trans
     var road_poly = PackedVector2Array([Vector2(-hw, -0.5), Vector2(-hw, 0), Vector2(hw, 0), Vector2(hw, -0.5)])
     create_csg.call(road_poly, 1, get_road_mat())
     
-    var c_line = PackedVector2Array([Vector2(-1.2, 0.35), Vector2(1.2, 0.35), Vector2(1.2, 0.25), Vector2(-1.2, 0.25)])
+    var c_line = PackedVector2Array([Vector2(-1.2, 0.15), Vector2(1.2, 0.15), Vector2(1.2, -0.05), Vector2(-1.2, -0.05)])
     create_csg.call(c_line, 1, get_centerline_mat(), false)
     
     var w = 2.0
