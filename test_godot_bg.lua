@@ -1,2 +1,2 @@
 setBG("[tscn:test_scene.tscn]")
-addBouncer("Hello Godot BG")
+addElement("Hello Godot BG")

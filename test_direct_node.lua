@@ -1,9 +1,9 @@
--- Add a Godot bouncer using the empty scene
-addBouncer("[tscn:empty.tscn]")
+-- Add a Godot element using the empty scene
+addElement("[tscn:empty.tscn]")
 -- We wait a moment to ensure it is fully instantiated in the backend
 delay(100)
 
--- Select the first Godot bouncer (index 0)
+-- Select the first Godot element (index 0)
 selectGodot(0)
 
 -- Test Lua Mutex
@@ -18,7 +18,7 @@ end
 -- Test Godot Direct Node Pointers
 print("Testing Direct Node Pointers...")
 
--- Select the root of the selected bouncer
+-- Select the root of the selected element
 godotSelectRoot()
 print("Selected root!")
 

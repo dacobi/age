@@ -85,9 +85,9 @@ void LuaManager::_play_ui_sound(const String& path) {
     }
 }
 
-void LuaManager::_set_bouncer_hover(uint64_t control_id, bool is_hovered) {
-    if (interactive_bouncers.find(control_id) != interactive_bouncers.end()) {
-        InteractiveData& idata = interactive_bouncers[control_id];
+void LuaManager::_set_element_hover(uint64_t control_id, bool is_hovered) {
+    if (interactive_elements.find(control_id) != interactive_elements.end()) {
+        InteractiveData& idata = interactive_elements[control_id];
         if (idata.is_graffity && idata.label_id != 0) {
             RichTextLabel* rtl = Object::cast_to<RichTextLabel>(ObjectDB::get_instance(idata.label_id));
             if (rtl) {
@@ -133,7 +133,7 @@ void LuaManager::_set_bouncer_hover(uint64_t control_id, bool is_hovered) {
     }
 }
 
-void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
+void LuaManager::_on_element_mouse_entered(uint64_t control_id) {
     _play_ui_sound("res://menu_click.wav");
     
     bool is_main_menu_item = false;
@@ -149,7 +149,7 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
                             if (old_r.selected_col >= 0 && old_r.selected_col < old_r.items.size()) {
                                 uint64_t old_id = old_r.items[old_r.selected_col];
                                 if (old_id != control_id) {
-                                    _set_bouncer_hover(old_id, false);
+                                    _set_element_hover(old_id, false);
                                 }
                             }
                         }
@@ -172,7 +172,7 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
                         if (old_r.selected_col >= 0 && old_r.selected_col < old_r.items.size()) {
                             uint64_t old_id = old_r.items[old_r.selected_col];
                             if (old_id != control_id) {
-                                _set_bouncer_hover(old_id, false);
+                                _set_element_hover(old_id, false);
                             }
                         }
                     }
@@ -184,10 +184,10 @@ void LuaManager::_on_bouncer_mouse_entered(uint64_t control_id) {
         }
     }
     
-    _set_bouncer_hover(control_id, true);
+    _set_element_hover(control_id, true);
 }
 
-void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
+void LuaManager::_on_element_mouse_exited(uint64_t control_id) {
     bool is_selected = false;
     for (int m_idx = 0; m_idx < (int)menus.size(); m_idx++) {
         MenuData& m = menus[m_idx];
@@ -203,13 +203,13 @@ void LuaManager::_on_bouncer_mouse_exited(uint64_t control_id) {
     }
     
     if (!is_selected) {
-        _set_bouncer_hover(control_id, false);
+        _set_element_hover(control_id, false);
     }
 }
 
-void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id) {
-    if (interactive_bouncers.find(control_id) != interactive_bouncers.end()) {
-        InteractiveData& idata = interactive_bouncers[control_id];
+void LuaManager::_on_element_gui_input(const Ref<InputEvent>& event, uint64_t control_id) {
+    if (interactive_elements.find(control_id) != interactive_elements.end()) {
+        InteractiveData& idata = interactive_elements[control_id];
         Ref<InputEventMouseButton> mb = event;
         if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == MouseButton::MOUSE_BUTTON_LEFT) {
             
@@ -232,7 +232,7 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
                                 if (old_r.selected_col >= 0 && old_r.selected_col < old_r.items.size()) {
                                     uint64_t old_id = old_r.items[old_r.selected_col];
                                     if (old_id != control_id) {
-                                        _set_bouncer_hover(old_id, false);
+                                        _set_element_hover(old_id, false);
                                     }
                                 }
                             }
@@ -259,7 +259,7 @@ void LuaManager::_on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t co
     }
 }
 
-String LuaManager::_evaluate_bouncer_text(const String& syntax) {
+String LuaManager::_evaluate_element_text(const String& syntax) {
     String s = syntax;
     String text = "";
     bool has_hover = syntax.find("[hover:") != -1;
@@ -334,10 +334,10 @@ void LuaManager::finish_gdscript_load() {
 }
 
 void LuaManager::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_entered", "control_id"), &LuaManager::_on_bouncer_mouse_entered);
-    ClassDB::bind_method(D_METHOD("_on_bouncer_mouse_exited", "control_id"), &LuaManager::_on_bouncer_mouse_exited);
-    ClassDB::bind_method(D_METHOD("_on_bouncer_gui_input", "event", "control_id"), &LuaManager::_on_bouncer_gui_input);
-    ClassDB::bind_method(D_METHOD("_on_addhscore_submitted", "text", "score", "level", "bouncer_id"), &LuaManager::_on_addhscore_submitted);
+    ClassDB::bind_method(D_METHOD("_on_element_mouse_entered", "control_id"), &LuaManager::_on_element_mouse_entered);
+    ClassDB::bind_method(D_METHOD("_on_element_mouse_exited", "control_id"), &LuaManager::_on_element_mouse_exited);
+    ClassDB::bind_method(D_METHOD("_on_element_gui_input", "event", "control_id"), &LuaManager::_on_element_gui_input);
+    ClassDB::bind_method(D_METHOD("_on_addhscore_submitted", "text", "score", "level", "element_id"), &LuaManager::_on_addhscore_submitted);
     ClassDB::bind_method(D_METHOD("_begin_menu_deferred", "name", "rows"), &LuaManager::_begin_menu_deferred);
     ClassDB::bind_method(D_METHOD("_begin_row_deferred", "name", "row"), &LuaManager::_begin_row_deferred);
     ClassDB::bind_method(D_METHOD("_end_row_deferred", "name"), &LuaManager::_end_row_deferred);
@@ -347,9 +347,9 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_end_submenu_deferred", "handle"), &LuaManager::_end_submenu_deferred);
     ClassDB::bind_method(D_METHOD("_enable_submenu_deferred", "handle"), &LuaManager::_enable_submenu_deferred);
     ClassDB::bind_method(D_METHOD("_disable_submenu_deferred", "handle"), &LuaManager::_disable_submenu_deferred);
-    ClassDB::bind_method(D_METHOD("_add_bouncer_deferred", "syntax"), &LuaManager::_add_bouncer_deferred);
-    ClassDB::bind_method(D_METHOD("_del_bouncer_deferred", "index"), &LuaManager::_del_bouncer_deferred);
-    ClassDB::bind_method(D_METHOD("_set_bouncer_param_deferred", "index", "name", "value"), &LuaManager::_set_bouncer_param_deferred);
+    ClassDB::bind_method(D_METHOD("_add_element_deferred", "syntax"), &LuaManager::_add_element_deferred);
+    ClassDB::bind_method(D_METHOD("_del_element_deferred", "index"), &LuaManager::_del_element_deferred);
+    ClassDB::bind_method(D_METHOD("_set_element_param_deferred", "index", "name", "value"), &LuaManager::_set_element_param_deferred);
     ClassDB::bind_method(D_METHOD("_set_bg_deferred", "syntax"), &LuaManager::_set_bg_deferred);
     ClassDB::bind_method(D_METHOD("_clear_and_run_deferred", "filename"), &LuaManager::_clear_and_run_deferred);
     ClassDB::bind_method(D_METHOD("_do_clear_and_run", "filename"), &LuaManager::_do_clear_and_run);
@@ -381,7 +381,7 @@ void LuaManager::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_global_float", "name"), &LuaManager::get_global_float);
 }
 
-void LuaManager::_on_addhscore_submitted(String text, int score, int level, uint64_t bouncer_id) {
+void LuaManager::_on_addhscore_submitted(String text, int score, int level, uint64_t element_id) {
     if (text.length() > 3) text = text.substr(0, 3);
     text = text.to_upper();
     
@@ -403,7 +403,7 @@ void LuaManager::_on_addhscore_submitted(String text, int score, int level, uint
         }
     }
     
-    Object* obj = ObjectDB::get_instance(bouncer_id);
+    Object* obj = ObjectDB::get_instance(element_id);
     if (obj) {
         Node* node = Object::cast_to<Node>(obj);
         if (node) node->queue_free();
@@ -501,12 +501,12 @@ void LuaManager::_enable_submenu_deferred(String handle) {
     if (submenus.count(handle)) {
         SubMenuData& sm = submenus[handle];
         sm.is_active = true;
-        for (uint64_t id : sm.all_bouncers) {
+        for (uint64_t id : sm.all_elements) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(id));
             if (container) {
                 container->show();
                 uint64_t ctrl_id = 0;
-                for (auto& pair : interactive_bouncers) {
+                for (auto& pair : interactive_elements) {
                     if (pair.second.container_id == id) {
                         ctrl_id = pair.first;
                         break;
@@ -526,7 +526,7 @@ void LuaManager::_enable_submenu_deferred(String handle) {
                     }
                 }
                 for (VideoStreamPlayer* vp : vps) {
-                    if (ctrl_id == 0 || !interactive_bouncers[ctrl_id].has_hover) {
+                    if (ctrl_id == 0 || !interactive_elements[ctrl_id].has_hover) {
                         vp->set_paused(false);
                         vp->play();
                         vp->set_volume_db(0.0f);
@@ -539,13 +539,13 @@ void LuaManager::_enable_submenu_deferred(String handle) {
             if (active_menu_index < (int)menus.size() && !menus[active_menu_index].rows.empty()) {
                 for (auto& row : menus[active_menu_index].rows) {
                     for (uint64_t id : row.items) {
-                        _set_bouncer_hover(id, false);
+                        _set_element_hover(id, false);
                     }
                 }
                 menus[active_menu_index].selected_row = 0;
                 if (!menus[active_menu_index].rows[0].items.empty()) {
                     menus[active_menu_index].rows[0].selected_col = 0;
-                    _set_bouncer_hover(menus[active_menu_index].rows[0].items[0], true);
+                    _set_element_hover(menus[active_menu_index].rows[0].items[0], true);
                 }
             }
         }
@@ -556,12 +556,12 @@ void LuaManager::_disable_submenu_deferred(String handle) {
     if (submenus.count(handle)) {
         SubMenuData& sm = submenus[handle];
         sm.is_active = false;
-        for (uint64_t id : sm.all_bouncers) {
+        for (uint64_t id : sm.all_elements) {
             Node2D* container = Object::cast_to<Node2D>(ObjectDB::get_instance(id));
             if (container) {
                 container->hide();
                 uint64_t ctrl_id = 0;
-                for (auto& pair : interactive_bouncers) {
+                for (auto& pair : interactive_elements) {
                     if (pair.second.container_id == id) {
                         ctrl_id = pair.first;
                         break;
@@ -591,7 +591,7 @@ void LuaManager::_disable_submenu_deferred(String handle) {
             if (active_menu_index >= 0 && active_menu_index < (int)menus.size() && !menus[active_menu_index].rows.empty()) {
                 MenuData& m = menus[active_menu_index];
                 if (m.selected_row >= 0 && m.selected_row < m.rows.size() && !m.rows[m.selected_row].items.empty()) {
-                    _set_bouncer_hover(m.rows[m.selected_row].items[m.rows[m.selected_row].selected_col], true);
+                    _set_element_hover(m.rows[m.selected_row].items[m.rows[m.selected_row].selected_col], true);
                 }
             }
         }
@@ -607,8 +607,8 @@ void LuaManager::_end_menu_deferred() {
             if (m.rows.size() == 1 && m.rows[0].items.size() > 1) {
                 float min_y = 1e9, max_y = -1e9;
                 for (uint64_t ctrl_id : m.rows[0].items) {
-                    if (interactive_bouncers.find(ctrl_id) != interactive_bouncers.end()) {
-                        uint64_t cont_id = interactive_bouncers[ctrl_id].container_id;
+                    if (interactive_elements.find(ctrl_id) != interactive_elements.end()) {
+                        uint64_t cont_id = interactive_elements[ctrl_id].container_id;
                         Node2D* n = Object::cast_to<Node2D>(ObjectDB::get_instance(cont_id));
                         if (n) {
                             float y = n->get_position().y;
@@ -631,19 +631,19 @@ void LuaManager::_end_menu_deferred() {
 
             for (auto& row : m.rows) {
                 for (uint64_t ctrl_id : row.items) {
-                    _set_bouncer_hover(ctrl_id, false);
+                    _set_element_hover(ctrl_id, false);
                 }
             }
             m.selected_row = 0;
             if (!m.rows[0].items.empty()) {
                 m.rows[0].selected_col = 0;
-                _set_bouncer_hover(m.rows[0].items[0], true);
+                _set_element_hover(m.rows[0].items[0], true);
             }
         }
     }
 }
 
-void LuaManager::_add_bouncer_deferred(const String& syntax) {
+void LuaManager::_add_element_deferred(const String& syntax) {
     String s = syntax;
     Vector2 pos(0, 0);
     String image_path = "";
@@ -812,8 +812,8 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     text = text.strip_edges();
     
     CanvasLayer* target_layer = nullptr;
-    if (bouncer_layers.find(layer_idx) != bouncer_layers.end()) {
-        uint64_t layer_id = bouncer_layers[layer_idx];
+    if (element_layers.find(layer_idx) != element_layers.end()) {
+        uint64_t layer_id = element_layers[layer_idx];
         Object* obj = ObjectDB::get_instance(layer_id);
         if (obj) {
             target_layer = Object::cast_to<CanvasLayer>(obj);
@@ -824,7 +824,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         target_layer = memnew(CanvasLayer);
         target_layer->set_layer(layer_idx);
         add_child(target_layer);
-        bouncer_layers[layer_idx] = target_layer->get_instance_id();
+        element_layers[layer_idx] = target_layer->get_instance_id();
     }
     
     Node2D* container = memnew(Node2D);
@@ -1168,11 +1168,11 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         idata.label_id = label ? label->get_instance_id() : 0;
         idata.is_selector = is_selector;
         idata.selector_id = current_selector_id;
-        interactive_bouncers[ctrl_id] = idata;
+        interactive_elements[ctrl_id] = idata;
         
-        interactive_control->connect("mouse_entered", Callable(this, "_on_bouncer_mouse_entered").bind(ctrl_id));
-        interactive_control->connect("mouse_exited", Callable(this, "_on_bouncer_mouse_exited").bind(ctrl_id));
-        interactive_control->connect("gui_input", Callable(this, "_on_bouncer_gui_input").bind(ctrl_id));
+        interactive_control->connect("mouse_entered", Callable(this, "_on_element_mouse_entered").bind(ctrl_id));
+        interactive_control->connect("mouse_exited", Callable(this, "_on_element_mouse_exited").bind(ctrl_id));
+        interactive_control->connect("gui_input", Callable(this, "_on_element_gui_input").bind(ctrl_id));
         
         if (is_building_menu && active_menu_index >= 0) {
             if (active_building_row < menus[active_menu_index].rows.size()) {
@@ -1187,7 +1187,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     }
     
     if (!active_building_submenu.is_empty()) {
-        submenus[active_building_submenu].all_bouncers.push_back(container->get_instance_id());
+        submenus[active_building_submenu].all_elements.push_back(container->get_instance_id());
         container->hide();
         if (video_player) {
             /* video_player->set_process_mode(Node::PROCESS_MODE_DISABLED); */
@@ -1197,7 +1197,7 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
     
     if (has_phys || has_linear || has_ttl) {
         if (has_phys || has_linear) container->set_position(has_phys ? phys_pos : pos);
-        BouncerPhysics bp;
+        ElementPhysics bp;
         bp.enabled = true;
         if (has_phys) {
             bp.velocity = phys_vel;
@@ -1212,15 +1212,15 @@ void LuaManager::_add_bouncer_deferred(const String& syntax) {
         }
         bp.has_ttl = has_ttl;
         bp.ttl = ttl_val;
-        bouncer_physics[container->get_instance_id()] = bp;
+        element_physics[container->get_instance_id()] = bp;
     }
     
-    bouncers.push_back(container->get_instance_id());
+    elements.push_back(container->get_instance_id());
 }
 
-void LuaManager::_del_bouncer_deferred(int index) {
-    if (index >= 0 && index < bouncers.size()) {
-        uint64_t id = bouncers[index];
+void LuaManager::_del_element_deferred(int index) {
+    if (index >= 0 && index < elements.size()) {
+        uint64_t id = elements[index];
         Object* obj = ObjectDB::get_instance(id);
         if (obj) {
             Node* node = Object::cast_to<Node>(obj);
@@ -1228,13 +1228,13 @@ void LuaManager::_del_bouncer_deferred(int index) {
                 node->queue_free();
             }
         }
-        bouncers.erase(bouncers.begin() + index);
+        elements.erase(elements.begin() + index);
     }
 }
 
-void LuaManager::_set_bouncer_param_deferred(int index, String name, double value) {
-    if (index >= 0 && index < bouncers.size()) {
-        uint64_t id = bouncers[index];
+void LuaManager::_set_element_param_deferred(int index, String name, double value) {
+    if (index >= 0 && index < elements.size()) {
+        uint64_t id = elements[index];
         Object* obj = ObjectDB::get_instance(id);
         if (obj) {
             Node2D* n2d = Object::cast_to<Node2D>(obj);
@@ -1393,14 +1393,14 @@ void LuaManager::_clear_and_run_deferred(const String& filename) {
 }
 
 void LuaManager::_do_clear_and_run(const String& filename) {
-    for (uint64_t id : bouncers) {
+    for (uint64_t id : elements) {
         Object* obj = ObjectDB::get_instance(id);
         if (obj) {
             Node* node = Object::cast_to<Node>(obj);
             if (node) node->queue_free();
         }
     }
-    bouncers.clear();
+    elements.clear();
     submenus.clear();
     active_building_submenu = "";
     main_menu_index = -1;
@@ -1416,7 +1416,7 @@ void LuaManager::_do_clear_and_run(const String& filename) {
     }
     loaded_nodes.clear();
     
-    for (auto const& [idx, layer_id] : bouncer_layers) {
+    for (auto const& [idx, layer_id] : element_layers) {
         Object* obj = ObjectDB::get_instance(layer_id);
         if (obj) {
             Node* node = Object::cast_to<Node>(obj);
@@ -1441,8 +1441,8 @@ void LuaManager::_do_clear_and_run(const String& filename) {
             }
         }
     }
-    bouncer_layers.clear();
-    interactive_bouncers.clear();
+    element_layers.clear();
+    interactive_elements.clear();
     videos_to_preload.clear();
     
     if (bg_layer_id != 0) {
@@ -1979,11 +1979,11 @@ void LuaManager::_ready() {
     lua_engine = new LuaScripting(
         // addFunc
         [this](const std::string& syntax) {
-            this->call_deferred("_add_bouncer_deferred", String(syntax.c_str()));
+            this->call_deferred("_add_element_deferred", String(syntax.c_str()));
         },
         // delFunc
         [this](int index) {
-            this->call_deferred("_del_bouncer_deferred", index);
+            this->call_deferred("_del_element_deferred", index);
         },
         // setBGFunc
         [this](const std::string& syntax) {
@@ -1996,9 +1996,9 @@ void LuaManager::_ready() {
         },
         // setParamFunc
         [](bool, const std::string&, double) { UtilityFunctions::print("Stub: setParamFunc"); },
-        // setBouncerParamFunc
+        // setElementParamFunc
         [this](int index, const std::string& name, double val) {
-            this->call_deferred("_set_bouncer_param_deferred", index, String(name.c_str()), val);
+            this->call_deferred("_set_element_param_deferred", index, String(name.c_str()), val);
         },
         // randomizeFunc
         [](bool, bool) { UtilityFunctions::print("Stub: randomizeFunc"); },
@@ -2207,8 +2207,8 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
                     MenuData& main_menu = menus[main_menu_index];
                     if (!main_menu.rows.empty() && !main_menu.rows.back().items.empty()) {
                         uint64_t quit_id = main_menu.rows.back().items.back();
-                        if (interactive_bouncers.find(quit_id) != interactive_bouncers.end()) {
-                            String script = interactive_bouncers[quit_id].clicked_script;
+                        if (interactive_elements.find(quit_id) != interactive_elements.end()) {
+                            String script = interactive_elements[quit_id].clicked_script;
                             if (!script.is_empty()) {
                                 if (script.ends_with(".lua")) {
                                     call_deferred("_clear_and_run_deferred", script);
@@ -2251,15 +2251,15 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
                     
                     if (!m.rows[new_row].items.empty()) {
                         int current_col = m.rows[new_row].selected_col;
-                        _on_bouncer_mouse_entered(m.rows[new_row].items[current_col]);
+                        _on_element_mouse_entered(m.rows[new_row].items[current_col]);
                     }
                 } else if (k == Key::KEY_LEFT || k == Key::KEY_RIGHT) {
                     if (m.selected_row >= 0 && m.selected_row < m.rows.size() && !m.rows[m.selected_row].items.empty()) {
                         MenuRow& r = m.rows[m.selected_row];
                         uint64_t current_id = r.items[r.selected_col];
                         
-                        if (interactive_bouncers.count(current_id) && interactive_bouncers[current_id].is_selector) {
-                            UISelector* selector = Object::cast_to<UISelector>(ObjectDB::get_instance(interactive_bouncers[current_id].selector_id));
+                        if (interactive_elements.count(current_id) && interactive_elements[current_id].is_selector) {
+                            UISelector* selector = Object::cast_to<UISelector>(ObjectDB::get_instance(interactive_elements[current_id].selector_id));
                             if (selector) {
                                 if (k == Key::KEY_LEFT) selector->_on_left_pressed();
                                 else selector->_on_right_pressed();
@@ -2272,14 +2272,14 @@ void LuaManager::_input(const Ref<InputEvent>& event) {
                             if (new_col < 0) new_col = r.items.size() - 1;
                             if (new_col >= (int)r.items.size()) new_col = 0;
                             
-                            _on_bouncer_mouse_entered(r.items[new_col]);
+                            _on_element_mouse_entered(r.items[new_col]);
                         }
                     }
                 } else if (k == Key::KEY_ENTER || k == Key::KEY_SPACE) {
                     if (m.selected_row >= 0 && m.selected_row < m.rows.size() && !m.rows[m.selected_row].items.empty()) {
                         uint64_t current_id = m.rows[m.selected_row].items[m.rows[m.selected_row].selected_col];
-                        if (interactive_bouncers.find(current_id) != interactive_bouncers.end()) {
-                            String script = interactive_bouncers[current_id].clicked_script;
+                        if (interactive_elements.find(current_id) != interactive_elements.end()) {
+                            String script = interactive_elements[current_id].clicked_script;
                             if (!script.is_empty()) {
                                 if (script.ends_with(".lua")) {
                                     call_deferred("_clear_and_run_deferred", script);
@@ -2599,11 +2599,11 @@ void LuaManager::_process(double delta) {
         } else {
             Label* label = Object::cast_to<Label>(obj);
             if (label) {
-                label->set_text(_evaluate_bouncer_text(it->syntax));
+                label->set_text(_evaluate_element_text(it->syntax));
             } else {
                 RichTextLabel* rtl = Object::cast_to<RichTextLabel>(obj);
                 if (rtl) {
-                    rtl->set_text(_evaluate_bouncer_text(it->syntax));
+                    rtl->set_text(_evaluate_element_text(it->syntax));
                 }
             }
             ++it;
@@ -2611,12 +2611,12 @@ void LuaManager::_process(double delta) {
     }
     
     Rect2 vp_rect = get_viewport()->get_visible_rect();
-    for (auto it = bouncer_physics.begin(); it != bouncer_physics.end(); ) {
+    for (auto it = element_physics.begin(); it != element_physics.end(); ) {
         uint64_t id = it->first;
-        BouncerPhysics& bp = it->second;
+        ElementPhysics& bp = it->second;
         Object* obj = ObjectDB::get_instance(id);
         if (!obj) {
-            it = bouncer_physics.erase(it);
+            it = element_physics.erase(it);
             continue;
         }
         
@@ -2629,14 +2629,14 @@ void LuaManager::_process(double delta) {
         if (bp.has_ttl) {
             bp.ttl -= delta;
             if (bp.ttl <= 0) {
-                for (auto b_it = bouncers.begin(); b_it != bouncers.end(); ++b_it) {
+                for (auto b_it = elements.begin(); b_it != elements.end(); ++b_it) {
                     if (*b_it == id) {
-                        bouncers.erase(b_it);
+                        elements.erase(b_it);
                         break;
                     }
                 }
                 n2d->queue_free();
-                it = bouncer_physics.erase(it);
+                it = element_physics.erase(it);
                 continue;
             }
         }

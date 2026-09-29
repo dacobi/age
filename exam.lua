@@ -6,10 +6,10 @@
 
 	setFractalParam("zoom", 2.0)
     
-     -- Add a bouncer and cycle its colors
-     	addBouncer("[pos: 100,100,100,50][rect: 500,500][plasma:1]")
+     -- Add a element and cycle its colors
+     	addElement("[pos: 100,100,100,50][rect: 500,500][plasma:1]")
      	delay(1000)
-     	selectPlasma(0) -- Select the bouncer we just added
+     	selectPlasma(0) -- Select the element we just added
      	for i=0, 100 do
 		randomizePlasmaPalette()
 		--ndomizePlasmaXY()

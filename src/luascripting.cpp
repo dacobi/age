@@ -16,14 +16,14 @@ static std::mutex global_lua_mutex;
 
 LuaScripting* LuaScripting::instance = nullptr;
 
-LuaScripting::LuaScripting(AddBouncerFunc addFunc, DelBouncerFunc delFunc, SetBGFunc bgFunc, SelectFunc selectFunc, SetParamFunc setParamFunc, SetBouncerParamFunc setBouncerParamFunc, RandomizeFunc randomizeFunc, SetAudioFunc audioFunc, 
+LuaScripting::LuaScripting(AddElementFunc addFunc, DelElementFunc delFunc, SetBGFunc bgFunc, SelectFunc selectFunc, SetParamFunc setParamFunc, SetElementParamFunc setElementParamFunc, RandomizeFunc randomizeFunc, SetAudioFunc audioFunc, 
     PlayAudioFunc playAudioFunc, StopAudioFunc stopAudioFunc, RewindAudioFunc rewindAudioFunc, SkipAudioFunc skipAudioFunc, SetAudioVolumeFunc setAudioVolumeFunc,
     RecordFunc recordFunc, IsRecordingFunc isRecFunc,
 #ifdef USE_USD
     SelectUSDFunc selectUSDFunc, SetUSDParamFunc setUSDParamFunc,
 #endif
     SelectGodotFunc selectGodotFunc, GodotCmdFunc godotFunc, QuitFunc quitFunc, SetImGuiVisibleFunc setImGuiVisibleFunc, ClearAndRunFunc clearAndRunFunc, SetMouseCaptureFunc setMouseCaptureFunc, SetResizeEnabledFunc setResizeEnabledFunc, MaximizeWindowFunc maximizeWindowFunc, CheckHighScoreFunc checkHSFunc, AddHighScoreFunc addHSFunc, LoadHighScoreFunc loadHSFunc, SaveHighScoreFunc saveHSFunc)
-    : addBouncerFunc(addFunc), delBouncerFunc(delFunc), setBGFunc(bgFunc), selectFunc(selectFunc), setParamFunc(setParamFunc), setBouncerParamFunc(setBouncerParamFunc), randomizeFunc(randomizeFunc), setAudioFunc(audioFunc), 
+    : addElementFunc(addFunc), delElementFunc(delFunc), setBGFunc(bgFunc), selectFunc(selectFunc), setParamFunc(setParamFunc), setElementParamFunc(setElementParamFunc), randomizeFunc(randomizeFunc), setAudioFunc(audioFunc), 
     playAudioFunc(playAudioFunc), stopAudioFunc(stopAudioFunc), rewindAudioFunc(rewindAudioFunc), skipAudioFunc(skipAudioFunc), setAudioVolumeFunc(setAudioVolumeFunc),
     recordFunc(recordFunc), isRecFunc(isRecFunc),
  
@@ -182,8 +182,8 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
         lua_setglobal(L_reg, name);
     };
 
-    reg("addBouncer", lua_addBouncer);
-    reg("delBouncer", lua_delBouncer);
+    reg("addElement", lua_addElement);
+    reg("delElement", lua_delElement);
     reg("ageBeginMenu", lua_ageBeginMenu);
     reg("ageEndMenu", lua_ageEndMenu);
     reg("ageBeginRow", lua_ageBeginRow);
@@ -619,23 +619,23 @@ int LuaScripting::lua_ageDisableSubMenu(lua_State* L) {
     return 0;
 }
 
-int LuaScripting::lua_addBouncer(lua_State* L) {
+int LuaScripting::lua_addElement(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (lua_isstring(L, 1)) {
         std::string syntax = lua_tostring(L, 1);
-        if (self && self->addBouncerFunc) {
-            self->addBouncerFunc(syntax);
+        if (self && self->addElementFunc) {
+            self->addElementFunc(syntax);
         }
     }
     return 0;
 }
 
-int LuaScripting::lua_delBouncer(lua_State* L) {
+int LuaScripting::lua_delElement(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (lua_isinteger(L, 1)) {
         int index = (int)lua_tointeger(L, 1);
-        if (self && self->delBouncerFunc) {
-            self->delBouncerFunc(index);
+        if (self && self->delElementFunc) {
+            self->delElementFunc(index);
         }
     }
     return 0;
@@ -647,8 +647,8 @@ int LuaScripting::lua_setParam(lua_State* L) {
         int index = (int)lua_tointeger(L, 1);
         std::string name = lua_tostring(L, 2);
         double val = lua_tonumber(L, 3);
-        if (self && self->setBouncerParamFunc) {
-            self->setBouncerParamFunc(index, name, val);
+        if (self && self->setElementParamFunc) {
+            self->setElementParamFunc(index, name, val);
         }
     }
     return 0;

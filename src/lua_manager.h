@@ -66,10 +66,10 @@ private:
     std::mutex cmd_mutex;
     std::vector<GodotCommand> cmd_queue;
 
-    std::vector<uint64_t> bouncers;
+    std::vector<uint64_t> elements;
     std::vector<uint64_t> loaded_nodes;
     std::vector<uint64_t> videos_to_preload;
-    std::map<int, uint64_t> bouncer_layers;
+    std::map<int, uint64_t> element_layers;
     uint64_t bg_layer_id = 0;
     uint64_t bg_rect_id = 0;
     
@@ -89,7 +89,7 @@ private:
         String syntax;
     };
     std::vector<DynamicLabel> dynamic_labels;
-    String _evaluate_bouncer_text(const String& syntax);
+    String _evaluate_element_text(const String& syntax);
 
     struct MenuRow {
         String name;
@@ -109,7 +109,7 @@ private:
     
     struct SubMenuData {
         String handle;
-        std::vector<uint64_t> all_bouncers;
+        std::vector<uint64_t> all_elements;
         int menu_index = -1;
         bool is_active = false;
     };
@@ -137,7 +137,7 @@ private:
         bool is_selector = false;
         uint64_t selector_id = 0;
     };
-    struct BouncerPhysics {
+    struct ElementPhysics {
         bool enabled = false;
         Vector2 velocity;
         float speed = 1.0f;
@@ -147,18 +147,18 @@ private:
         bool has_ttl = false;
         float ttl = 0.0f;
     };
-    std::map<uint64_t, BouncerPhysics> bouncer_physics;
+    std::map<uint64_t, ElementPhysics> element_physics;
 
-    std::map<uint64_t, InteractiveData> interactive_bouncers;
+    std::map<uint64_t, InteractiveData> interactive_elements;
 
     void _begin_menu_deferred(String name, int rows);
     void _begin_row_deferred(String name, int row);
     void _end_row_deferred(String name);
     void _end_menu_deferred();
 
-    void _add_bouncer_deferred(const String& syntax);
-    void _del_bouncer_deferred(int index);
-    void _set_bouncer_param_deferred(int index, String name, double value);
+    void _add_element_deferred(const String& syntax);
+    void _del_element_deferred(int index);
+    void _set_element_param_deferred(int index, String name, double value);
     void _set_bg_deferred(const String& syntax);
     void _clear_and_run_deferred(const String& filename);
     void _do_clear_and_run(const String& filename);
@@ -199,11 +199,11 @@ private:
     void _quit_deferred();
 
     void _play_ui_sound(const String& path);
-    void _on_bouncer_mouse_entered(uint64_t control_id);
-    void _on_bouncer_mouse_exited(uint64_t control_id);
-    void _on_bouncer_gui_input(const Ref<InputEvent>& event, uint64_t control_id);
-    void _set_bouncer_hover(uint64_t control_id, bool is_hovered);
-    void _on_addhscore_submitted(String text, int score, int level, uint64_t bouncer_id);
+    void _on_element_mouse_entered(uint64_t control_id);
+    void _on_element_mouse_exited(uint64_t control_id);
+    void _on_element_gui_input(const Ref<InputEvent>& event, uint64_t control_id);
+    void _set_element_hover(uint64_t control_id, bool is_hovered);
+    void _on_addhscore_submitted(String text, int score, int level, uint64_t element_id);
 
     bool is_preloading() const { return !videos_to_preload.empty(); }
     bool is_loading_engine() const { return !videos_to_preload.empty() || !cmd_queue.empty() || !pending_scene_load.is_empty(); }

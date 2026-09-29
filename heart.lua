@@ -1,8 +1,8 @@
---addBouncer("[phys: 250,250,0,0,1,0.95][rect: 1024, 768][fractal:2]")
+--addElement("[phys: 250,250,0,0,1,0.95][rect: 1024, 768][fractal:2]")
 setBG("[plasma:12]")
-addBouncer("[pos: 100,100,100,100][tusd:heart.usdc]");
+addElement("[pos: 100,100,100,100][tusd:heart.usdc]");
 
-addBouncer("[stencil:softstar.png][pos: 300,600,100,100][usd:cube.usda]");
+addElement("[stencil:softstar.png][pos: 300,600,100,100][usd:cube.usda]");
 
 selectUSD(-1);
 setUSDParam("camera",2);
@@ -37,7 +37,7 @@ local tasks = {}
 	  for i=1, 5 do coroutine.yield() end
 --	selectUSD(0)
 
-        --lectUSD(0) -- Select the first bouncer with a fractal
+        --lectUSD(0) -- Select the first element with a fractal
 	      local base = 0 
 	 while true do
 --	selectUSD(0);

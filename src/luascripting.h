@@ -68,12 +68,12 @@ public:
         
     };
 
-    using AddBouncerFunc = std::function<void(const std::string&)>;
-    using DelBouncerFunc = std::function<void(int)>;
+    using AddElementFunc = std::function<void(const std::string&)>;
+    using DelElementFunc = std::function<void(int)>;
     using SetBGFunc = std::function<void(const std::string&)>;
     using SelectFunc = std::function<void(bool isPlasma, int index, std::shared_ptr<LuaSyncData> sync_data)>;
     using SetParamFunc = std::function<void(bool isPlasma, const std::string& name, double value)>;
-    using SetBouncerParamFunc = std::function<void(int index, const std::string& name, double value)>;
+    using SetElementParamFunc = std::function<void(int index, const std::string& name, double value)>;
     using RandomizeFunc = std::function<void(bool isPlasma, bool isXY)>;
     using SetAudioFunc = std::function<void(const std::string&, std::shared_ptr<LuaSyncData>)>;
     using PlayAudioFunc = std::function<void()>;
@@ -107,7 +107,7 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
     using LoadHighScoreFunc = std::function<void()>;
     using SaveHighScoreFunc = std::function<void()>;
 
-    LuaScripting(AddBouncerFunc addFunc, DelBouncerFunc delFunc, SetBGFunc setBGFunc, SelectFunc selectFunc, SetParamFunc setParamFunc, SetBouncerParamFunc setBouncerParamFunc, RandomizeFunc randomizeFunc, SetAudioFunc setAudioFunc, 
+    LuaScripting(AddElementFunc addFunc, DelElementFunc delFunc, SetBGFunc setBGFunc, SelectFunc selectFunc, SetParamFunc setParamFunc, SetElementParamFunc setElementParamFunc, RandomizeFunc randomizeFunc, SetAudioFunc setAudioFunc, 
         PlayAudioFunc playAudioFunc, StopAudioFunc stopAudioFunc, RewindAudioFunc rewindAudioFunc, SkipAudioFunc skipAudioFunc, SetAudioVolumeFunc setAudioVolumeFunc,
         RecordFunc recordFunc, IsRecordingFunc isRecFunc,
  
@@ -180,8 +180,8 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
     std::unordered_map<std::string, std::string> global_strings;
 
 private:
-    static int lua_addBouncer(lua_State* L);
-    static int lua_delBouncer(lua_State* L);
+    static int lua_addElement(lua_State* L);
+    static int lua_delElement(lua_State* L);
     static int lua_ageBeginMenu(lua_State* L);
     static int lua_ageEndMenu(lua_State* L);
     static int lua_ageBeginRow(lua_State* L);
@@ -333,12 +333,12 @@ private:
     std::queue<std::string> pendingCallbacks;
     std::mutex callbackMutex;
 
-    AddBouncerFunc addBouncerFunc;
-    DelBouncerFunc delBouncerFunc;
+    AddElementFunc addElementFunc;
+    DelElementFunc delElementFunc;
     SetBGFunc setBGFunc;
     SelectFunc selectFunc;
     SetParamFunc setParamFunc;
-    SetBouncerParamFunc setBouncerParamFunc;
+    SetElementParamFunc setElementParamFunc;
     RandomizeFunc randomizeFunc;
     SetAudioFunc setAudioFunc;
     PlayAudioFunc playAudioFunc;

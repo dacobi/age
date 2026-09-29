@@ -1,4 +1,4 @@
---addBouncer("[phys: 250,250,0,0,1,0.95][rect: 1024, 768][fractal:2]")
+--addElement("[phys: 250,250,0,0,1,0.95][rect: 1024, 768][fractal:2]")
 setBG("[fractal:2]")
 selectFractal(-1)
 setFractalParam("color_speed",7)
@@ -28,7 +28,7 @@ local tasks = {}
    spawn(function()
 	  for i=1, 5 do coroutine.yield() end
    
-        selectFractal(-1) -- Select the first bouncer with a fractal
+        selectFractal(-1) -- Select the first element with a fractal
 	      local base = 0 
 	 while true do
            -- Be careful with large increments: 0.1 * 5000 is 500. 
@@ -47,7 +47,7 @@ local tasks = {}
 	 spawn(function()
 	  for i=1, 5 do coroutine.yield() end
    
-        selectFractal(-1) -- Select the first bouncer with a fractal
+        selectFractal(-1) -- Select the first element with a fractal
 	      local base = 5
 	 while true do
            -- Be careful with large increments: 0.1 * 5000 is 500. 
@@ -65,12 +65,12 @@ local tasks = {}
    )
 
    spawn(function()
-        -- IMPORTANT: If you added the bouncer via CLI or a previous command,
+        -- IMPORTANT: If you added the element via CLI or a previous command,
         -- it might take a moment for the main thread to process it.
         -- We wait a few frames to ensure it exists before selecting it.
         for i=1, 5 do coroutine.yield() end
    
-        selectFractal(-1) -- Select the first bouncer with a fractal
+        selectFractal(-1) -- Select the first element with a fractal
       local base = 0.3
        
        while true do

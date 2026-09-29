@@ -12,9 +12,9 @@ local minX = -55.0
 local maxX = 55.0
 
 
-addBouncer("[layer:1][fontsize:0.6][pos:20,20][rgb: 0,255,255]Level [global:level]")
+addElement("[layer:1][fontsize:0.6][pos:20,20][rgb: 0,255,255]Level [global:level]")
 
-addBouncer("[layer:1][fontsize:0.6][pos:800,20][rgb: 0,255,255]Score [global:score]")
+addElement("[layer:1][fontsize:0.6][pos:800,20][rgb: 0,255,255]Score [global:score]")
 
 setAudioVolume(30)
 
@@ -39,13 +39,13 @@ godotSetProperty("vaders", 50, myInvaders)
 local vtest = godotGetProperty("vaders",myInvaders)
 print("vaders: ",vtest)
     
-addBouncer("[layer:1][pos:20,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
+addElement("[layer:1][pos:20,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
 
 if clvs > 1 then
-    addBouncer("[layer:1][pos:80,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
+    addElement("[layer:1][pos:80,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
 end
 if clvs > 2 then
-    addBouncer("[layer:1][pos:140,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
+    addElement("[layer:1][pos:140,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
 end
 
 local myGameOverMutex = luaCreateMutex()
@@ -58,12 +58,12 @@ function onLivesReset()
     print("In lives_reset")
 
     setGlobalVar("lives",3)
-    delBouncer(4)
-    delBouncer(3)
-    delBouncer(2)
-    addBouncer("[layer:1][pos:20,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
-    addBouncer("[layer:1][pos:80,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
-    addBouncer("[layer:1][pos:140,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
+    delElement(4)
+    delElement(3)
+    delElement(2)
+    addElement("[layer:1][pos:20,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
+    addElement("[layer:1][pos:80,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
+    addElement("[layer:1][pos:140,730][rect:40,20][rgb:255,255,255][image:ship_icon.png]")
 
     luaReleaseMutex(myLivesLostMutex)
     print("Exit lives_reset")
@@ -107,11 +107,11 @@ function onLiveLost()
     
     if livesleft == 2 then                
         setGlobalVar("lives",2)
-        delBouncer(4)
+        delElement(4)
     end
     if livesleft == 1 then
         setGlobalVar("lives",1)
-        delBouncer(3)
+        delElement(3)
     end
     if livesleft <= 0 then
         -- This is the final hit! Grab the Game Over lock IMMEDIATELY to win the race condition.
@@ -121,7 +121,7 @@ function onLiveLost()
         end
         
         setGlobalVar("lives",0)
-        delBouncer(2)
+        delElement(2)
         delay(500)
         
         print("***************************")
@@ -164,16 +164,16 @@ function onLoosing()
     godotSetProperty("bAdvance", false, myInvaders)
     
     if livesleft == 2 then                
-        delBouncer(4)
+        delElement(4)
         return
     end
     if livesleft == 1 then
-        delBouncer(3)
+        delElement(3)
         return
     end
     if livesleft == 0 then
         setGlobalVar("lives",0)
-        delBouncer(2)
+        delElement(2)
     end
     
     delay(500)
