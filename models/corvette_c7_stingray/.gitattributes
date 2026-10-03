@@ -1,0 +1,2 @@
+corvette_c7_stingray.blend filter=lfs diff=lfs merge=lfs -text
+corvette_c7_stingray.glb filter=lfs diff=lfs merge=lfs -text
