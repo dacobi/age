@@ -1,5 +1,5 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1790769030
+::res://::1791489256
 aabb_output.txt::TextFile::-1::1790419419::0::1::::<><><>0<>0<><>::
 aga.gdextension::GDExtension::6091002112854102600::1787220233::0::1::::<><><>0<>0<><>::
 ai_brain_driver.gd::GDScript::6401822491950000156::1788091464::0::1::::<>Node<><>0<>0<><>::
@@ -7,9 +7,12 @@ ai_driver.gd::GDScript::7146605027880264044::1788091464::0::1::::<>Node<><>0<>0<
 alien_explosion.wav::AudioStreamWAV::4150594238302321754::1787220216::1787220216::1::::<><><>0<>0<>6d73c47ff41b95a31fb752c50eecce3c<>res://.godot/imported/alien_explosion.wav-679b28fb5a807198d8b3fda4b326b6eb.sample::
 alien_laser.wav::AudioStreamWAV::7201068946253618332::1787220216::1787220216::1::::<><><>0<>0<>942ad937f4dd567ef84d1304ccd6733a<>res://.godot/imported/alien_laser.wav-cd933cc871d0895f39f5593a943f3821.sample::
 alien_march.wav::AudioStreamWAV::3555151192822714247::1787220216::1787220216::1::::<><><>0<>0<>b7cb3dd831dd03123f1108d1703bb451<>res://.godot/imported/alien_march.wav-05f1146c0c40fd03cfed087172d7c3d0.sample::
+apply_flakes.gd::GDScript::5769400822907733993::1791301898::0::1::::<>Node3D<><>0<>1<><>::
 area.ogv::VideoStreamTheora::5577859947816120503::1787220216::0::1::::<><><>0<>0<><>::
+batch.json::JSON::-1::1791364158::0::1::::<><><>0<>0<><>::
 beep_high.wav::AudioStreamWAV::8421100976738292917::1787220216::1787220216::1::::<><><>0<>0<>6d1a9d0ef64255bc15f2bc74a70af2f2<>res://.godot/imported/beep_high.wav-e2f714768d40f718e97a06b6e5bacfc2.sample::
 beep_low.wav::AudioStreamWAV::7618082088034777424::1787220216::1787220216::1::::<><><>0<>0<>f50ef14145cddfadd27b50754da17d24<>res://.godot/imported/beep_low.wav-9e9d26a692c7378bca94887a2d9699b2.sample::
+bens.png::CompressedTexture2D::1239520788538896960::1791300614::1791300710::1::::<><><>0<>0<>33a294b30428cd0e2a130bd59c554656<>res://.godot/imported/bens.png-50bff71e3c9a368e9bcb45a9585f6bda.ctex::
 blenderkit_skybox.hdr::CompressedTexture2D::4931756048408259731::1787253495::1787253531::1::::<><><>0<>0<>758279dbc77d4daef8333fd3ed5993c4<>res://.godot/imported/blenderkit_skybox.hdr-07a9c8d5a2d8b2583db8f48c974e6e9c.bptc.ctex::
 blender_help.txt::TextFile::-1::1788722548::0::1::::<><><>0<>0<><>::
 BUILD.md::TextFile::-1::1787228847::0::1::::<><><>0<>0<><>::
@@ -35,6 +38,7 @@ check_mat.gd::GDScript::1230295892668897828::1788091464::0::1::::<>SceneTree<><>
 check_order.gd::GDScript::1187804272880356473::1788772473::0::1::::<>SceneTree<><>0<>0<><>::
 ckitt.png::CompressedTexture2D::224836754315554009::1787220216::1787220216::1::::<><><>0<>0<>c5422b9ba7d0536da423146fb63609a0<>res://.godot/imported/ckitt.png-5e530cb6a317abfaba8e54da3794989d.ctex::
 class_curve3d.txt::TextFile::-1::1787906467::0::1::::<><><>0<>0<><>::
+clear_batch.json::JSON::-1::1791365875::0::1::::<><><>0<>0<><>::
 colbug.png::CompressedTexture2D::244578345778978428::1790416600::1790417112::1::::<><><>0<>0<>fb6e06b75ac6d6505202696175ce6340<>res://.godot/imported/colbug.png-0b1ab57afbe3598a59affbe4526d6a21.ctex::
 coolcatemoji.png::CompressedTexture2D::3448473550168033151::1787220216::1787220216::1::::<><><>0<>0<>c2c16796afc406592304ac2c9f51e55e<>res://.godot/imported/coolcatemoji.png-0f568f153aab43b59c63778fbc4761a7.ctex::
 dalekd.png::CompressedTexture2D::3307661256069896686::1787220216::1787220216::1::::<><><>0<>0<>75440eed843e330b4f52e83adace3597<>res://.godot/imported/dalekd.png-aee2baef6a8f1f504a329aaa03495b63.ctex::
@@ -64,16 +68,28 @@ editor_camera.gd::GDScript::6142890188856009200::1788091464::0::1::::<>Camera3D<
 ed_transforms.txt::TextFile::-1::1788190305::0::1::::<><><>0<>0<><>::
 empty.tscn::PackedScene::-1::1787220216::0::1::::<><><>0<>0<><>::
 enemy_projectile.tscn::PackedScene::-1::1787220216::0::1::::<><><>0<>0<><>::res://firee.gd
+export_presets.cfg::TextFile::-1::1791453961::0::1::::<><><>0<>0<><>::
 extension_api.json::JSON::-1::1787220216::0::1::::<><><>0<>0<><>::
 ff2.json::JSON::-1::1788801332::0::1::::<><><>0<>0<><>::
 find_sun.gd::GDScript::906658335234116990::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 firee.gd::GDScript::4604120676218911074::1788091464::0::1::::<>Area3D<><>0<>0<><>::
 firep.gd::GDScript::8869931329999029192::1788091464::0::1::::<>Area3D<><>0<>0<><>::
+fix_all_materials2.gd::GDScript::3044185619519935396::1791300690::0::1::::<>SceneTree<><>0<>0<><>::
+fix_all_materials3.gd::GDScript::2741174156596080618::1791300905::0::1::::<>SceneTree<><>0<>0<><>::
+fix_all_materials4.gd::GDScript::1230116825938771666::1791301117::0::1::::<>SceneTree<><>0<>0<><>::
+fix_all_materials.gd::GDScript::113075612208656983::1791300367::0::1::::<>SceneTree<><>0<>0<><>::
 fix_csg.gd::GDScript::8747060405065922456::1788258653::0::1::::<>SceneTree<><>0<>0<><>::
+fix_materials.gd::GDScript::6525767218531845731::1791363984::0::1::::<>EditorScript<><>0<>1<><>::
+fix_materials_tool.gd::GDScript::3374029554865117897::1791365281::0::1::::<>Node<><>0<>1<><>::
+fix_mercedes_materials.gd::GDScript::7234975064563673402::1791298645::0::1::::<>SceneTree<><>0<>0<><>::
 fix_neonrun.gd::GDScript::1798526348551596739::1790204882::0::1::::<>SceneTree<><>0<>0<><>::
 fix_scene2.gd::GDScript::6016365766666890762::1789566437::0::1::::<>SceneTree<><>0<>0<><>::
 fix_scene.gd::GDScript::791268089978619329::1789566052::0::1::::<>SceneTree<><>0<>0<><>::
 fix_sun.gd::GDScript::6138805039048053110::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
+fix_tscn_disk2.gd::GDScript::1062557870176515421::1791302541::0::1::::<>SceneTree<><>0<>0<><>::
+fix_tscn_disk3.gd::GDScript::4790890634564577567::1791302747::0::1::::<>SceneTree<><>0<>0<><>::
+fix_tscn_disk4.gd::GDScript::8348981960106752614::1791302935::0::1::::<>SceneTree<><>0<>0<><>::
+fix_tscn_disk.gd::GDScript::788695584298202308::1791302174::0::1::::<>SceneTree<><>0<>0<><>::
 fix_twist.gd::GDScript::2381284517334499126::1788258511::0::1::::<>SceneTree<><>0<>0<><>::
 game_icon.png::CompressedTexture2D::5510586427982334011::1787220216::1787220216::1::::<><><>0<>0<>7316585c9454a1e3b74c782363a126bc<>res://.godot/imported/game_icon.png-389b50e564fffef90defc972f4d00b12.ctex::
 geekemoji25.png::CompressedTexture2D::5710257801841007936::1787220216::1787220216::1::::<><><>0<>0<>1a70ea08d36a9dac4b4ff96929036976<>res://.godot/imported/geekemoji25.png-454064e87422b9652d175eedde9c26ef.ctex::
@@ -84,12 +100,17 @@ gen.txt::TextFile::-1::1788019906::0::1::::<><><>0<>0<><>::
 genetic_manager.gd::GDScript::4809577783863957139::1788091464::0::1::::<>Node<><>0<>0<><>::
 gen_loop.txt::TextFile::-1::1788190384::0::1::::<><><>0<>0<><>::
 gen_transforms.txt::TextFile::-1::1788190305::0::1::::<><><>0<>0<><>::
+get_all_mats.gd::GDScript::4830582290682939494::1791300234::0::1::::<>SceneTree<><>0<>0<><>::
+get_meshes2.gd::GDScript::8697251381649632091::1791297552::0::1::::<>SceneTree<><>0<>0<><>::
+get_meshes.gd::GDScript::6662417347045886435::1791297501::0::1::::<>SceneTree<><>0<>0<><>::
 heart.png::CompressedTexture2D::5468736835057108373::1787220216::1787220216::1::::<><><>0<>0<>713acb5855d9bc242e963ed562a75fc9<>res://.godot/imported/heart.png-46ac0108226a8969f121b451c7b38c9b.ctex::
 heartemoji.png::CompressedTexture2D::490575535879346461::1787220216::1787220216::1::::<><><>0<>0<>bae8b241c41561ad97535444fa7ecf77<>res://.godot/imported/heartemoji.png-405fae536c0ee0e36c123ceb41e41ebd.ctex::
 hitdit.gd::GDScript::114478263903115887::1788091464::0::1::::<>Area3D<><>0<>0<><>::
 hud.gd::GDScript::4321225352220267938::1788091464::0::1::::<>Control<><>0<>0<><>::
-init_scene.gd::GDScript::5506459620683895152::1788091464::0::1::::<>Node3D<><>0<>0<><>::
+init_scene.gd::GDScript::5506459620683895152::1791488801::0::1::::<>Node3D<><>0<>0<><>::
 init_scene.tscn::PackedScene::4743466563718462445::1787220216::0::1::::<><><>0<>0<><>::res://init_scene.gd
+inspect_blend.gd::GDScript::3920306901241971494::1791364291::0::1::::<>SceneTree<><>0<>0<><>::
+inspect_materials.gd::GDScript::7249777987527313997::1791364735::0::1::::<>SceneTree<><>0<>0<><>::
 invader.gd::GDScript::3145191589818745527::1788091464::0::1::::<>Area3D<><>0<>0<><>::
 invader.tscn::PackedScene::6772962513585106495::1787220216::0::1::::<><><>0<>0<><>::res://invader.gd
 invaders_movement.gd::GDScript::1061908063007121855::1788091464::0::1::::<>Node3D<><>0<>0<><>::
@@ -100,11 +121,16 @@ kitten12.png::CompressedTexture2D::358451927153510161::1787220216::1787220216::1
 kitten25.png::CompressedTexture2D::2256586528108385081::1787220216::1787220216::1::::<><><>0<>0<>cdf60427959718f244ddbffbb7e2e078<>res://.godot/imported/kitten25.png-3c15edf0e5e4cb468f92ba4c5b687792.ctex::
 kitten50.png::CompressedTexture2D::2853023808116571751::1787220216::1787220216::1::::<><><>0<>0<>de4bc2d11c2027b75db77e37c91d90b8<>res://.godot/imported/kitten50.png-5070758b9c3dcf973a6b77d79965502a.ctex::
 kitten.png::CompressedTexture2D::6029440915424471690::1787220216::1787220216::1::::<><><>0<>0<>e211e9a54ca3005bc0b7f259e232d09f<>res://.godot/imported/kitten.png-3cce062009769a1287e5a5913fb0288a.ctex::
-lemans_car.gd::GDScript::6539261436119175272::1790694010::0::1::::<>RigidBody3D<><>0<>0<><>::
+lemans_car.gd::GDScript::6539261436119175272::1791455108::0::1::::<>RigidBody3D<><>0<>0<><>::
 list_fmod_classes.gd::GDScript::7532087249611060618::1790204135::0::1::::<>SceneTree<><>0<>0<><>::
 list_fmod_event.gd::GDScript::803717675198456646::1790204164::0::1::::<>SceneTree<><>0<>0<><>::
 loading_screen.gd::GDScript::7158867710506618008::1790204926::0::1::::<>CanvasLayer<><>0<>0<><>::
 lua_manager_autoload.tscn::PackedScene::-1::1787328027::0::1::::<><><>0<>0<><>::
+make_editable.gd::GDScript::3362993920667074179::1791449182::0::1::::<>Node<><>0<>1<><>::
+mat_list.txt::TextFile::-1::1791364736::0::1::::<><><>0<>0<><>::
+mcp_batch4.json::JSON::-1::1791301367::0::1::::<><><>0<>0<><>::
+mcp_fix2.json::JSON::-1::1791299589::0::1::::<><><>0<>0<><>::
+mcp_fix.json::JSON::-1::1791299240::0::1::::<><><>0<>0<><>::
 menu_click.wav::AudioStreamWAV::4406927466988784777::1789636728::1789637941::1::::<><><>0<>0<>032e8975a711da8a2317d74922001356<>res://.godot/imported/menu_click.wav-19ea31f82952dc7f6ff5b729172cc773.sample::
 neonrun.png::CompressedTexture2D::2757943157792799779::1789563666::1789566149::1::::<><><>0<>0<>eaa05a181a7514559fafa4cde0abbef3<>res://.godot/imported/neonrun.png-4fd401c68328791f9048329feae8cf0d.ctex::
 neonrun.tscn::PackedScene::3166711369::1790415246::0::1::::<><><>0<>0<><>::res://neonrun.png
@@ -164,7 +190,7 @@ tardis.wav::AudioStreamWAV::2734542378237065822::1787220216::1787220216::1::::<>
 tardis_loud.wav::AudioStreamWAV::704492942507167250::1787220216::1787220216::1::::<><><>0<>0<>e468c0e695f29998c8b4131d16283aec<>res://.godot/imported/tardis_loud.wav-cd272b8eb1fda8a1e30713e6743b2c0c.sample::
 tardis_movement.gd::GDScript::3679560680924885867::1788091464::0::1::::<>Node3D<><>0<>0<><>::
 tardis_short_loud.wav::AudioStreamWAV::8569715420810951318::1787220216::1787220216::1::::<><><>0<>0<>1f5738dbdee7ff91dd29624ea57bfb0d<>res://.godot/imported/tardis_short_loud.wav-067e376f0b8563f3a9886daa63376cc4.sample::
-tardis_side.png::CompressedTexture2D::3297150477783458590::1787220216::1787220216::1::::<><><>0<>0<>e0c88005d8fc32a33179da47b40fc063<>res://.godot/imported/tardis_side.png-ea4b474c26344d202b045d4e39ab708e.ctex::
+tardis_side.png::CompressedTexture2D::3297150477783458590::1787220216::1791455108::1::::<><><>0<>0<>e0c88005d8fc32a33179da47b40fc063<>res://.godot/imported/tardis_side.png-ea4b474c26344d202b045d4e39ab708e.ctex::
 temp2.gd::GDScript::7936398695990940023::1788091464::0::1::::<>Node3D<><>0<>0<><>::
 temp2.tscn::PackedScene::1004689194625::1787220216::0::1::::<><><>0<>0<><>::res://temp2.gd
 temp3.gd::GDScript::7571916868960875436::1788091464::0::1::::<>Node3D<><>0<>0<><>::
@@ -233,6 +259,7 @@ test_helix_tilt3.gd::GDScript::3945589342123668295::1788091464::0::1::::<>SceneT
 test_helix_tilt.gd::GDScript::3888272508365028259::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_helix_universal.gd::GDScript::15590535050237911::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_hitdit.gd::GDScript::7609998850100328773::1788091464::0::1::::<>Area3D<><>0<>0<><>::
+test_hood_mat.gd::GDScript::901555310736119721::1791448785::0::1::::<>Node<><>0<>1<><>::
 test_index.gd::GDScript::725976636222348796::1788688187::0::1::::<>SceneTree<><>0<>0<><>::
 test_instantiate2.gd::GDScript::696075222883258644::1789430446::0::1::::<>SceneTree<><>0<>0<><>::
 test_instantiate.gd::GDScript::2860011935013064247::1789429745::0::1::::<>SceneTree<><>0<>0<><>::
@@ -244,6 +271,8 @@ test_json.gd::GDScript::6933513396745606650::1788598310::0::1::::<>SceneTree<><>
 test_label.gd::GDScript::6572144765532647228::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_lemans.gd::GDScript::4758984331815819052::1790417567::0::1::::<>SceneTree<><>0<>0<><>::
 test_load.gd::GDScript::8219338957245215799::1790199677::0::1::::<>SceneTree<><>0<>0<><>::
+test_mat.gd::GDScript::3287401761149388068::1791364498::0::1::::<>Node<><>0<>1<><>::
+test_mats.gd::GDScript::887700102529838716::1791297029::0::1::::<>SceneTree<><>0<>0<><>::
 test_measure2.gd::GDScript::3695337624853901856::1790075912::0::1::::<>SceneTree<><>0<>0<><>::
 test_measure.gd::GDScript::1208793782882000633::1790075771::0::1::::<>SceneTree<><>0<>0<><>::
 test_mesh.gd::GDScript::5902987383704065687::1788688143::0::1::::<>SceneTree<><>0<>0<><>::
@@ -539,15 +568,21 @@ lemans_area.gd::GDScript::141092176157710614::1790425866::0::1::::<>Node3D<><>0<
 lemans_area.tscn::PackedScene::5950051137681002406::1790413421::0::1::::<><><>0<>0<><>::uid://cwt7c3u7dviee::::res://assets/areas/lemans_area/lemans_area.gd<>uid://dbolghfp018vm::::res://sky/sky2.hdr
 ::res://assets/brain/::1787220233
 best_brain.json::JSON::-1::1787220233::0::1::::<><><>0<>0<><>::
-::res://assets/cars/::1790082999
-::res://assets/cars/car_stingray/::1790687992
+::res://assets/cars/::1791489237
+setup_car_view.gd::GDScript::2811843775421911147::1791489237::0::1::::<>Node3D<><>0<>0<><>::
+::res://assets/cars/car_stingray/::1791033146
 car.ini::TextFile::-1::1790687777::0::1::::<><><>0<>0<><>::
 car.png::CompressedTexture2D::4862312814672334961::1789468798::1790180471::1::::<><><>0<>0<>63c7ab8db6959f6df686b0ac541881cd<>res://.godot/imported/car.png-bf39ee86cea1748c948534da137fddce.ctex::
-car_stingray.tscn::PackedScene::3166711369::1790687992::0::1::::<><><>0<>0<><>::uid://cvs4ga4tdd8m4::::res://models/corvette_c7_stingray/corvette_c7_stingray.glb<>uid://c0fwxeuujytga::::res://lemans_car.gd<>uid://drrn4ndldayl0::::res://setup_car.gd
+car_stingray.tscn::PackedScene::3166711369::1791033146::0::1::::<><><>0<>0<><>::uid://cvs4ga4tdd8m4::::res://models/corvette_c7_stingray/corvette_c7_stingray.glb<>uid://c0fwxeuujytga::::res://lemans_car.gd<>uid://drrn4ndldayl0::::res://setup_car.gd
 ::res://assets/cars/lemans_car/::1790688004
 car.ini::TextFile::-1::1790687777::0::1::::<><><>0<>0<><>::
 car.png::CompressedTexture2D::4081816077385067468::1790081139::1790180471::1::::<><><>0<>0<>bd7c3eb4924af00c86dfc023f8ab1480<>res://.godot/imported/car.png-5c3f7a60e32093efacaf2a3282c92f0f.ctex::
 lemans_car.tscn::PackedScene::2972544803127051005::1790688004::0::1::::<><><>0<>0<><>::uid://c0fwxeuujytga::::res://lemans_car.gd<>uid://drrn4ndldayl0::::res://setup_car.gd
+::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/::1791455330
+custom_glass.tres::StandardMaterial3D::6698089968093799743::1791451959::0::1::::<><><>0<>0<><>::
+gold_flake.png::CompressedTexture2D::5397374842743356596::1791302529::1791302569::1::::<><><>0<>0<>21176b38b8c1db45b65e2c5c1cae92bf<>res://.godot/imported/gold_flake.png-b64a0201ba8244077cd716d24449cce1.s3tc.ctex::
+head_light_glass.tres::StandardMaterial3D::1505686990127448381::1791452703::0::1::::<><><>0<>0<><>::
+Mercedes_Benz_AMG_GT3_Evo.tscn::PackedScene::1769679649120935641::1791455330::0::1::::<><><>0<>0<><>::uid://bm754cenqrgne::::res://models/mercedes_benz_amg_gt3_evo/textures/_Height.jpg<>uid://c8m7jvc3wyhes::::res://models/mercedes_benz_amg_gt3_evo/textures/Tyre Bump Normal.jpg<>uid://bl5mfc8kxycjm::::res://models/mercedes_benz_amg_gt3_evo/textures/Sidewall.jpg<>uid://ci5r8fhc0n8uq::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/gold_flake.png<>uid://c2outfa5dn1s2::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/custom_glass.tres<>uid://vpmpeehecjdd::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/head_light_glass.tres<>uid://ch7dortm4xhkd::::res://models/mercedes_benz_amg_gt3_evo/textures/AMG-emblem-black-2560x1440.png<>uid://gobmdw4avxhi::::res://models/mercedes_benz_amg_gt3_evo/textures/carbon fiber_Diffuse.jpg<>uid://b4ojvqu8v2ndy::::res://models/mercedes_benz_amg_gt3_evo/textures/carbon fiber_Normal.jpg<>uid://cyi3dcpnxdi23::::res://models/mercedes_benz_amg_gt3_evo/textures/carbon fiber_Roughness.jpg<>uid://dvesbtd2luttx::::res://models/mercedes_benz_amg_gt3_evo/textures/logo.jpg
 ::res://assets/models/::1787220216
 ::res://assets/models/environment/::1787220216
 bush.glb::PackedScene::6346297843151541362::1787220216::1787220216::1::::<><><>0<>0<>78767750a5077987cd447f9dc74205a4<>res://.godot/imported/bush.glb-8fb5309f397dc327c492aab36c8979ea.scn::
@@ -590,6 +625,7 @@ track2.tscn::PackedScene::5950051137681002406::1790193277::0::1::::<><><>0<>0<><
 ::res://Audio/::1787220233
 ::res://Audio/Desktop/::1787220233
 ::res://bin/::1790687787
+::res://Build/::1791454782
 ::res://fmoddata/::1787220233
 ::res://fmoddata/CarExamples/::1787332683
 ::res://fmoddata/CarExamples/Assets/::1787252632
@@ -1760,7 +1796,7 @@ asphalt05_diffuse.jpg::CompressedTexture2D::2017007650611224831::1787749921::178
 asphalt05_normal_opengl.jpg::CompressedTexture2D::7228866809459354648::1787749922::1787750322::1::::<><><>0<>0<>9e471094fa154dcf50703b33d38fd59f<>res://.godot/imported/asphalt05_normal_opengl.jpg-c8452db22c0de498bd5028fca4a0be47.s3tc.ctex::
 asphalt05_roughness.jpg::CompressedTexture2D::9072077267994394316::1787749922::1787750322::1::::<><><>0<>0<>e665a10341a679dd87f15bbce6dbdba2<>res://.godot/imported/asphalt05_roughness.jpg-54fe3acbf7da8dd170bf2beaae799217.s3tc.ctex::
 asphalt05_specular.jpg::CompressedTexture2D::2144981244066874699::1787749922::1787750316::1::::<><><>0<>0<>eb0b898b2dbbe308b3ebf5d22bc39488<>res://.godot/imported/asphalt05_specular.jpg-d658f06801fc3f47f08755d5e826671e.ctex::
-::res://models/::1788864708
+::res://models/::1791296230
 ::res://models/corvette_c7_stingray/::1790417998
 corvette_c7_stingray.blend::PackedScene::4422987087494415985::1788694395::1788866260::1::::<><><>0<>0<>e896012d3d6833eae644e3b111b2a238<>res://.godot/imported/corvette_c7_stingray.blend-1874a3bb27ddcc1929f1313290707b82.scn::uid://chlefp6k1yn64::::res://models/corvette_c7_stingray/textures/Corvette_logo_Diffuse.png<>uid://efg7vn7v0a8s::::res://models/corvette_c7_stingray/textures/Corvette_logo_Metallic.png<>uid://dlg3dcy4wplgu::::res://models/corvette_c7_stingray/textures/Pilot_Sport_4s_AO.png<>uid://cqcdfa4pxi38::::res://models/corvette_c7_stingray/textures/Pilot_Sport_4s_Bump.png
 corvette_c7_stingray.glb::PackedScene::6285737436578381601::1788694401::1788866411::1::::<><><>0<>0<>0c57ddba5542c552be176e620b814ac4<>res://.godot/imported/corvette_c7_stingray.glb-bc5a0c7acdeaebfb7be9be93cf9150aa.scn::uid://iemh4esogqkg::::res://models/corvette_c7_stingray/corvette_c7_stingray_Corvette_logo_Diffuse.png<>uid://bb1bga2qka3a6::::res://models/corvette_c7_stingray/corvette_c7_stingray_Corvette_logo_Metallic.png<>uid://dfgev05r8tp7v::::res://models/corvette_c7_stingray/corvette_c7_stingray_Pilot_Sport_4s_AO.png<>uid://cp5hlluu4lb8k::::res://models/corvette_c7_stingray/corvette_c7_stingray_Pilot_Sport_4s_Bump.png
@@ -1774,7 +1810,7 @@ Corvette_logo_Metallic.png::CompressedTexture2D::291499835239774668::1788694397:
 Pilot_Sport_4s_AO.png::CompressedTexture2D::7945431174270829188::1788694397::1788866318::1::::<><><>0<>0<>2730b4449a6520aa36f409f1a0fcd4f1<>res://.godot/imported/Pilot_Sport_4s_AO.png-e736fb6b219e30fb6f404963a3e3c3ff.s3tc.ctex::
 Pilot_Sport_4s_Bump.png::CompressedTexture2D::173534786663606081::1788694397::1788866318::1::::<><><>0<>0<>59717af8d400b291394eb7caec69d184<>res://.godot/imported/Pilot_Sport_4s_Bump.png-9c0d708406b20c0ebe82b9cf59125f2a.s3tc.ctex::
 ::res://models/ferrari_daytona_sp3_mod/::1788866308
-ferrari_daytona_sp3_mod.blend::PackedScene::3153008122572346350::1788864710::1788866308::1::::<><><>0<>0<>1332baecc3a91f1774a06c6c9a7fdd8e<>res://.godot/imported/ferrari_daytona_sp3_mod.blend-dbf9d57b9a6f227716175564bd119d0b.scn::
+ferrari_daytona_sp3_mod.blend::PackedScene::3153008122572346350::1791297614::1788866308::1::::<><><>0<>0<>1332baecc3a91f1774a06c6c9a7fdd8e<>res://.godot/imported/ferrari_daytona_sp3_mod.blend-dbf9d57b9a6f227716175564bd119d0b.scn::
 ::res://models/ferrari_daytona_sp3_mod/textures/::1788945569
 _Height.jpg::CompressedTexture2D::3752815970482764575::1788866284::1788945566::1::::<><><>0<>0<>ad2cb61ff251a7525fd44ef45c74eea9<>res://.godot/imported/_Height.jpg-7ea1a8fc847d0bcb66c1b87b17d7b009.ctex::
 Carbon fiber_albedo.jpg::CompressedTexture2D::3512006745885772653::1788866284::1788945567::1::::<><><>0<>0<>2c87b4e2909c7ff054da70eb11308ef5<>res://.godot/imported/Carbon fiber_albedo.jpg-b16e943e45a6f1bc16949f27033d0815.ctex::
@@ -1794,6 +1830,61 @@ Sidewall.jpg::CompressedTexture2D::8948262712181777757::1788866284::1788945566::
 Tyre Bump Normal.jpg::CompressedTexture2D::6732340853387949055::1788866284::1788945567::1::::<><><>0<>0<>90b835b5d0e95a490a080bb630c9dbfe<>res://.godot/imported/Tyre Bump Normal.jpg-a291c36063f04aa8ef1362daa3df2a64.ctex::
 ::res://models/lamborghini_auro_gt3/::1788866309
 lamborghini_auro_gt3.blend::PackedScene::6922688028316920503::1788721780::1788866309::0::::<><><>0<>0<>223c41a397e6a68ea942c54d9869f5ab<>::
+::res://models/mercedes_benz_amg_gt3_evo/::1791298680
+Accent.tres::StandardMaterial3D::5933331967516929787::1791297316::0::1::::<><><>0<>0<><>::
+allblack.tres::StandardMaterial3D::2352226921628557069::1791297316::0::1::::<><><>0<>0<><>::
+Body Panel PArt.tres::StandardMaterial3D::6754327582804925232::1791364976::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg<>res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/gold_flake.png
+Body.tres::StandardMaterial3D::3182872877161725483::1791364976::0::1::::<><><>0<>0<><>::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/gold_flake.png
+Bolts.tres::StandardMaterial3D::1409168415534770754::1791297316::0::1::::<><><>0<>0<><>::
+Fins.tres::StandardMaterial3D::5604388009299072191::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+flares.tres::StandardMaterial3D::1271663308696771486::1791364976::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg<>res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/gold_flake.png
+Front Emblem Logo.tres::StandardMaterial3D::9136116102748887419::1791297316::0::1::::<><><>0<>0<><>::uid://60wlj5xv5u35::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_AMG-emblem-black-2560x1440.png
+Front Emblem silver.tres::StandardMaterial3D::6102895536245994669::1791297316::0::1::::<><><>0<>0<><>::
+Front Splitter.tres::StandardMaterial3D::2855822624188482053::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+glass.tres::StandardMaterial3D::3904566095193344305::1791364976::0::1::::<><><>0<>0<><>::
+hood.001.tres::StandardMaterial3D::6378637018930727514::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+hood.tres::StandardMaterial3D::2204771619902769287::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+Lights glass.tres::StandardMaterial3D::9069636167870872179::1791297316::0::1::::<><><>0<>0<><>::
+lights.tres::StandardMaterial3D::1545901423854021133::1791297316::0::1::::<><><>0<>0<><>::
+Logo.tres::StandardMaterial3D::1890331435353017490::1791297316::0::1::::<><><>0<>0<><>::uid://bbnt4nh6q0py6::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_logo.png
+Material.001.tres::StandardMaterial3D::4589162150800544655::1791297316::0::1::::<><><>0<>0<><>::
+Material.tres::StandardMaterial3D::5923394918341444600::1791297316::0::1::::<><><>0<>0<><>::
+mercedes_benz_amg_gt3_evo.blend::PackedScene::5438368571141123058::1791297674::1791298680::1::::<><><>0<>0<>fe02387317a06394da869027162d537e<>res://.godot/imported/mercedes_benz_amg_gt3_evo.blend-c2d9d19546e51470c91c000133c5e005.scn::
+mercedes_benz_amg_gt3_evo.glb::PackedScene::958420388147507885::1791296979::1791297322::1::::<><><>0<>0<>71a0d3472b4d4fb9979e4c3a7d348347<>res://.godot/imported/mercedes_benz_amg_gt3_evo.glb-f54886e8d834a8a80cd0be1fc070a7d7.scn::
+mercedes_benz_amg_gt3_evo_AMG-emblem-black-2560x1440.png::CompressedTexture2D::2228819534332879174::1791296336::1791296348::1::::<><><>0<>0<>298ee99823a9844838e58f1fa11e6086<>res://.godot/imported/mercedes_benz_amg_gt3_evo_AMG-emblem-black-2560x1440.png-91c111c0f687fceaade5a65131a08450.s3tc.ctex::
+mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg::CompressedTexture2D::2109123273277230570::1791296338::1791296348::1::::<><><>0<>0<>acbfebe21b038f80ee43eb54a1f5d7e7<>res://.godot/imported/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg-24b5f7190a23966fcb4545ae0165e7e9.s3tc.ctex::
+mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg::CompressedTexture2D::4304947234374095506::1791296337::1791296348::1::::<><><>0<>0<>1f073827b9f869b75a9a539825c4aa12<>res://.godot/imported/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg-ef0aac439816dabddf4b50146a061677.s3tc.ctex::
+mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png::CompressedTexture2D::5524759762345701128::1791296338::1791296348::1::::<><><>0<>0<>5578b4d73809b73297def105e320697a<>res://.godot/imported/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png-11afd0a73b31b6a40035e4d43abc7c5a.s3tc.ctex::
+mercedes_benz_amg_gt3_evo_logo.png::CompressedTexture2D::2484652544067778419::1791296338::1791296348::1::::<><><>0<>0<>0aaea752ed3aaca88547be26856f2f15<>res://.godot/imported/mercedes_benz_amg_gt3_evo_logo.png-e9165d8eb156609593edb27db553461d.s3tc.ctex::
+mercedes_benz_amg_gt3_evo_Sidewall.jpg::CompressedTexture2D::4624899633134210515::1791296336::1791296348::1::::<><><>0<>0<>37f63c76ce750077b6ef2ff428496f57<>res://.godot/imported/mercedes_benz_amg_gt3_evo_Sidewall.jpg-0f52a4cd919dbd2b4237f9134d3d7d5a.s3tc.ctex::
+mercedes_benz_amg_gt3_evo_Tyre Bump Normal.jpg::CompressedTexture2D::1707952465329931296::1791296336::1791296348::1::::<><><>0<>0<>cfa623de1cf32452071a30b67c40b620<>res://.godot/imported/mercedes_benz_amg_gt3_evo_Tyre Bump Normal.jpg-dd06dd1c1ddb5981c735e5dd50bdb3c7.s3tc.ctex::
+mercedes_benz_amg_gt3_evo__Height.jpg::CompressedTexture2D::3078956780356835875::1791296336::1791296348::1::::<><><>0<>0<>1290cbf02253cc4f1beef939a8475806<>res://.godot/imported/mercedes_benz_amg_gt3_evo__Height.jpg-c043889566a922389a680332ecce8a98.s3tc.ctex::
+Rim.tres::StandardMaterial3D::4772443666401826924::1791297316::0::1::::<><><>0<>0<><>::
+rubber.tres::StandardMaterial3D::8529090658742217326::1791364976::0::1::::<><><>0<>0<><>::
+Side wall.tres::StandardMaterial3D::1752674391562086199::1791364976::0::1::::<><><>0<>0<><>::uid://b65lok74phtnf::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_Sidewall.jpg
+silver metal front.tres::StandardMaterial3D::6761783081174275557::1791297316::0::1::::<><><>0<>0<><>::
+Spoiler hinge.tres::StandardMaterial3D::2093823107803363957::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+Spoiler.tres::StandardMaterial3D::7079933496505988234::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+Spolier fins.tres::StandardMaterial3D::3723525962183658731::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+Steel.tres::StandardMaterial3D::6878325459231775059::1791297316::0::1::::<><><>0<>0<><>::
+Tail light red light.tres::StandardMaterial3D::1440509723766560207::1791297316::0::1::::<><><>0<>0<><>::
+Tail light red.tres::StandardMaterial3D::4454731075020028765::1791297316::0::1::::<><><>0<>0<><>::
+Tail lights red.tres::StandardMaterial3D::8971877144010921656::1791297316::0::1::::<><><>0<>0<><>::
+Tyre.tres::StandardMaterial3D::535770359579225391::1791297316::0::1::::<><><>0<>0<><>::uid://ylly0cmwjgkm::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_Tyre Bump Normal.jpg
+vent covers.tres::StandardMaterial3D::8059380243223551385::1791297316::0::1::::<><><>0<>0<><>::uid://5bw7mx4ga2q5::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Diffuse.jpg<>uid://ckyh8r7acd0oq::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Roughness.png<>uid://b2ll375uhhqx3::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo_carbon fiber_Normal.jpg
+Wheel Brake Disk.001.tres::StandardMaterial3D::2836702359789771016::1791297316::0::1::::<><><>0<>0<><>::uid://bj4p76nj6pijj::::res://models/mercedes_benz_amg_gt3_evo/mercedes_benz_amg_gt3_evo__Height.jpg
+White Accents.tres::StandardMaterial3D::7518983004082282812::1791297316::0::1::::<><><>0<>0<><>::
+Windshield pane.tres::StandardMaterial3D::8984334670062045431::1791297316::0::1::::<><><>0<>0<><>::
+::res://models/mercedes_benz_amg_gt3_evo/textures/::1791298681
+_Height.jpg::CompressedTexture2D::3296620305124273790::1791296252::1791298680::1::::<><><>0<>0<>83b4d611f005111371b8ee6c026d7169<>res://.godot/imported/_Height.jpg-5456e6dce1e2470999aa2714b21c69ba.s3tc.ctex::
+AMG-emblem-black-2560x1440.png::CompressedTexture2D::5330431435908437179::1791296252::1791298681::1::::<><><>0<>0<>5c97c6702d4f7fb68ef17adf5339844d<>res://.godot/imported/AMG-emblem-black-2560x1440.png-d0550e187a0b9782062440693b44a5d3.s3tc.ctex::
+carbon fiber_Diffuse.jpg::CompressedTexture2D::450116689778883482::1791296252::1791298680::1::::<><><>0<>0<>7b045fee593dcc004e6421cfb4c44140<>res://.godot/imported/carbon fiber_Diffuse.jpg-b5fd564419b4a31dd6d2d4662ad0b789.s3tc.ctex::
+carbon fiber_Height.jpg::CompressedTexture2D::8262078137807970428::1791296252::1791296335::1::::<><><>0<>0<>ad598bccf6a09f01a2e35288086f8862<>res://.godot/imported/carbon fiber_Height.jpg-58719074fcfd223e18aab0df73d5283b.ctex::
+carbon fiber_Normal.jpg::CompressedTexture2D::4451383265157977082::1791296252::1791298680::1::::<><><>0<>0<>79748c93ff5e28619baff40c59f7a1c5<>res://.godot/imported/carbon fiber_Normal.jpg-7b2c04dacf9cce52cc713036f6876e57.s3tc.ctex::
+carbon fiber_Roughness.jpg::CompressedTexture2D::6475594198750924090::1791296252::1791298680::1::::<><><>0<>0<>3aa6a6d153287ca78c9bca56634a67ab<>res://.godot/imported/carbon fiber_Roughness.jpg-099cb66f8582992df2524418c6ee9751.s3tc.ctex::
+logo.jpg::CompressedTexture2D::8642580973978254425::1791296252::1791298680::1::::<><><>0<>0<>4414a3ffe571eb28d522cb8460ea3778<>res://.godot/imported/logo.jpg-a8a99531a650925c4e4c12f3f44be531.s3tc.ctex::
+Sidewall.jpg::CompressedTexture2D::3221166985727254518::1791296252::1791298680::1::::<><><>0<>0<>33287e66d8b7d400cce67cde8b8d2596<>res://.godot/imported/Sidewall.jpg-aa94929eb8c75d10ff14641774a052e1.s3tc.ctex::
+Tyre Bump Normal.jpg::CompressedTexture2D::7115805863786163670::1791296252::1791298680::1::::<><><>0<>0<>cd01abb61ba04f6c88815f38daef4947<>res://.godot/imported/Tyre Bump Normal.jpg-a7131e973e477a12acb26e131bb072c6.s3tc.ctex::
 ::res://models/polestar_synergy_concept_interior/::1788866316
 polestar_synergy_concept_interior.blend::PackedScene::5991586484709436385::1788722180::1788866316::1::::<><><>0<>0<>0be95563a12ab0aae23d0f98779e8ab4<>res://.godot/imported/polestar_synergy_concept_interior.blend-fff1555bf6acd4c6d8909f4cabd7e502.scn::
 ::res://models/polestar_synergy_concept_interior/textures/::1788945569
@@ -1812,7 +1903,7 @@ test_label.gd::GDScript::1561900288162807564::1788091464::0::1::::<>SceneTree<><
 test_labelsettings.gd::GDScript::6938674790646668817::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 test_render_label.gd::GDScript::2954273358289064919::1788091464::0::1::::<>Node<><>0<>0<><>::
 update_input_map.gd::GDScript::326845005856208::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
-::res://sky/::1787676387
+::res://sky/::1791039108
 desert_rock_sun.hdr::CompressedTexture2D::6806681205913120502::1787418149::1787418194::1::::<><><>0<>0<>04eac094cbe4ee31431a0db77b7c1a3f<>res://.godot/imported/desert_rock_sun.hdr-968ae36aec7ff2423609f4e057b7f221.bptc.ctex::
 evening.hdr::CompressedTexture2D::2270100683160815776::1787676370::1787676387::1::::<><><>0<>0<>a3b218ca6a405ad7a10311e9397c23e6<>res://.godot/imported/evening.hdr-ac2342c88d2917cb6bbd8503ea8733cc.bptc.ctex::
 lakeside_night.hdr::CompressedTexture2D::7330039205014183253::1787302730::1787302811::1::::<><><>0<>0<>0e92d70488950b7298b7c449129c84a4<>res://.godot/imported/lakeside_night.hdr-1686ed7acc6b040c1aa6f98d2f6808b9.bptc.ctex::
