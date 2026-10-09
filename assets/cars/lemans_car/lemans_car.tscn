@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bil6m4xasr6mb"]
 
-[ext_resource type="Script" uid="uid://c0fwxeuujytga" path="res://lemans_car.gd" id="1"]
-[ext_resource type="Script" uid="uid://drrn4ndldayl0" path="res://setup_car.gd" id="2_0nhqq"]
+[ext_resource type="Script" uid="uid://c0fwxeuujytga" path="res://lemans_car.gd" id="1_lemans"]
+[ext_resource type="Script" uid="uid://drrn4ndldayl0" path="res://setup_car.gd" id="2_setup"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_Car"]
 friction = 0.0
@@ -119,7 +119,7 @@ mass = 1200.0
 physics_material_override = SubResource("PhysicsMaterial_Car")
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, -0.2, 0)
-script = ExtResource("1")
+script = ExtResource("1_lemans")
 
 [node name="BodyCol" type="CollisionShape3D" parent="." unique_id=1117760313]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0.1)
@@ -800,7 +800,7 @@ sides = 64
 material = SubResource("StandardMaterial3D_4xtml")
 
 [node name="CarSetup" type="Node" parent="." unique_id=906717595 node_paths=PackedStringArray("wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR", "Pipe1", "Pipe2", "Pipe3", "Pipe4")]
-script = ExtResource("2_0nhqq")
+script = ExtResource("2_setup")
 wheel_FL = NodePath("../FrontLeftSteerPivot/FrontLeftWheel")
 wheel_FR = NodePath("../FrontRightSteerPivot/FrontRightWheel")
 wheel_RL = NodePath("../RearLeftSteerPivot/RearLeftWheel")

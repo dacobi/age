@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://3aq2bwp3e7rf"]
 
 [ext_resource type="Script" uid="uid://bgccwkr628cpn" path="res://assets/cars/setup_car_view.gd" id="1_af1yv"]
-[ext_resource type="PackedScene" path="res://assets/cars/car_stingray/car_stingray.tscn" id="2_fsnou"]
+[ext_resource type="PackedScene" uid="uid://cbxxyyy" path="res://assets/cars/car_stingray/car_stingray.tscn" id="2_fsnou"]
 [ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="3_6qgko"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_24l0t"]

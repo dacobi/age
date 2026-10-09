@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://3aq2bwp3e7rf"]
+[gd_scene format=3 uid="uid://3aq2bwp3e7rv"]
 
 [ext_resource type="Script" uid="uid://bgccwkr628cpn" path="res://assets/cars/setup_car_view.gd" id="1_af1yv"]
 [ext_resource type="PackedScene" uid="uid://bil6m4xasr6mb" path="res://assets/cars/lemans_car/lemans_car.tscn" id="2_nh3pm"]
