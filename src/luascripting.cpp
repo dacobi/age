@@ -744,6 +744,10 @@ int LuaScripting::lua_godotLoadScene(lua_State* L) {
     if (self) {
         std::lock_guard<std::mutex> lock(self->imgui_mutex);
         self->lua_imgui_windows.clear();
+        self->show_recorder = false;
+        self->show_shape_chooser = false;
+        self->show_playlist = false;
+        self->show_gamepad_diagnostic = false;
     }
     if (lua_isstring(L, 1)) {
         std::string filename = lua_tostring(L, 1);
@@ -2146,7 +2150,6 @@ void LuaScripting::renderLuaImGui() {
     }
     
     
-    static bool show_shape_chooser = false;
     if (getGlobalFloat("ce_trigger_shape_popup") > 0.5f) {
         show_shape_chooser = true;
         setGlobalFloat("ce_trigger_shape_popup", 0.0f);
@@ -2231,7 +2234,6 @@ void LuaScripting::renderLuaImGui() {
     
 
 
-    static bool show_playlist = false;
     static bool f5_was_pressed = false;
     bool f5_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F5);
     if (f5_is_pressed && !f5_was_pressed) {
@@ -2287,8 +2289,6 @@ void LuaScripting::renderLuaImGui() {
         ImGui::End();
     }
     
-    static bool show_gamepad_diagnostic = false;
-
     static bool f3_was_pressed = false;
     bool f3_is_pressed = godot::Input::get_singleton()->is_key_pressed(godot::KEY_F2);
     if (f3_is_pressed && !f3_was_pressed) {

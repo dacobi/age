@@ -116,7 +116,7 @@ addElement(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_time_trial_play][la
 addElement(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_time_trial_cancel][layer:1]Cancel")
 ageEndRow("TimeTSub1")
 ageBeginRow("TimeTSub1",2)
-addElement("[pos:550, 950][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
+addElement("[pos:550, 950][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
 ageEndMenu()
 ageEndSubMenu("TimeT")
 
@@ -129,7 +129,7 @@ addElement(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_play_ground_play][l
 addElement(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_play_ground_cancel][layer:1]Cancel")
 ageEndRow("PlayGSub1")
 ageBeginRow("PlayGSub1",2)
-addElement("[pos:550, 950][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
+addElement("[pos:550, 950][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
 ageEndMenu()
 ageEndMenu()
 ageEndSubMenu("PlayG")

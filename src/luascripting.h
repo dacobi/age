@@ -400,6 +400,9 @@ private:
 public:
     Recorder recorder;
     bool show_recorder = false;
+    bool show_shape_chooser = false;
+    bool show_playlist = false;
+    bool show_gamepad_diagnostic = false;
     char record_path_buf[1024] = "output.ogv";
     int record_max_seconds = 0;
     bool record_use_max = false;
