@@ -44,6 +44,7 @@
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
+#include <godot_cpp/classes/aspect_ratio_container.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -1102,17 +1103,24 @@ void LuaManager::_add_element_deferred(const String& syntax) {
         bool is_video = sel_filename.ends_with(".ogv");
         Vector2 media_size = (rect.x > 0 && rect.y > 0) ? rect : Vector2(640, 360);
         
+        AspectRatioContainer* aspect = memnew(AspectRatioContainer);
+        aspect->set_custom_minimum_size(media_size);
+        aspect->set_ratio(media_size.x / media_size.y);
+        aspect->set_stretch_mode(AspectRatioContainer::STRETCH_FIT);
+        aspect->set_alignment_horizontal(AspectRatioContainer::ALIGNMENT_CENTER);
+        aspect->set_alignment_vertical(AspectRatioContainer::ALIGNMENT_CENTER);
+
         if (is_video) {
             VideoStreamPlayer* vp = memnew(VideoStreamPlayer);
-            vp->set_custom_minimum_size(media_size);
             vp->set_expand(true);
-            selector->media_node = vp;
+            aspect->add_child(vp);
+            selector->media_node = aspect;
         } else {
             TextureRect* tr = memnew(TextureRect);
-            tr->set_custom_minimum_size(media_size);
             tr->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
-            tr->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
-            selector->media_node = tr;
+            tr->set_stretch_mode(TextureRect::STRETCH_SCALE);
+            aspect->add_child(tr);
+            selector->media_node = aspect;
         }
         
         hbox->add_child(left_btn);
@@ -2722,10 +2730,15 @@ void UISelector::_on_right_pressed() {
 void UISelector::update_media() {
     if (subfolders.empty() || !media_node) return;
     
+    Node* inner = media_node;
+    if (inner->is_class("AspectRatioContainer") && inner->get_child_count() > 0) {
+        inner = inner->get_child(0);
+    }
+    
     String current_sub = subfolders[current_index];
     String full_path = "res://" + folder + "/" + current_sub + "/" + filename;
     
-    if (TextureRect* tr = Object::cast_to<TextureRect>(media_node)) {
+    if (TextureRect* tr = Object::cast_to<TextureRect>(inner)) {
         if (ResourceLoader::get_singleton()->exists(full_path)) {
             Ref<Texture2D> tex = ResourceLoader::get_singleton()->load(full_path);
             if (tex.is_valid()) {
@@ -2739,7 +2752,7 @@ void UISelector::update_media() {
                 if (itex.is_valid()) tr->set_texture(itex);
             }
         }
-    } else if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(media_node)) {
+    } else if (VideoStreamPlayer* vp = Object::cast_to<VideoStreamPlayer>(inner)) {
         Ref<VideoStream> stream = ResourceLoader::get_singleton()->load(full_path);
         if (stream.is_valid()) {
             vp->set_stream(stream);
