@@ -32,11 +32,13 @@ func _setup_environment() -> void:
 			
 	if env_node and env_node.environment:
 		var env = env_node.environment
-		env.tonemap_mode = Environment.TONE_MAPPER_ACES
-		env.tonemap_exposure = 0.9
+		# env.tonemap_mode = Environment.TONE_MAPPER_ACES
+		env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+		env.tonemap_exposure = 0.7
 		env.glow_intensity = 0.4
-		env.glow_bloom = 0.1
-		env.glow_strength = 0.8
+		env.glow_bloom = 0.05
+		env.glow_strength = 0.3
+		env.glow_hdr_threshold = 2.5
 
 func _create_chessboard() -> void:
 	var board_root = Node3D.new()
@@ -45,11 +47,13 @@ func _create_chessboard() -> void:
 	
 	var marble_mat = StandardMaterial3D.new()
 	marble_mat.albedo_color = Color(0.9, 0.9, 0.9) # Light marble
-	marble_mat.roughness = 0.05 # Highly reflective
+	marble_mat.roughness = 0.15 # Highly reflective
+	marble_mat.metallic_specular = 0.2
 	
 	var piano_black_mat = StandardMaterial3D.new()
 	piano_black_mat.albedo_color = Color(0.02, 0.02, 0.02) # Piano black
-	piano_black_mat.roughness = 0.02 # Highly reflective
+	piano_black_mat.roughness = 0.1 # Highly reflective
+	piano_black_mat.metallic_specular = 0.2
 	
 	var mesh = PlaneMesh.new()
 	mesh.size = Vector2(1, 1)
