@@ -1128,12 +1128,12 @@ void LuaManager::_add_element_deferred(const String& syntax) {
         hbox->add_child(right_btn);
         
         selector->add_child(hbox);
-        selector->update_media();
         current_selector_id = selector->get_instance_id();
         
         interactive_control = selector;
     
         container->add_child(selector);
+        selector->update_media();
         visual_item = selector;
     } else if (plasma_idx >= 0) {
         ColorRect* cr = memnew(ColorRect);
@@ -2731,8 +2731,10 @@ void UISelector::update_media() {
     if (subfolders.empty() || !media_node) return;
     
     Node* inner = media_node;
-    if (inner->is_class("AspectRatioContainer") && inner->get_child_count() > 0) {
-        inner = inner->get_child(0);
+    if (AspectRatioContainer* aspect = Object::cast_to<AspectRatioContainer>(media_node)) {
+        if (aspect->get_child_count() > 0) {
+            inner = aspect->get_child(0);
+        }
     }
     
     String current_sub = subfolders[current_index];
@@ -2756,7 +2758,11 @@ void UISelector::update_media() {
         Ref<VideoStream> stream = ResourceLoader::get_singleton()->load(full_path);
         if (stream.is_valid()) {
             vp->set_stream(stream);
-            vp->play();
+            if (vp->is_inside_tree()) {
+                vp->play();
+            } else {
+                vp->set_autoplay(true);
+            }
         }
     }
     
