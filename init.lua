@@ -27,6 +27,9 @@ for i, dir in ipairs(dirs) do
         delay(3000)
         
         print("Recording 30s video to: " .. ogv_path)
+        setRecordResolution(1024, 768)
+        setRecordFPS(30)
+        setRecordBitrate(2000000)
         setRecordMax(30)
         startRecord(ogv_path)
         

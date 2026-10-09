@@ -224,6 +224,9 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("skipAudio", lua_skipAudio);
     reg("setAudioVolume", lua_setAudioVolume);
     reg("nextAudio", lua_nextAudio);
+    reg("setRecordResolution", lua_setRecordResolution);
+    reg("setRecordFPS", lua_setRecordFPS);
+    reg("setRecordBitrate", lua_setRecordBitrate);
     reg("startRecord", lua_startRecord);
     reg("stopRecord", lua_stopRecord);
     reg("setRecordMax", lua_setRecordMax);
@@ -738,6 +741,10 @@ int LuaScripting::lua_selectGodot(lua_State* L) {
 
 int LuaScripting::lua_godotLoadScene(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self) {
+        std::lock_guard<std::mutex> lock(self->imgui_mutex);
+        self->lua_imgui_windows.clear();
+    }
     if (lua_isstring(L, 1)) {
         std::string filename = lua_tostring(L, 1);
         if (self && self->godotCmdFunc) {
@@ -876,14 +883,39 @@ int LuaScripting::lua_setAudioVolume(lua_State* L) {
     return 0;
 }
 
+int LuaScripting::lua_setRecordResolution(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
+        self->record_width = (int)lua_tonumber(L, 1);
+        self->record_height = (int)lua_tonumber(L, 2);
+    }
+    return 0;
+}
+
+int LuaScripting::lua_setRecordFPS(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && lua_isnumber(L, 1)) {
+        self->record_fps = (int)lua_tonumber(L, 1);
+    }
+    return 0;
+}
+
+int LuaScripting::lua_setRecordBitrate(lua_State* L) {
+    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
+    if (self && lua_isnumber(L, 1)) {
+        self->record_bitrate = (int)lua_tonumber(L, 1);
+    }
+    return 0;
+}
+
 int LuaScripting::lua_startRecord(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (self && lua_isstring(L, 1)) {
         std::string path = lua_tostring(L, 1);
-        int w = godot::DisplayServer::get_singleton()->window_get_size().x;
-        int h = godot::DisplayServer::get_singleton()->window_get_size().y;
+        int w = self->record_width > 0 ? self->record_width : godot::DisplayServer::get_singleton()->window_get_size().x;
+        int h = self->record_height > 0 ? self->record_height : godot::DisplayServer::get_singleton()->window_get_size().y;
         int audio_rate = godot::AudioServer::get_singleton()->get_mix_rate();
-        self->recorder.start(w, h, 60, audio_rate, 2, path);
+        self->recorder.start(w, h, self->record_fps > 0 ? self->record_fps : 60, audio_rate, 2, path, self->record_bitrate);
     }
     return 0;
 }

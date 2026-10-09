@@ -10,7 +10,7 @@ Recorder::~Recorder() {
     stop();
 }
 
-bool Recorder::start(int w, int h, int f, int a_rate, int a_channels, const std::string& p) {
+bool Recorder::start(int w, int h, int f, int a_rate, int a_channels, const std::string& p, int v_bitrate) {
     if (recording) return false;
     
     // Enforce even dimensions for yuv420p
@@ -20,6 +20,7 @@ bool Recorder::start(int w, int h, int f, int a_rate, int a_channels, const std:
     audio_rate = a_rate;
     audio_channels = a_channels;
     path = p;
+    video_bitrate = v_bitrate;
     frame_count = 0;
     
     avformat_alloc_output_context2(&format_ctx, nullptr, nullptr, path.c_str());
@@ -77,7 +78,7 @@ bool Recorder::setupVideo() {
     video_codec_ctx->time_base = {1, fps};
     video_stream->time_base = video_codec_ctx->time_base;
     video_codec_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
-    video_codec_ctx->bit_rate = 4000000;
+    video_codec_ctx->bit_rate = video_bitrate;
     video_codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     if (codec->id == AV_CODEC_ID_H264) {

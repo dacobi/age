@@ -22,7 +22,7 @@ public:
     Recorder();
     ~Recorder();
 
-    bool start(int width, int height, int fps, int audio_rate, int audio_channels, const std::string& path);
+    bool start(int width, int height, int fps, int audio_rate, int audio_channels, const std::string& path, int video_bitrate = 4000000);
     void stop();
     
     // Pitch is in bytes (e.g. width * 4 for RGBA)
@@ -76,6 +76,7 @@ private:
     int audio_channels = 0;
     std::string path;
     int frame_count = 0;
+    int video_bitrate = 4000000;
 
     AVFormatContext* format_ctx = nullptr;
     AVStream* video_stream = nullptr;

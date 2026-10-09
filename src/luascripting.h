@@ -219,6 +219,9 @@ private:
     static int lua_skipAudio(lua_State* L);
     static int lua_setAudioVolume(lua_State* L);
     static int lua_nextAudio(lua_State* L);
+    static int lua_setRecordResolution(lua_State* L);
+    static int lua_setRecordFPS(lua_State* L);
+    static int lua_setRecordBitrate(lua_State* L);
     static int lua_startRecord(lua_State* L);
     static int lua_stopRecord(lua_State* L);
     static int lua_setRecordMax(lua_State* L);
@@ -401,6 +404,10 @@ public:
     int record_max_seconds = 0;
     bool record_use_max = false;
     bool record_hide_window = false;
+    int record_width = 0;
+    int record_height = 0;
+    int record_fps = 60;
+    int record_bitrate = 4000000;
 private:
     std::string active_window_title;
     std::vector<ImGuiWidget> active_window_widgets;
