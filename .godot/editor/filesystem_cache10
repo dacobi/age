@@ -1,5 +1,5 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1791489256
+::res://::1791549997
 aabb_output.txt::TextFile::-1::1790419419::0::1::::<><><>0<>0<><>::
 aga.gdextension::GDExtension::6091002112854102600::1787220233::0::1::::<><><>0<>0<><>::
 ai_brain_driver.gd::GDScript::6401822491950000156::1788091464::0::1::::<>Node<><>0<>0<><>::
@@ -121,7 +121,7 @@ kitten12.png::CompressedTexture2D::358451927153510161::1787220216::1787220216::1
 kitten25.png::CompressedTexture2D::2256586528108385081::1787220216::1787220216::1::::<><><>0<>0<>cdf60427959718f244ddbffbb7e2e078<>res://.godot/imported/kitten25.png-3c15edf0e5e4cb468f92ba4c5b687792.ctex::
 kitten50.png::CompressedTexture2D::2853023808116571751::1787220216::1787220216::1::::<><><>0<>0<>de4bc2d11c2027b75db77e37c91d90b8<>res://.godot/imported/kitten50.png-5070758b9c3dcf973a6b77d79965502a.ctex::
 kitten.png::CompressedTexture2D::6029440915424471690::1787220216::1787220216::1::::<><><>0<>0<>e211e9a54ca3005bc0b7f259e232d09f<>res://.godot/imported/kitten.png-3cce062009769a1287e5a5913fb0288a.ctex::
-lemans_car.gd::GDScript::6539261436119175272::1791455108::0::1::::<>RigidBody3D<><>0<>0<><>::
+lemans_car.gd::GDScript::6539261436119175272::1791489317::0::1::::<>RigidBody3D<><>0<>0<><>::
 list_fmod_classes.gd::GDScript::7532087249611060618::1790204135::0::1::::<>SceneTree<><>0<>0<><>::
 list_fmod_event.gd::GDScript::803717675198456646::1790204164::0::1::::<>SceneTree<><>0<>0<><>::
 loading_screen.gd::GDScript::7158867710506618008::1790204926::0::1::::<>CanvasLayer<><>0<>0<><>::
@@ -568,21 +568,24 @@ lemans_area.gd::GDScript::141092176157710614::1790425866::0::1::::<>Node3D<><>0<
 lemans_area.tscn::PackedScene::5950051137681002406::1790413421::0::1::::<><><>0<>0<><>::uid://cwt7c3u7dviee::::res://assets/areas/lemans_area/lemans_area.gd<>uid://dbolghfp018vm::::res://sky/sky2.hdr
 ::res://assets/brain/::1787220233
 best_brain.json::JSON::-1::1787220233::0::1::::<><><>0<>0<><>::
-::res://assets/cars/::1791489237
+::res://assets/cars/::1791489258
 setup_car_view.gd::GDScript::2811843775421911147::1791489237::0::1::::<>Node3D<><>0<>0<><>::
-::res://assets/cars/car_stingray/::1791033146
+::res://assets/cars/car_stingray/::1791549983
 car.ini::TextFile::-1::1790687777::0::1::::<><><>0<>0<><>::
 car.png::CompressedTexture2D::4862312814672334961::1789468798::1790180471::1::::<><><>0<>0<>63c7ab8db6959f6df686b0ac541881cd<>res://.godot/imported/car.png-bf39ee86cea1748c948534da137fddce.ctex::
-car_stingray.tscn::PackedScene::3166711369::1791033146::0::1::::<><><>0<>0<><>::uid://cvs4ga4tdd8m4::::res://models/corvette_c7_stingray/corvette_c7_stingray.glb<>uid://c0fwxeuujytga::::res://lemans_car.gd<>uid://drrn4ndldayl0::::res://setup_car.gd
-::res://assets/cars/lemans_car/::1790688004
+car_stingray.tscn::PackedScene::3166711369::1791549983::0::1::::<><><>0<>0<><>::uid://cvs4ga4tdd8m4::::res://models/corvette_c7_stingray/corvette_c7_stingray.glb<>uid://c0fwxeuujytga::::res://lemans_car.gd<>uid://drrn4ndldayl0::::res://setup_car.gd
+view.tscn::PackedScene::1966307397412793223::1791549788::0::1::::<><><>0<>0<><>::uid://bgccwkr628cpn::::res://assets/cars/setup_car_view.gd<>uid://cbxxxxx::::res://assets/cars/car_stingray/car_stingray.tscn<>uid://dbolghfp018vm::::res://sky/sky2.hdr
+::res://assets/cars/lemans_car/::1791549163
 car.ini::TextFile::-1::1790687777::0::1::::<><><>0<>0<><>::
 car.png::CompressedTexture2D::4081816077385067468::1790081139::1790180471::1::::<><><>0<>0<>bd7c3eb4924af00c86dfc023f8ab1480<>res://.godot/imported/car.png-5c3f7a60e32093efacaf2a3282c92f0f.ctex::
 lemans_car.tscn::PackedScene::2972544803127051005::1790688004::0::1::::<><><>0<>0<><>::uid://c0fwxeuujytga::::res://lemans_car.gd<>uid://drrn4ndldayl0::::res://setup_car.gd
-::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/::1791455330
+view.tscn::PackedScene::1966307397412793223::1791549163::0::1::::<><><>0<>0<><>::uid://bgccwkr628cpn::::res://assets/cars/setup_car_view.gd<>uid://bil6m4xasr6mb::::res://assets/cars/lemans_car/lemans_car.tscn<>uid://dbolghfp018vm::::res://sky/sky2.hdr
+::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/::1791549167
 custom_glass.tres::StandardMaterial3D::6698089968093799743::1791451959::0::1::::<><><>0<>0<><>::
 gold_flake.png::CompressedTexture2D::5397374842743356596::1791302529::1791302569::1::::<><><>0<>0<>21176b38b8c1db45b65e2c5c1cae92bf<>res://.godot/imported/gold_flake.png-b64a0201ba8244077cd716d24449cce1.s3tc.ctex::
 head_light_glass.tres::StandardMaterial3D::1505686990127448381::1791452703::0::1::::<><><>0<>0<><>::
 Mercedes_Benz_AMG_GT3_Evo.tscn::PackedScene::1769679649120935641::1791455330::0::1::::<><><>0<>0<><>::uid://bm754cenqrgne::::res://models/mercedes_benz_amg_gt3_evo/textures/_Height.jpg<>uid://c8m7jvc3wyhes::::res://models/mercedes_benz_amg_gt3_evo/textures/Tyre Bump Normal.jpg<>uid://bl5mfc8kxycjm::::res://models/mercedes_benz_amg_gt3_evo/textures/Sidewall.jpg<>uid://ci5r8fhc0n8uq::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/gold_flake.png<>uid://c2outfa5dn1s2::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/custom_glass.tres<>uid://vpmpeehecjdd::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/head_light_glass.tres<>uid://ch7dortm4xhkd::::res://models/mercedes_benz_amg_gt3_evo/textures/AMG-emblem-black-2560x1440.png<>uid://gobmdw4avxhi::::res://models/mercedes_benz_amg_gt3_evo/textures/carbon fiber_Diffuse.jpg<>uid://b4ojvqu8v2ndy::::res://models/mercedes_benz_amg_gt3_evo/textures/carbon fiber_Normal.jpg<>uid://cyi3dcpnxdi23::::res://models/mercedes_benz_amg_gt3_evo/textures/carbon fiber_Roughness.jpg<>uid://dvesbtd2luttx::::res://models/mercedes_benz_amg_gt3_evo/textures/logo.jpg
+view.tscn::PackedScene::1966307397412793223::1791549167::0::1::::<><><>0<>0<><>::uid://bgccwkr628cpn::::res://assets/cars/setup_car_view.gd<>uid://0himoiqh162h::::res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/Mercedes_Benz_AMG_GT3_Evo.tscn<>uid://dbolghfp018vm::::res://sky/sky2.hdr
 ::res://assets/models/::1787220216
 ::res://assets/models/environment/::1787220216
 bush.glb::PackedScene::6346297843151541362::1787220216::1787220216::1::::<><><>0<>0<>78767750a5077987cd447f9dc74205a4<>res://.godot/imported/bush.glb-8fb5309f397dc327c492aab36c8979ea.scn::
@@ -624,7 +627,7 @@ track2.json::JSON::-1::1788257582::0::1::::<><><>0<>0<><>::
 track2.tscn::PackedScene::5950051137681002406::1790193277::0::1::::<><><>0<>0<><>::res://assets/tools/test_track/test_track.gd<>uid://dbolghfp018vm::::res://sky/sky2.hdr<>res://lemans_car.tscn<>res://setup_track.gd
 ::res://Audio/::1787220233
 ::res://Audio/Desktop/::1787220233
-::res://bin/::1790687787
+::res://bin/::1791549415
 ::res://Build/::1791454782
 ::res://fmoddata/::1787220233
 ::res://fmoddata/CarExamples/::1787332683
@@ -1911,5 +1914,5 @@ milky_way_with_stars.hdr::CompressedTexture2D::6100825906591027145::1787302293::
 rogland_clear_night.hdr::CompressedTexture2D::491127653546223955::1787302627::1787304666::1::::<><><>0<>0<>4df7eac01b8d0a77e328edb377222d5c<>res://.godot/imported/rogland_clear_night.hdr-d7a6250307ff5db250a284c3e02e4ce9.bptc.ctex::
 sky1.hdr::CompressedTexture2D::7872460534491457551::1787253217::1787653954::1::::<><><>0<>0<>a38dbde9b0195b0b6406cacbe723a137<>res://.godot/imported/sky1.hdr-9fb5731395f21a88b93c71db588f64cc.bptc.ctex::
 sky2.hdr::CompressedTexture2D::7259031161061506522::1787253443::1787653962::1::::<><><>0<>0<>a396c5c03454d7015ce56fe0cbc89081<>res://.godot/imported/sky2.hdr-1a1c73b0476fadcb0b7cd32d7a11357d.bptc.ctex::
-::res://src/::1790687786
+::res://src/::1791549415
 ::res://tmp/::1788721963

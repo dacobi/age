@@ -194,6 +194,10 @@ private:
     static int lua_setParam(lua_State* L);
     static int lua_setBG(lua_State* L);
     static int lua_godotLoadScene(lua_State* L);
+    static int lua_getDirContent(lua_State* L);
+    static int lua_traverseSubDirs(lua_State* L);
+    static int lua_getFilteredDirContent(lua_State* L);
+    static int lua_getSubDirs(lua_State* L);
     static int lua_selectPlasma(lua_State* L);
     static int lua_selectFractal(lua_State* L);
 #ifdef USE_USD

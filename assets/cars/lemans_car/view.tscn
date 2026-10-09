@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://3aq2bwp3e7rf"]
 
 [ext_resource type="Script" uid="uid://bgccwkr628cpn" path="res://assets/cars/setup_car_view.gd" id="1_af1yv"]
-[ext_resource type="PackedScene" uid="uid://0himoiqh162h" path="res://assets/cars/Mercedes_Benz_AMG_GT3_Evo/Mercedes_Benz_AMG_GT3_Evo.tscn" id="2_bypqa"]
-[ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="3_bypqa"]
+[ext_resource type="PackedScene" uid="uid://bil6m4xasr6mb" path="res://assets/cars/lemans_car/lemans_car.tscn" id="2_nh3pm"]
+[ext_resource type="Texture2D" uid="uid://dbolghfp018vm" path="res://sky/sky2.hdr" id="3_jjjdt"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_24l0t"]
-panorama = ExtResource("3_bypqa")
+panorama = ExtResource("3_jjjdt")
 
 [sub_resource type="Sky" id="Sky_24l0t"]
 sky_material = SubResource("PanoramaSkyMaterial_24l0t")
@@ -17,7 +17,7 @@ glow_enabled = true
 
 [node name="Node3D" type="Node3D" unique_id=1141909437]
 script = ExtResource("1_af1yv")
-car_scene = ExtResource("2_bypqa")
+car_scene = ExtResource("2_nh3pm")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1904207609]
 environment = SubResource("Environment_fip4i")

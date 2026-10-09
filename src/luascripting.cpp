@@ -11,6 +11,7 @@
 #include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/audio_server.hpp>
 #include <godot_cpp/classes/input.hpp>
+#include <godot_cpp/classes/dir_access.hpp>
 
 static std::mutex global_lua_mutex;
 
@@ -196,6 +197,10 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("setParam", lua_setParam);
     reg("setBG", lua_setBG);
     reg("godotLoadScene", lua_godotLoadScene);
+    reg("getDirContent", lua_getDirContent);
+    reg("traverseSubDirs", lua_traverseSubDirs);
+    reg("getFilteredDirContent", lua_getFilteredDirContent);
+    reg("getSubDirs", lua_getSubDirs);
     reg("godotInputGetAxis", lua_godotInputGetAxis);
     reg("godotInputIsActionPressed", lua_godotInputIsActionPressed);
     reg("selectPlasma", lua_selectPlasma);
@@ -2575,4 +2580,130 @@ int LuaScripting::lua_getGlobalString(lua_State* L) {
         return 1;
     }
     return 0;
+}
+
+int LuaScripting::lua_getDirContent(lua_State* L) {
+    if (!lua_isstring(L, 1)) return 0;
+    godot::String path = godot::String(lua_tostring(L, 1));
+
+    godot::Ref<godot::DirAccess> dir = godot::DirAccess::open(path);
+    if (dir.is_null()) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    dir->list_dir_begin();
+    godot::String file_name = dir->get_next();
+    while (!file_name.is_empty()) {
+        if (file_name != "." && file_name != "..") {
+            lua_pushinteger(L, index++);
+            lua_newtable(L);
+
+            lua_pushstring(L, "name");
+            lua_pushstring(L, file_name.utf8().get_data());
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "is_dir");
+            lua_pushboolean(L, dir->current_is_dir());
+            lua_settable(L, -3);
+
+            lua_settable(L, -3);
+        }
+        file_name = dir->get_next();
+    }
+    return 1;
+}
+
+void _traverse_dir_recursive(const godot::String& path, lua_State* L, int& index) {
+    godot::Ref<godot::DirAccess> dir = godot::DirAccess::open(path);
+    if (dir.is_null()) return;
+
+    dir->list_dir_begin();
+    godot::String file_name = dir->get_next();
+    while (!file_name.is_empty()) {
+        if (file_name != "." && file_name != "..") {
+            godot::String full_path = path;
+            if (!full_path.ends_with("/")) full_path += "/";
+            full_path += file_name;
+
+            lua_pushinteger(L, index++);
+            lua_pushstring(L, full_path.utf8().get_data());
+            lua_settable(L, -3);
+
+            if (dir->current_is_dir()) {
+                _traverse_dir_recursive(full_path, L, index);
+            }
+        }
+        file_name = dir->get_next();
+    }
+}
+
+int LuaScripting::lua_traverseSubDirs(lua_State* L) {
+    if (!lua_isstring(L, 1)) return 0;
+    godot::String path = godot::String(lua_tostring(L, 1));
+
+    lua_newtable(L);
+    int index = 1;
+    _traverse_dir_recursive(path, L, index);
+    return 1;
+}
+
+int LuaScripting::lua_getFilteredDirContent(lua_State* L) {
+    if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) return 0;
+    godot::String path = godot::String(lua_tostring(L, 1));
+    godot::String filter = godot::String(lua_tostring(L, 2));
+
+    godot::Ref<godot::DirAccess> dir = godot::DirAccess::open(path);
+    if (dir.is_null()) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    dir->list_dir_begin();
+    godot::String file_name = dir->get_next();
+    while (!file_name.is_empty()) {
+        if (file_name != "." && file_name != "..") {
+            if (!dir->current_is_dir() && file_name.ends_with(filter)) {
+                lua_pushinteger(L, index++);
+                lua_pushstring(L, file_name.utf8().get_data());
+                lua_settable(L, -3);
+            }
+        }
+        file_name = dir->get_next();
+    }
+    return 1;
+}
+
+int LuaScripting::lua_getSubDirs(lua_State* L) {
+    if (!lua_isstring(L, 1)) return 0;
+    godot::String path = godot::String(lua_tostring(L, 1));
+
+    godot::Ref<godot::DirAccess> dir = godot::DirAccess::open(path);
+    if (dir.is_null()) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    dir->list_dir_begin();
+    godot::String file_name = dir->get_next();
+    while (!file_name.is_empty()) {
+        if (file_name != "." && file_name != "..") {
+            if (dir->current_is_dir()) {
+                lua_pushinteger(L, index++);
+                lua_pushstring(L, file_name.utf8().get_data());
+                lua_settable(L, -3);
+            }
+        }
+        file_name = dir->get_next();
+    }
+    return 1;
 }
