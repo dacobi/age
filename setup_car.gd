@@ -21,6 +21,7 @@ class_name CarSetup
 @export var Pipe4 : Node3D
 @export var Pipe5 : Node3D
 @export var Pipe6 : Node3D
+@export var exhaust_offset : Vector3 = Vector3.ZERO
 
 @export_group("Suspension")
 @export_range(0.0, 40.0) var TotalTravel : float = 12.0
@@ -185,6 +186,7 @@ func get_exhaust_global_positions() -> Array[Vector3]:
 	if assigned_pipes.is_empty():
 		return positions
 		
+	var car = get_parent()
 	var pipes_per_node = NumberOfExaustPipes / assigned_pipes.size()
 	var remainder = NumberOfExaustPipes % assigned_pipes.size()
 	
@@ -194,23 +196,44 @@ func get_exhaust_global_positions() -> Array[Vector3]:
 		if i < remainder:
 			count_for_this_node += 1
 			
-		if count_for_this_node <= 1:
-			positions.append(pipe.global_position)
-			continue
-			
+		var local_center_x = 0.0
+		var local_center_y = 0.0
+		var local_rear_z = 0.0
 		var pipe_spacing = 0.12
+		
 		if pipe is MeshInstance3D and pipe.mesh:
 			var aabb = pipe.get_aabb()
+			local_center_x = aabb.get_center().x
+			local_center_y = aabb.get_center().y
 			var diameter = aabb.size.y
-			var center_to_center = maxf(0.001, aabb.size.x - diameter)
-			pipe_spacing = center_to_center / float(count_for_this_node - 1)
+			if count_for_this_node > 1:
+				var center_to_center = maxf(0.001, aabb.size.x - diameter)
+				pipe_spacing = center_to_center / float(count_for_this_node - 1)
 			
-		# Center the cluster around the node's origin along the local X axis
+			# Determine which Z boundary of the mesh AABB faces the rear of the car
+			var p1 = car.to_local(pipe.global_transform * Vector3(local_center_x, local_center_y, aabb.position.z)) if car else pipe.global_transform * Vector3(local_center_x, local_center_y, aabb.position.z)
+			var p2 = car.to_local(pipe.global_transform * Vector3(local_center_x, local_center_y, aabb.end.z)) if car else pipe.global_transform * Vector3(local_center_x, local_center_y, aabb.end.z)
+			if p1.z > p2.z:
+				local_rear_z = aabb.position.z
+			else:
+				local_rear_z = aabb.end.z
+				
+		if count_for_this_node <= 1:
+			var local_pos = Vector3(local_center_x, local_center_y, local_rear_z)
+			var gpos = pipe.global_transform * local_pos
+			if car and exhaust_offset != Vector3.ZERO:
+				gpos += car.global_basis * exhaust_offset
+			positions.append(gpos)
+			continue
+			
+		# Center the cluster around the node's/mesh's center along the local X axis
 		var start_offset = -((count_for_this_node - 1) * pipe_spacing) / 2.0
 		
 		for j in range(count_for_this_node):
-			var local_offset = Vector3(start_offset + (j * pipe_spacing), 0, 0)
+			var local_offset = Vector3(local_center_x + start_offset + (j * pipe_spacing), local_center_y, local_rear_z)
 			var global_pos = pipe.global_transform * local_offset
+			if car and exhaust_offset != Vector3.ZERO:
+				global_pos += car.global_basis * exhaust_offset
 			positions.append(global_pos)
 			
 	return positions
