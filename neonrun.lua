@@ -45,6 +45,12 @@ end
 
 function on_settings()
     print("Settings clicked!")
+    ageEnableSubMenu("Settings")
+end
+
+function on_settings_cancel()
+    print("Settings Cancel clicked!")
+    ageDisableSubMenu("Settings")
 end
 
 function on_about()
@@ -85,6 +91,24 @@ function on_race_cancel()
 end
 
 -- Create the submenu
+
+ageCreateSubMenu("Settings")
+ageBeginSubMenu("Settings")
+ageBeginMenu()
+
+imguiBegin("HUD Overlay", 700, 500, 280, 160)
+
+imguiText("STATIC HUD (NO DECORATIONS)")
+imguiSeparator()
+imguiSliderFloat("Speed", "test_speed", 0.0, 300.0)
+imguiCheckbox("Boost Active", "test_boost")
+
+imguiEnd()
+
+addElement(g_tag .. "[pos:900, 700][fontsize:1.2][clicked:on_settings_cancel][layer:1]Cancel")
+ageEndMenu()
+ageEndSubMenu("Settings")
+
 ageCreateSubMenu("Quit")
 ageBeginSubMenu("Quit")
 ageBeginMenu()

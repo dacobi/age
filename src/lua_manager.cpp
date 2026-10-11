@@ -499,6 +499,9 @@ void LuaManager::_end_submenu_deferred(String handle) {
 }
 
 void LuaManager::_enable_submenu_deferred(String handle) {
+    if (lua_engine) {
+        lua_engine->setSubmenuActive(handle.utf8().get_data(), true);
+    }
     if (submenus.count(handle)) {
         SubMenuData& sm = submenus[handle];
         sm.is_active = true;
@@ -554,6 +557,9 @@ void LuaManager::_enable_submenu_deferred(String handle) {
 }
 
 void LuaManager::_disable_submenu_deferred(String handle) {
+    if (lua_engine) {
+        lua_engine->setSubmenuActive(handle.utf8().get_data(), false);
+    }
     if (submenus.count(handle)) {
         SubMenuData& sm = submenus[handle];
         sm.is_active = false;

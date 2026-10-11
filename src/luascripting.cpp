@@ -116,6 +116,8 @@ void LuaScripting::stop() {
         std::lock_guard<std::mutex> lock(imgui_mutex);
         lua_imgui_windows.clear();
         active_window_title = "";
+        active_submenus.clear();
+        current_building_submenu = "";
     }
 }
 
@@ -311,6 +313,7 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
 
     // ImGui bindings
     reg("imguiBegin", lua_imguiBegin);
+    reg("imguiBeginStatic", lua_imguiBegin);
     reg("imguiEnd", lua_imguiEnd);
     reg("imguiRemoveWindow", lua_imguiRemoveWindow);
     reg("imguiText", lua_imguiText);
@@ -600,29 +603,44 @@ int LuaScripting::lua_ageCreateSubMenu(lua_State* L) {
 }
 int LuaScripting::lua_ageBeginSubMenu(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self && self->beginSubMenuFunc && lua_isstring(L, 1)) {
-        self->beginSubMenuFunc(lua_tostring(L, 1));
+    if (self && lua_isstring(L, 1)) {
+        std::string handle = lua_tostring(L, 1);
+        self->current_building_submenu = handle;
+        if (self->beginSubMenuFunc) {
+            self->beginSubMenuFunc(handle);
+        }
     }
     return 0;
 }
 int LuaScripting::lua_ageEndSubMenu(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self && self->endSubMenuFunc && lua_isstring(L, 1)) {
-        self->endSubMenuFunc(lua_tostring(L, 1));
+    if (self) {
+        self->current_building_submenu = "";
+        if (self->endSubMenuFunc && lua_isstring(L, 1)) {
+            self->endSubMenuFunc(lua_tostring(L, 1));
+        }
     }
     return 0;
 }
 int LuaScripting::lua_ageEnableSubMenu(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self && self->enableSubMenuFunc && lua_isstring(L, 1)) {
-        self->enableSubMenuFunc(lua_tostring(L, 1));
+    if (self && lua_isstring(L, 1)) {
+        std::string handle = lua_tostring(L, 1);
+        self->setSubmenuActive(handle, true);
+        if (self->enableSubMenuFunc) {
+            self->enableSubMenuFunc(handle);
+        }
     }
     return 0;
 }
 int LuaScripting::lua_ageDisableSubMenu(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (self && self->disableSubMenuFunc && lua_isstring(L, 1)) {
-        self->disableSubMenuFunc(lua_tostring(L, 1));
+    if (self && lua_isstring(L, 1)) {
+        std::string handle = lua_tostring(L, 1);
+        self->setSubmenuActive(handle, false);
+        if (self->disableSubMenuFunc) {
+            self->disableSubMenuFunc(handle);
+        }
     }
     return 0;
 }
@@ -748,6 +766,8 @@ int LuaScripting::lua_godotLoadScene(lua_State* L) {
         self->show_shape_chooser = false;
         self->show_playlist = false;
         self->show_gamepad_diagnostic = false;
+        self->active_submenus.clear();
+        self->current_building_submenu = "";
     }
     if (lua_isstring(L, 1)) {
         std::string filename = lua_tostring(L, 1);
@@ -2020,7 +2040,19 @@ int LuaScripting::lua_godotWatchProperty(lua_State* L) {
 void LuaScripting::renderLuaImGui() {
     std::lock_guard<std::mutex> lock(imgui_mutex);
     for (auto& win : lua_imgui_windows) {
-        ImGui::Begin(win.title.c_str());
+        if (!win.submenu.empty() && active_submenus.find(win.submenu) == active_submenus.end()) {
+            continue;
+        }
+        ImGuiWindowFlags flags = 0;
+        if (win.is_static) {
+            ImGui::SetNextWindowPos(ImVec2(win.pos_x, win.pos_y), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(win.size_w, win.size_h), ImGuiCond_Always);
+            flags |= ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+            if (win.no_background) {
+                flags |= ImGuiWindowFlags_NoBackground;
+            }
+        }
+        ImGui::Begin(win.title.c_str(), nullptr, flags);
         for (auto& widget : win.widgets) {
             switch (widget.type) {
                 case ImGuiWidget::TEXT:
@@ -2395,6 +2427,18 @@ int LuaScripting::lua_imguiBegin(lua_State* L) {
         std::string title = lua_tostring(L, 1);
         self->active_window_title = title;
         self->active_window_widgets.clear();
+        self->active_window_submenu = self->current_building_submenu;
+        if (lua_gettop(L) >= 5 && lua_isnumber(L, 2) && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
+            self->active_window_static = true;
+            self->active_window_x = (float)lua_tonumber(L, 2);
+            self->active_window_y = (float)lua_tonumber(L, 3);
+            self->active_window_w = (float)lua_tonumber(L, 4);
+            self->active_window_h = (float)lua_tonumber(L, 5);
+            self->active_window_no_bg = (lua_gettop(L) >= 6 && lua_toboolean(L, 6));
+        } else {
+            self->active_window_static = false;
+            self->active_window_no_bg = false;
+        }
     }
     return 0;
 }
@@ -2423,14 +2467,31 @@ int LuaScripting::lua_imguiEnd(lua_State* L) {
         });
         if (it != self->lua_imgui_windows.end()) {
             it->widgets = self->active_window_widgets;
+            it->is_static = self->active_window_static;
+            it->pos_x = self->active_window_x;
+            it->pos_y = self->active_window_y;
+            it->size_w = self->active_window_w;
+            it->size_h = self->active_window_h;
+            it->no_background = self->active_window_no_bg;
+            it->submenu = self->active_window_submenu;
         } else {
             ImGuiWindowDef w;
             w.title = self->active_window_title;
             w.widgets = self->active_window_widgets;
+            w.is_static = self->active_window_static;
+            w.pos_x = self->active_window_x;
+            w.pos_y = self->active_window_y;
+            w.size_w = self->active_window_w;
+            w.size_h = self->active_window_h;
+            w.no_background = self->active_window_no_bg;
+            w.submenu = self->active_window_submenu;
             self->lua_imgui_windows.push_back(w);
         }
         self->active_window_title = "";
         self->active_window_widgets.clear();
+        self->active_window_static = false;
+        self->active_window_no_bg = false;
+        self->active_window_submenu = "";
     }
     return 0;
 }

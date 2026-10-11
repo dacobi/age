@@ -393,11 +393,32 @@ private:
     struct ImGuiWindowDef {
         std::string title;
         std::vector<ImGuiWidget> widgets;
+        bool is_static = false;
+        float pos_x = 0.0f;
+        float pos_y = 0.0f;
+        float size_w = 0.0f;
+        float size_h = 0.0f;
+        bool no_background = false;
+        std::string submenu;
     };
 
     std::vector<ImGuiWindowDef> lua_imgui_windows;
 
 public:
+    void setSubmenuActive(const std::string& handle, bool active) {
+        std::lock_guard<std::mutex> lock(imgui_mutex);
+        if (active) {
+            active_submenus.insert(handle);
+        } else {
+            active_submenus.erase(handle);
+        }
+    }
+    void clearSubmenus() {
+        std::lock_guard<std::mutex> lock(imgui_mutex);
+        active_submenus.clear();
+        current_building_submenu = "";
+    }
+
     Recorder recorder;
     bool show_recorder = false;
     bool show_shape_chooser = false;
@@ -414,6 +435,15 @@ public:
 private:
     std::string active_window_title;
     std::vector<ImGuiWidget> active_window_widgets;
+    bool active_window_static = false;
+    float active_window_x = 0.0f;
+    float active_window_y = 0.0f;
+    float active_window_w = 0.0f;
+    float active_window_h = 0.0f;
+    bool active_window_no_bg = false;
+    std::string active_window_submenu;
+    std::string current_building_submenu;
+    std::set<std::string> active_submenus;
     std::mutex imgui_mutex;
 
     static int lua_imguiBegin(lua_State* L);
