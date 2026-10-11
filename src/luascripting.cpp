@@ -414,9 +414,23 @@ int LuaScripting::lua_godotSaveHighScore(lua_State* L) {
     return 0;
 }
 
-void LuaScripting::loadCarSettings() {
-    const char* home = std::getenv("HOME");
-    std::string filename = home ? std::string(home) + "/.age/car.ini" : "car.ini";
+void LuaScripting::loadCarSettings(const std::string& car_name) {
+    std::string filename = "";
+    if (!car_name.empty()) {
+        std::string candidate = "assets/cars/" + car_name + "/car.ini";
+        if (std::filesystem::exists(candidate)) {
+            filename = candidate;
+        }
+    }
+    if (filename.empty()) {
+        const char* home = std::getenv("HOME");
+        std::string candidate = home ? std::string(home) + "/.age/car.ini" : "car.ini";
+        if (std::filesystem::exists(candidate)) {
+            filename = candidate;
+        } else {
+            filename = "car.ini";
+        }
+    }
     std::ifstream f(filename);
     if (f.is_open()) {
         std::string line;
@@ -434,19 +448,27 @@ void LuaScripting::loadCarSettings() {
     }
 }
 
-void LuaScripting::saveCarSettings() {
-    const char* home = std::getenv("HOME");
-    std::string dir = home ? std::string(home) + "/.age" : ".age";
-    std::error_code ec;
-    std::filesystem::create_directories(dir, ec);
-    std::string filename = dir + "/car.ini";
+void LuaScripting::saveCarSettings(const std::string& car_name) {
+    std::string filename = "";
+    if (!car_name.empty()) {
+        std::string dir = "assets/cars/" + car_name;
+        std::error_code ec;
+        std::filesystem::create_directories(dir, ec);
+        filename = dir + "/car.ini";
+    } else {
+        const char* home = std::getenv("HOME");
+        std::string dir = home ? std::string(home) + "/.age" : ".age";
+        std::error_code ec;
+        std::filesystem::create_directories(dir, ec);
+        filename = dir + "/car.ini";
+    }
     std::ofstream f(filename);
     if (f.is_open()) {
         std::vector<std::string> keys = {
             "engine_force_value", "brake_force_value", "max_steer", "wheel_friction_slip",
             "total_travel_cm", "spring_stiffness_kn_m", "suspension_max_force",
             "damping_compression", "damping_relaxation", "downforce_multiplier",
-            "car_mass", "center_of_mass_y", "center_of_mass_z", "max_speed", "over_extend", "z_traction",
+            "car_mass", "override_center_of_mass", "center_of_mass_y", "center_of_mass_z", "max_speed", "over_extend", "z_traction",
             "radius_front", "radius_rear", "use_shapecast", "drivetrain_mode", "tire_turn_speed",
             "esp_max_yaw_damping", "aero_drag_coeff", "steer_speed_limit_max_speed", "steer_speed_limit_min_mult"
         };
@@ -459,7 +481,11 @@ void LuaScripting::saveCarSettings() {
 int LuaScripting::lua_godotLoadCarSettings(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (self) {
-        self->loadCarSettings();
+        std::string car_name = "";
+        if (lua_isstring(L, 1)) {
+            car_name = lua_tostring(L, 1);
+        }
+        self->loadCarSettings(car_name);
     }
     return 0;
 }
@@ -467,7 +493,11 @@ int LuaScripting::lua_godotLoadCarSettings(lua_State* L) {
 int LuaScripting::lua_godotSaveCarSettings(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (self) {
-        self->saveCarSettings();
+        std::string car_name = "";
+        if (lua_isstring(L, 1)) {
+            car_name = lua_tostring(L, 1);
+        }
+        self->saveCarSettings(car_name);
     }
     return 0;
 }

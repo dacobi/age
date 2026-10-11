@@ -161,8 +161,8 @@ using PlayPlaylistTrackFunc = std::function<void(int)>;
     void regGlobalFloat(const std::string& name, float val);
     void unregGlobalFloat(const std::string& name);
 
-    void loadCarSettings();
-    void saveCarSettings();
+    void loadCarSettings(const std::string& car_name = "");
+    void saveCarSettings(const std::string& car_name = "");
     void renderLuaImGui();
 
     std::unordered_map<std::string, int> global_ints;

@@ -1,5 +1,5 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1791717811
+::res://::1791726150
 aabb_output.txt::TextFile::-1::1790419419::0::1::::<><><>0<>0<><>::
 aga.gdextension::GDExtension::6091002112854102600::1787220233::0::1::::<><><>0<>0<><>::
 ai_brain_driver.gd::GDScript::6401822491950000156::1788091464::0::1::::<>Node<><>0<>0<><>::
@@ -53,7 +53,6 @@ debug_radius.gd::GDScript::343608582294519424::1789469245::0::1::::<>SceneTree<>
 debug_tilt_sign.gd::GDScript::4348035143850770799::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 debug_torsion_cancel.gd::GDScript::6168311688212538230::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
 debug_track.gd::GDScript::8103929215907578147::1788091464::0::1::::<>SceneTree<><>0<>0<><>::
-docallismeonstreet.otf::FontFile::8879406085153885949::1789570517::1789571527::1::::<><><>0<>0<>ad2654173d575843a9a999f0bd904846<>res://.godot/imported/docallismeonstreet.otf-300bc76d931f03a438d7f63f6f98ce19.fontdata::
 dostreet.ttf::FontFile::3994314230207390120::1789569627::1789570233::1::::<><><>0<>0<>6fd03d50c6515d9ceba0a1525c5c6803<>res://.godot/imported/dostreet.ttf-7c94208861a7e3261603a16e4203c12b.fontdata::
 dude.png::CompressedTexture2D::4104455158570452839::1787220216::1787220216::1::::<><><>0<>0<>3f796cb42eba8fa14aa4907fbf15cbdf<>res://.godot/imported/dude.png-fb4e14cb83845e5914adbc9d4566a289.ctex::
 dudeemoji.png::CompressedTexture2D::1365623087853087634::1787220216::1787220216::1::::<><><>0<>0<>19147954001c7b6998fe5b5f68981e0a<>res://.godot/imported/dudeemoji.png-29c43fe6e7f95fe5bc7c9232de61f4fb.ctex::
@@ -133,7 +132,6 @@ mcp_batch4.json::JSON::-1::1791301367::0::1::::<><><>0<>0<><>::
 mcp_fix2.json::JSON::-1::1791299589::0::1::::<><><>0<>0<><>::
 mcp_fix.json::JSON::-1::1791299240::0::1::::<><><>0<>0<><>::
 menu_click.wav::AudioStreamWAV::4406927466988784777::1789636728::1789637941::1::::<><><>0<>0<>032e8975a711da8a2317d74922001356<>res://.godot/imported/menu_click.wav-19ea31f82952dc7f6ff5b729172cc773.sample::
-neonrun.png::CompressedTexture2D::2757943157792799779::1789563666::1789566149::1::::<><><>0<>0<>eaa05a181a7514559fafa4cde0abbef3<>res://.godot/imported/neonrun.png-4fd401c68328791f9048329feae8cf0d.ctex::
 neonrun.tscn::PackedScene::3166711369::1791717774::0::1::::<><><>0<>0<><>::res://nitrorider_2x.png
 new.gd::GDScript::6565269190489862691::1788091464::0::1::::<>RigidBody3D<><>0<>0<><>::
 new_ship.png::CompressedTexture2D::8061838859526042999::1787220216::1787220216::1::::<><><>0<>0<>449c5feda5e8e87e819a5525e5c009ab<>res://.godot/imported/new_ship.png-8df8dd1454b1722571fd4b1343881d88.ctex::
@@ -160,7 +158,7 @@ print_weights.gd::GDScript::4633259704330258876::1788091464::0::1::::<>SceneTree
 projectile.tscn::PackedScene::2580691756384831604::1787220216::0::1::::<><><>0<>0<><>::res://firep.gd<>res://player_laser.wav
 race_manager.gd::GDScript::4341857844742524167::1788099976::0::1::::<>Node<><>0<>0<><>::
 raycast_wheel.gd::GDScript::6156156898819966131::1790693461::0::1::::RaycastWheel<>RayCast3D<><>0<>0<><>::
-README.md::TextFile::-1::1787220216::0::1::::<><><>0<>0<><>::
+README.md::TextFile::-1::1791724845::0::1::::<><><>0<>0<><>::
 rebuild.txt::TextFile::-1::1787920839::0::1::::<><><>0<>0<><>::
 Road_Rage.otf::FontFile::7928633255222035888::1466292390::1791717813::1::::<><><>0<>0<>cb7e3a486487950fe3cb7bcf445b946f<>res://.godot/imported/Road_Rage.otf-3f26830c501f9d40db99f57eec7d53ba.fontdata::
 selector.png::CompressedTexture2D::7982182419768867934::1790173922::1790180471::1::::<><><>0<>0<>d28f75c2e7d336fb1d8a8a4996e09cff<>res://.godot/imported/selector.png-8cc6a9bd576f7d576578ff18614caee4.ctex::
@@ -641,7 +639,7 @@ track2.json::JSON::-1::1788257582::0::1::::<><><>0<>0<><>::
 track2.tscn::PackedScene::5950051137681002406::1790193277::0::1::::<><><>0<>0<><>::res://assets/tools/test_track/test_track.gd<>uid://dbolghfp018vm::::res://sky/sky2.hdr<>res://lemans_car.tscn<>res://setup_track.gd
 ::res://Audio/::1787220233
 ::res://Audio/Desktop/::1787220233
-::res://bin/::1791558892
+::res://bin/::1791724599
 ::res://Build/::1791454782
 ::res://fmoddata/::1787220233
 ::res://fmoddata/CarExamples/::1787332683
@@ -1928,5 +1926,5 @@ milky_way_with_stars.hdr::CompressedTexture2D::6100825906591027145::1787302293::
 rogland_clear_night.hdr::CompressedTexture2D::491127653546223955::1787302627::1787304666::1::::<><><>0<>0<>4df7eac01b8d0a77e328edb377222d5c<>res://.godot/imported/rogland_clear_night.hdr-d7a6250307ff5db250a284c3e02e4ce9.bptc.ctex::
 sky1.hdr::CompressedTexture2D::7872460534491457551::1787253217::1787653954::1::::<><><>0<>0<>a38dbde9b0195b0b6406cacbe723a137<>res://.godot/imported/sky1.hdr-9fb5731395f21a88b93c71db588f64cc.bptc.ctex::
 sky2.hdr::CompressedTexture2D::7259031161061506522::1787253443::1787653962::1::::<><><>0<>0<>a396c5c03454d7015ce56fe0cbc89081<>res://.godot/imported/sky2.hdr-1a1c73b0476fadcb0b7cd32d7a11357d.bptc.ctex::
-::res://src/::1791558891
+::res://src/::1791724598
 ::res://tmp/::1788721963

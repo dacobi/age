@@ -6,8 +6,10 @@ local manual_gear_val = 1 -- 0 = Neutral, 1..6 = Gears 1..6
 local last_triangle_down = false
 local last_shift_up = false
 local last_shift_down = false
+local current_supercar = nil
 
-function initCarPhysicsDefaults()
+function initCarPhysicsDefaults(supercar)
+	current_supercar = supercar
 	-- Register impulse properties so C++ never caches/skips their property sets
 	if godotRegisterImpulseProperty then
 		godotRegisterImpulseProperty("reset_car")
@@ -61,11 +63,18 @@ function initCarPhysicsDefaults()
 	setGlobalFloat("steer_speed_limit_min_mult", 0.2)
 	setGlobalFloat("show_car_physics_ui", 0.0)
 	setGlobalFloat("show_fps_hud", 0.0)
+	setGlobalFloat("override_center_of_mass", 0.0)
 
 	-- Load saved car settings on startup if present
-	-- local car_name = godotGetProperty("CarSetup", "car_name")
-			if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
-			godotLoadCarSettings(car_name)
+	local car_name = nil
+	if current_supercar then
+		car_name = godotGetProperty("car_name", current_supercar)
+	end
+	if not car_name or car_name == "" then
+		car_name = getGlobalString("current_car_name")
+	end
+	if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+	godotLoadCarSettings(car_name)
 end
 
 function renderCarPhysicsUI()
@@ -98,8 +107,14 @@ function renderCarPhysicsUI()
 		imguiSliderFloat("Damp Relax", "damping_relaxation", 1.0, 20.0)
 		imguiSliderFloat("Downforce Mult", "downforce_multiplier", 0.0, 500.0)
 		imguiSliderFloat("Car Mass", "car_mass", 500.0, 3000.0)
-		imguiSliderFloat("Center of Mass Y", "center_of_mass_y", -1.0, 1.0)
-		imguiSliderFloat("Center of Mass Z", "center_of_mass_z", -1.0, 1.0)
+		imguiCheckbox("Overwrite COM", "override_center_of_mass")
+		local ov_com = getGlobalFloat("override_center_of_mass")
+		if ov_com > 0.5 then
+			imguiSliderFloat("Center of Mass Y", "center_of_mass_y", -2.0, 2.0)
+			imguiSliderFloat("Center of Mass Z", "center_of_mass_z", -2.0, 2.0)
+		else
+			imguiText("Center of Mass: AUTO (From wheel axles)")
+		end
 		imguiSliderFloat("Max Speed", "max_speed", 10.0, 1000.0)
 		imguiSliderFloat("Over Extend", "over_extend", 0.0, 1.0)
 		imguiSliderFloat("Longitudinal Traction", "z_traction", 0.0, 1.0)
@@ -135,16 +150,26 @@ function renderCarPhysicsUI()
 		
 		imguiEnd()
 		
+		local function get_active_car_name()
+			local name = nil
+			if current_supercar then
+				name = godotGetProperty("car_name", current_supercar)
+			end
+			if not name or name == "" then
+				name = getGlobalString("current_car_name")
+			end
+			if type(name) ~= "string" or name == "" then name = "lemans_car" end
+			return name
+		end
+
 		if getGlobalFloat("save_settings_clicked") > 0.5 then
 			setGlobalFloat("save_settings_clicked", 0.0)
-			local car_name = godotGetProperty("CarSetup", "car_name")
-			if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+			local car_name = get_active_car_name()
 			godotSaveCarSettings(car_name)
 		end
 		if getGlobalFloat("load_settings_clicked") > 0.5 then
 			setGlobalFloat("load_settings_clicked", 0.0)
-			local car_name = godotGetProperty("CarSetup", "car_name")
-			if type(car_name) ~= "string" or car_name == "" then car_name = "lemans_car" end
+			local car_name = get_active_car_name()
 			godotLoadCarSettings(car_name)
 		end
 	end
@@ -316,8 +341,10 @@ function updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_nam
 	godotSetProperty("suspension_max_force", getGlobalFloat("suspension_max_force"), supercar)
 	godotSetProperty("damping_compression", getGlobalFloat("damping_compression"), supercar)
 	godotSetProperty("damping_relaxation", getGlobalFloat("damping_relaxation"), supercar)
+	current_supercar = supercar
 	godotSetProperty("downforce_multiplier", getGlobalFloat("downforce_multiplier"), supercar)
 	godotSetProperty("car_mass", getGlobalFloat("car_mass"), supercar)
+	godotSetProperty("override_center_of_mass", getGlobalFloat("override_center_of_mass"), supercar)
 	godotSetProperty("center_of_mass_y", getGlobalFloat("center_of_mass_y"), supercar)
 	godotSetProperty("center_of_mass_z", getGlobalFloat("center_of_mass_z"), supercar)
 	godotSetProperty("slider_max_speed_kmh", getGlobalFloat("max_speed"), supercar)

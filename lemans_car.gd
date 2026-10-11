@@ -8,6 +8,7 @@ var handbrake_input: float = 0.0
 var air_time: float = 0.0
 var is_grounded_state: bool = false
 var auto_reset_enabled: bool = true
+var car_name: String = ""
 
 var mount_FL = Vector3(-1.0, -0.025, -1.7)
 var mount_FR = Vector3(1.0, -0.025, -1.7)
@@ -35,6 +36,8 @@ var damping_compression = 12.0
 var damping_relaxation = 15.0
 var downforce_multiplier = 180.0
 var car_mass = 1000.0
+var override_center_of_mass: float = 0.0
+var auto_center_of_mass: Vector3 = Vector3.ZERO
 var center_of_mass_y = -0.35
 var center_of_mass_z = 0.5
 var esp_max_yaw_damping = 1.5
@@ -152,6 +155,7 @@ func _ready():
 	
 	
 	if setup:
+		car_name = setup.car_name
 		suspension_travel = setup.rest_dist
 		suspension_stiffness = setup.spring_strength
 		total_travel_cm = setup.TotalTravel
@@ -177,6 +181,9 @@ func _ready():
 			radius_rear = setup.wheel_radius_rear
 			default_radius_front = radius_front
 			default_radius_rear = radius_rear
+			
+			if "auto_center_of_mass" in setup and setup.auto_center_of_mass != Vector3.ZERO:
+				auto_center_of_mass = setup.auto_center_of_mass
 			
 		print("DEBUG: mount_FL = ", mount_FL)
 		print("DEBUG: mount_RL = ", mount_RL)
@@ -495,7 +502,10 @@ func _physics_process(delta: float) -> void:
 	# Update mass and COM from properties set by Lua script
 	mass = car_mass
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-	center_of_mass = Vector3(0, center_of_mass_y, center_of_mass_z)
+	if override_center_of_mass > 0.5:
+		center_of_mass = Vector3(0, center_of_mass_y, center_of_mass_z)
+	else:
+		center_of_mass = auto_center_of_mass
 	
 	var horizontal_vel = linear_velocity
 	horizontal_vel.y = 0.0
@@ -705,6 +715,7 @@ func _physics_process(delta: float) -> void:
 		w.rest_dist = suspension_travel
 		w.spring_strength = suspension_stiffness
 		w.damping_compression = damping_compression * 200.0
+		w.damping_relaxation = damping_relaxation * 200.0
 		
 		var r = radius_front if i < 2 else radius_rear
 		w.wheel_radius = r
@@ -805,7 +816,10 @@ func _physics_process(delta: float) -> void:
 		air_time = 0.0
 
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-	center_of_mass = Vector3(0, center_of_mass_y, center_of_mass_z)
+	if override_center_of_mass > 0.5:
+		center_of_mass = Vector3(0, center_of_mass_y, center_of_mass_z)
+	else:
+		center_of_mass = auto_center_of_mass
 		
 	# Downforce and Aerodynamic Drag
 	var current_speed_for_aero = linear_velocity.length()
