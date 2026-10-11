@@ -275,25 +275,39 @@ func _generate_dynamic_collisions():
 	
 	# 1. Main Body Box (Only generate if car does not already have a handcrafted BodyCol)
 	if not car.has_node("BodyCol"):
+		var box_top_y = aabb.position.y + aabb.size.y
+		var highest_wheel_hub = maxf(pivot_FL.position.y, pivot_RL.position.y) if (pivot_FL and pivot_RL) else 0.0
+		var box_bottom_y = highest_wheel_hub + 0.05
+		var box_height = maxf(0.3, box_top_y - box_bottom_y)
+		var box_center_y = box_bottom_y + (box_height * 0.5)
+
 		var body_col = CollisionShape3D.new()
 		body_col.name = "BodyCol"
 		var box = BoxShape3D.new()
-		box.size = Vector3(track_width, height, wheel_base)
+		box.size = Vector3(track_width * 0.95, box_height, wheel_base * 1.15)
 		body_col.shape = box
-		body_col.position = base_pos
+		body_col.position = Vector3(cx, box_center_y, cz)
 		_generate_debug_mesh(body_col, Color(1, 0, 0, 0.4))
 		car.add_child(body_col)
-		
-		# 2. 4 Corner Skid Spheres (at wheel pivot X/Z, slightly above ground as bump stops)
-		var sphere_radius = 0.25
+
+	# 2. 4 Corner Skid Spheres (Generated for all cars with safe bottom-out clearance)
+	if not car.has_node("SkidSphere_FL"):
+		var sphere_radius = 0.12
 		var wheel_pivots = [pivot_FL, pivot_FR, pivot_RL, pivot_RR]
-		for wp in wheel_pivots:
+		var pivot_names = ["FL", "FR", "RL", "RR"]
+		for i in range(wheel_pivots.size()):
+			var wp = wheel_pivots[i]
 			if not wp: continue
+			var r = wheel_radius_front if i < 2 else wheel_radius_rear
 			var sphere_col = CollisionShape3D.new()
+			sphere_col.name = "SkidSphere_" + pivot_names[i]
 			var sphere = SphereShape3D.new()
 			sphere.radius = sphere_radius
 			sphere_col.shape = sphere
-			var sphere_y = wp.position.y - (wheel_radius_front * 0.3)
+			
+			var ground_at_max_compression = wp.position.y - (r - rest_dist)
+			var sphere_bottom_y = ground_at_max_compression + 0.025
+			var sphere_y = sphere_bottom_y + sphere_radius
 			sphere_col.position = Vector3(wp.position.x, sphere_y, wp.position.z)
 			_generate_debug_mesh(sphere_col, Color(0, 0.6, 0.7, 0.42))
 			car.add_child(sphere_col)

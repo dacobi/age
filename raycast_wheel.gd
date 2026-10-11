@@ -64,22 +64,31 @@ func apply_wheel_physics(car: RigidBody3D) -> void:
 		return
 
 	var contact       := get_collision_point()
-	var spring_len    := maxf(0.0, global_position.distance_to(contact) - wheel_radius)
+	var contact_dist  := global_position.distance_to(contact)
+	var spring_len    := maxf(0.0, contact_dist - wheel_radius)
 	var offset        := rest_dist - spring_len
 
 	if visual_pivot and is_instance_valid(visual_pivot):
-		var target_y = position.y - spring_len
-		visual_pivot.position = Vector3(position.x, move_toward(visual_pivot.position.y, target_y, 5 * get_physics_process_delta_time()), position.z)
+		var target_y = position.y - (contact_dist - wheel_radius)
+		visual_pivot.position = Vector3(position.x, move_toward(visual_pivot.position.y, target_y, 30.0 * get_physics_process_delta_time()), position.z)
 		visual_pivot.rotation.y = rotation.y
 
-	contact = global_position - global_basis.y * spring_len # Contact is now the wheel origin point
+	contact = global_position - global_basis.y * (contact_dist - wheel_radius) # Contact is now the wheel origin point
 	var force_pos     := contact - car.global_position
 
-	## Spring forces
-	var spring_force  := spring_strength * offset
+	## Spring forces & progressive bump stop
+	var compression   := (rest_dist + wheel_radius) - contact_dist
+	var spring_force  := spring_strength * minf(compression, rest_dist)
+	if compression > rest_dist:
+		var bump_pen := compression - rest_dist
+		var bump_stop_force := bump_pen * (spring_strength * 4.0) + (bump_pen * bump_pen * spring_strength * 30.0)
+		spring_force = minf(max_spring_force, spring_force + bump_stop_force)
+
 	var tire_vel      := car.linear_velocity + car.angular_velocity.cross(contact - car.global_position)
 	var tire_y_vel: float = global_basis.y.dot(tire_vel)
 	var active_damping: float = damping_compression if tire_y_vel < 0.0 else damping_relaxation
+	if compression > rest_dist:
+		active_damping *= 2.0 # Extra damping on bump stop contact to absorb bottoming shock
 	var spring_damp_f: float = active_damping * tire_y_vel
 
 	var y_force       := (spring_force - spring_damp_f) * get_collision_normal()
