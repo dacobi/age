@@ -398,7 +398,7 @@ private:
         float pos_y = 0.0f;
         float size_w = 0.0f;
         float size_h = 0.0f;
-        bool no_background = false;
+        float bg_opacity = 1.0f;
         std::string submenu;
     };
 
@@ -440,7 +440,7 @@ private:
     float active_window_y = 0.0f;
     float active_window_w = 0.0f;
     float active_window_h = 0.0f;
-    bool active_window_no_bg = false;
+    float active_window_bg_opacity = 1.0f;
     std::string active_window_submenu;
     std::string current_building_submenu;
     std::set<std::string> active_submenus;

@@ -96,7 +96,7 @@ ageCreateSubMenu("Settings")
 ageBeginSubMenu("Settings")
 ageBeginMenu()
 
-imguiBegin("HUD Overlay", 700, 500, 280, 160)
+imguiBegin("HUD Overlay", 700, 500, 280, 160, 0.5)
 
 imguiText("STATIC HUD (NO DECORATIONS)")
 imguiSeparator()

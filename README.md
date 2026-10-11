@@ -128,6 +128,7 @@ The following functions are exposed from `src/luascripting.cpp` and available gl
 
 ### ImGui Integration
 - `imguiBegin(title)`: Begins a new ImGui window with `title`.
+- `imguiBeginStatic(title, x, y, w, h, [bg_opacity])` / `imguiBegin(title, x, y, w, h, [bg_opacity])`: Begins a static undecorated ImGui window at `(x, y)` with size `(w, h)`. `bg_opacity` is an optional float from 0.0 (transparent) to 1.0 (fully opaque, default 1.0).
 - `imguiEnd()`: Ends the current ImGui window.
 - `imguiRemoveWindow(title)`: Removes an ImGui window.
 - `imguiText(text)`: Displays text.

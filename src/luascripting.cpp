@@ -2047,8 +2047,9 @@ void LuaScripting::renderLuaImGui() {
         if (win.is_static) {
             ImGui::SetNextWindowPos(ImVec2(win.pos_x, win.pos_y), ImGuiCond_Always);
             ImGui::SetNextWindowSize(ImVec2(win.size_w, win.size_h), ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(win.bg_opacity);
             flags |= ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-            if (win.no_background) {
+            if (win.bg_opacity <= 0.0f) {
                 flags |= ImGuiWindowFlags_NoBackground;
             }
         }
@@ -2434,10 +2435,15 @@ int LuaScripting::lua_imguiBegin(lua_State* L) {
             self->active_window_y = (float)lua_tonumber(L, 3);
             self->active_window_w = (float)lua_tonumber(L, 4);
             self->active_window_h = (float)lua_tonumber(L, 5);
-            self->active_window_no_bg = (lua_gettop(L) >= 6 && lua_toboolean(L, 6));
+            if (lua_gettop(L) >= 6 && lua_isnumber(L, 6)) {
+                float op = (float)lua_tonumber(L, 6);
+                self->active_window_bg_opacity = std::clamp(op, 0.0f, 1.0f);
+            } else {
+                self->active_window_bg_opacity = 1.0f;
+            }
         } else {
             self->active_window_static = false;
-            self->active_window_no_bg = false;
+            self->active_window_bg_opacity = 1.0f;
         }
     }
     return 0;
@@ -2472,7 +2478,7 @@ int LuaScripting::lua_imguiEnd(lua_State* L) {
             it->pos_y = self->active_window_y;
             it->size_w = self->active_window_w;
             it->size_h = self->active_window_h;
-            it->no_background = self->active_window_no_bg;
+            it->bg_opacity = self->active_window_bg_opacity;
             it->submenu = self->active_window_submenu;
         } else {
             ImGuiWindowDef w;
@@ -2483,14 +2489,14 @@ int LuaScripting::lua_imguiEnd(lua_State* L) {
             w.pos_y = self->active_window_y;
             w.size_w = self->active_window_w;
             w.size_h = self->active_window_h;
-            w.no_background = self->active_window_no_bg;
+            w.bg_opacity = self->active_window_bg_opacity;
             w.submenu = self->active_window_submenu;
             self->lua_imgui_windows.push_back(w);
         }
         self->active_window_title = "";
         self->active_window_widgets.clear();
         self->active_window_static = false;
-        self->active_window_no_bg = false;
+        self->active_window_bg_opacity = 1.0f;
         self->active_window_submenu = "";
     }
     return 0;
