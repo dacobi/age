@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bfj76kr2qcxtr"
-path="res://.godot/imported/neonrun.png-4fd401c68328791f9048329feae8cf0d.ctex"
+uid="uid://bvw6sbm78gcf2"
+path="res://.godot/imported/nitrorider.jpg-8233f5da97a32876a3dddc04d8909221.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://neonrun.png"
-dest_files=["res://.godot/imported/neonrun.png-4fd401c68328791f9048329feae8cf0d.ctex"]
+source_file="res://nitrorider.jpg"
+dest_files=["res://.godot/imported/nitrorider.jpg-8233f5da97a32876a3dddc04d8909221.ctex"]
 
 [params]
 

@@ -692,6 +692,7 @@ void LuaManager::_add_element_deferred(const String& syntax) {
     Color graffity_inner;
     Color graffity_outer;
     Color graffity_hover;
+    int graffity_outline_size = 24;
 
     int current_idx = 0;
     while (current_idx < s.length()) {
@@ -777,6 +778,9 @@ void LuaManager::_add_element_deferred(const String& syntax) {
                 graffity_inner = Color(p[0].to_float() / 255.0f, p[1].to_float() / 255.0f, p[2].to_float() / 255.0f);
                 graffity_outer = Color(p[3].to_float() / 255.0f, p[4].to_float() / 255.0f, p[5].to_float() / 255.0f);
                 graffity_hover = Color(p[6].to_float() / 255.0f, p[7].to_float() / 255.0f, p[8].to_float() / 255.0f);
+                if (p.size() >= 10) {
+                    graffity_outline_size = p[9].to_int();
+                }
             }
         } else if (tag.begins_with("clicked:")) {
             clicked_script = tag.substr(8);
@@ -914,16 +918,21 @@ void LuaManager::_add_element_deferred(const String& syntax) {
         label->set_autowrap_mode(TextServer::AUTOWRAP_OFF);
         label->set_fit_content(true);
         if (is_graffity) {
-            Ref<Font> custom_font = ResourceLoader::get_singleton()->load("res://docallismeonstreet.otf");
+            Ref<Font> custom_font = ResourceLoader::get_singleton()->load("res://Road_Rage.otf");
             if (custom_font.is_valid()) {
                 label->add_theme_font_override("normal_font", custom_font);
             }
-            // Prepend a transparent period to fool the font into middle-of-word alternates
-            text = "[color=#00000000].[/color]" + text;
+            PackedStringArray lines = text.split("\n");
+            String wrapped_text = "";
+            for (int i = 0; i < lines.size(); ++i) {
+                if (i > 0) wrapped_text += "\n";
+                wrapped_text += "[color=#00000000].[/color]" + lines[i] + "[color=#00000000].[/color]";
+            }
+            text = wrapped_text;
             label->set_text(text);
             label->add_theme_color_override("default_color", graffity_inner);
             label->add_theme_color_override("font_outline_color", graffity_outer);
-            label->add_theme_constant_override("outline_size", 12);
+            label->add_theme_constant_override("outline_size", graffity_outline_size);
         }
         
         if (syntax.find("[global:") != -1) {

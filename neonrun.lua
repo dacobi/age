@@ -1,8 +1,10 @@
 godotLoadScene("neonrun.tscn")
 
-local inner = "0, 255, 255"       -- White inner
-local hover = "0, 0, 0"             -- Black border
-local outer = "255, 0, 255"         -- Neon purple hover
+local inner = "0, 255, 255"       -- Cyan inner
+local hover = "194, 78, 8"             -- yellow border
+-- local hover = "255, 0, 255"         -- Neon purple hover
+local outer = "125, 0, 125"             -- yellow border
+
 
 local g_tag = "[graffity: " .. inner .. ", " .. outer .. ", " .. hover .. "]"
 
@@ -86,22 +88,22 @@ end
 ageCreateSubMenu("Quit")
 ageBeginSubMenu("Quit")
 ageBeginMenu()
-addElement(g_tag .. "[pos:700, 700][fontsize:1.5][clicked:on_sub_quit][layer:1]Quit")
-addElement(g_tag .. "[pos:900, 700][fontsize:1.5][clicked:on_sub_cancel][layer:1]Cancel")
+addElement(g_tag .. "[pos:700, 700][fontsize:1.2][clicked:on_sub_quit][layer:1]Quit")
+addElement(g_tag .. "[pos:900, 700][fontsize:1.2][clicked:on_sub_cancel][layer:1]Cancel")
 ageEndMenu()
 ageEndSubMenu("Quit")
 
 
 ageCreateSubMenu("Race")
 ageBeginSubMenu("Race")
-addElement("[pos:700,350][rect:400,300][hover:255,255,255][clicked:on_race_play][layer:1][video:track.ogv]")
+addElement("[pos:700,450][rect:400,300][hover:255,255,255][clicked:on_race_play][layer:1][video:track.ogv]")
 ageBeginMenu("RaceSub1",2)
 ageBeginRow("RaceSub1",1)
-addElement(g_tag .. "[pos:600, 700][fontsize:1.5][clicked:on_race_play][layer:1]Play")
-addElement(g_tag .. "[pos:900, 700][fontsize:1.5][clicked:on_race_cancel][layer:1]Cancel")
+addElement(g_tag .. "[pos:600, 1125][fontsize:1.2][clicked:on_race_play][layer:1]Play")
+addElement(g_tag .. "[pos:900, 1125][fontsize:1.2][clicked:on_race_cancel][layer:1]Cancel")
 ageEndRow("RaceSub1")
 ageBeginRow("RaceSub1",2)
-addElement("[pos:550, 950][layer:1][rgb: 0,255,255][selector: \"assets/cars\", \"car.png\", \"current_car_name\"]")
+addElement("[pos:650, 800][layer:1][rgb: 0,255,255][rect:400,300][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
 ageEndRow("RaceSub1")
 ageEndMenu()
 ageEndSubMenu("Race")
@@ -109,39 +111,39 @@ ageEndSubMenu("Race")
 
 ageCreateSubMenu("TimeT")
 ageBeginSubMenu("TimeT")
-addElement("[pos:700,400][rect:400,300][hover:255,255,255][clicked:on_time_trial_play][layer:1][layer:1][video:track.ogv]")
+addElement("[pos:700,450][rect:400,300][hover:255,255,255][clicked:on_time_trial_play][layer:1][layer:1][video:track.ogv]")
 ageBeginMenu("TimeTSub1",2)
 ageBeginRow("TimeTSub1",1)
-addElement(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_time_trial_play][layer:1]Play")
-addElement(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_time_trial_cancel][layer:1]Cancel")
+addElement(g_tag .. "[pos:600, 1125][fontsize:1.2][clicked:on_time_trial_play][layer:1]Play")
+addElement(g_tag .. "[pos:900, 1125][fontsize:1.2][clicked:on_time_trial_cancel][layer:1]Cancel")
 ageEndRow("TimeTSub1")
 ageBeginRow("TimeTSub1",2)
-addElement("[pos:650, 950][layer:1][rgb: 0,255,255][rect:400,300][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
+addElement("[pos:650, 800][layer:1][rgb: 0,255,255][rect:400,300][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
 ageEndMenu()
 ageEndSubMenu("TimeT")
 
 ageCreateSubMenu("PlayG")
 ageBeginSubMenu("PlayG")
-addElement("[pos:700,400][rect:400,300][hover:255,255,255][clicked:on_play_ground_play][layer:1][layer:1][video:area.ogv]")
+addElement("[pos:700,450][rect:400,300][hover:255,255,255][clicked:on_play_ground_play][layer:1][layer:1][video:area.ogv]")
 ageBeginMenu("PlayGSub1",2)
 ageBeginRow("PlayGSub1",1)
-addElement(g_tag .. "[pos:600, 800][fontsize:1.5][clicked:on_play_ground_play][layer:1]Play")
-addElement(g_tag .. "[pos:900, 800][fontsize:1.5][clicked:on_play_ground_cancel][layer:1]Cancel")
+addElement(g_tag .. "[pos:600, 1125][fontsize:1.2][clicked:on_play_ground_play][layer:1]Play")
+addElement(g_tag .. "[pos:900, 1125][fontsize:1.2][clicked:on_play_ground_cancel][layer:1]Cancel")
 ageEndRow("PlayGSub1")
 ageBeginRow("PlayGSub1",2)
-addElement("[pos:650, 950][layer:1][rgb: 0,255,255][rect:400, 300][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
+addElement("[pos:650, 800][layer:1][rgb: 0,255,255][rect:400, 300][selector: \"assets/cars\", \"car.ogv\", \"current_car_name\"]")
 ageEndMenu()
 ageEndMenu()
 ageEndSubMenu("PlayG")
 
 ageBeginMenu()
-addElement(g_tag .. "[pos:100, 400][fontsize:1.5][clicked:on_race][layer:1]Race")
-addElement(g_tag .. "[pos:100, 500][fontsize:1.5][clicked:on_time_trial][layer:1]Time Trial")
-addElement(g_tag .. "[pos:100, 600][fontsize:1.5][clicked:on_play_ground][layer:1]Play Ground")
-addElement(g_tag .. "[pos:100, 700][fontsize:1.5][clicked:on_settings][layer:1]Settings")
-addElement(g_tag .. "[pos:100, 800][fontsize:1.5][clicked:on_about][layer:1]About")
-addElement(g_tag .. "[pos:100, 900][fontsize:1.5][clicked:on_arcade][layer:1]Arcade")
-addElement(g_tag .. "[pos:100, 1000][fontsize:1.5][clicked:on_quit][layer:1]Quit")
+addElement(g_tag .. "[pos:100, 400][fontsize:1.2][clicked:on_race][layer:1]Race")
+addElement(g_tag .. "[pos:100, 500][fontsize:1.2][clicked:on_time_trial][layer:1]Time Trial")
+addElement(g_tag .. "[pos:100, 600][fontsize:1.2][clicked:on_play_ground][layer:1]Play Ground")
+addElement(g_tag .. "[pos:100, 700][fontsize:1.2][clicked:on_settings][layer:1]Settings")
+addElement(g_tag .. "[pos:100, 800][fontsize:1.2][clicked:on_about][layer:1]About")
+addElement(g_tag .. "[pos:100, 900][fontsize:1.2][clicked:on_arcade][layer:1]Arcade")
+addElement(g_tag .. "[pos:100, 1000][fontsize:1.2][clicked:on_quit][layer:1]Quit")
 ageEndMenu()
 
 while true do
