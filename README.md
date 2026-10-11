@@ -3,14 +3,6 @@ Turned in to mostly vibecoded Accidental Game Engine, with Godot integration
 
 ## Build Instructions
 
-### Building Godot (Local Library)
-
-To build the local Godot library used by this project, run the following command from the `godot` directory:
-
-```bash
-scons p=linuxbsd target=template_release library_type=shared_library builtin_sdl=no builtin_libpng=no vulkan=yes disable_path_overrides=no -j8
-```
-
 ### Building the Project (GDExtension)
 
 To build the project's GDExtension library (`aga`), run the following command from the project root directory:
@@ -28,8 +20,8 @@ Available `scons` options for the extension:
 
 ## Lua Functions Documentation
 
-### `asdfg.lua` & `invaders.lua`
-These files implement game lifecycle hooks:
+### `invaders.lua`
+This files implement game lifecycle hooks:
 - `onLivesReset()`: Triggered when player lives are reset.
 - `onGameOver()`: Triggered when the game reaches a game-over state.
 - `onGameWon()`: Triggered when the player wins the game.
@@ -43,12 +35,6 @@ Provides shared logic for vehicle physics and telemetry:
 - `renderCarPhysicsUI()`: Renders the ImGui interface for tweaking car physics parameters.
 - `updateCarControlsAndPhysics(supercar, joy_handle, track, reset_prop_name)`: Updates the car's state based on joystick input and applies physics logic against the track.
 - `updateCarTelemetry(supercar, frame_count)`: Updates and tracks telemetry data for the given car per frame.
-
-### `fract.lua` & `heart.lua`
-Provides coroutine-based task management:
-- `spawn(f)`: Spawns a new coroutine from function `f` and inserts it into the `tasks` list.
-- `run()`: Executes the running coroutine tasks.
-
 
 ## C++ Lua API Bindings
 
@@ -157,10 +143,10 @@ The following functions are exposed from `src/luascripting.cpp` and available gl
 - `ioJoystickGetHat(device, hat)`: Returns a bitmask for the D-pad (1=Up, 2=Right, 4=Down, 8=Left).
 - `ioJoystickGetNumAxes()`, `ioJoystickGetNumButtons()`, `ioJoystickGetNumHats()`: Returns maximum capabilities.
 
-### Visualizers (Plasma, Fractal, USD)
-- `addBouncer(syntax)`: Adds a bouncer object.
-- `delBouncer(index)`: Deletes a bouncer by index.
-- `setParam(index, name, val)`: Sets a parameter on a bouncer.
-- `selectPlasma(index)` / `selectFractal(index)` / `selectUSD(index)` / `selectGodot(index)`: Switches the active renderer mode.
-- `setPlasmaParam(name, val)` / `setFractalParam(name, val)` / `setUSDParam(name, val)`: Sets parameters for the respective visualizer.
+### Visualizers (Plasma, Fractal, Godot)
+- `addElement(syntax)`: Adds a Element object.
+- `delElement(index)`: Deletes a Element by index.
+- `setParam(index, name, val)`: Sets a parameter on a Element.
+- `selectPlasma(index)` / `selectFractal(index)` / `selectGodot(index)`: Switches the active renderer mode.
+- `setPlasmaParam(name, val)` / `setFractalParam(name, val)`: Sets parameters for the respective visualizer.
 - `randomizePlasmaPalette()`, `randomizePlasmaXY()`, `randomizeFractalPalette()`: Randomizes visualizer parameters.

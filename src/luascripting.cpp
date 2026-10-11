@@ -20,17 +20,10 @@ LuaScripting* LuaScripting::instance = nullptr;
 LuaScripting::LuaScripting(AddElementFunc addFunc, DelElementFunc delFunc, SetBGFunc bgFunc, SelectFunc selectFunc, SetParamFunc setParamFunc, SetElementParamFunc setElementParamFunc, RandomizeFunc randomizeFunc, SetAudioFunc audioFunc, 
     PlayAudioFunc playAudioFunc, StopAudioFunc stopAudioFunc, RewindAudioFunc rewindAudioFunc, SkipAudioFunc skipAudioFunc, SetAudioVolumeFunc setAudioVolumeFunc,
     RecordFunc recordFunc, IsRecordingFunc isRecFunc,
-#ifdef USE_USD
-    SelectUSDFunc selectUSDFunc, SetUSDParamFunc setUSDParamFunc,
-#endif
     SelectGodotFunc selectGodotFunc, GodotCmdFunc godotFunc, QuitFunc quitFunc, SetImGuiVisibleFunc setImGuiVisibleFunc, ClearAndRunFunc clearAndRunFunc, SetMouseCaptureFunc setMouseCaptureFunc, SetResizeEnabledFunc setResizeEnabledFunc, MaximizeWindowFunc maximizeWindowFunc, CheckHighScoreFunc checkHSFunc, AddHighScoreFunc addHSFunc, LoadHighScoreFunc loadHSFunc, SaveHighScoreFunc saveHSFunc)
     : addElementFunc(addFunc), delElementFunc(delFunc), setBGFunc(bgFunc), selectFunc(selectFunc), setParamFunc(setParamFunc), setElementParamFunc(setElementParamFunc), randomizeFunc(randomizeFunc), setAudioFunc(audioFunc), 
     playAudioFunc(playAudioFunc), stopAudioFunc(stopAudioFunc), rewindAudioFunc(rewindAudioFunc), skipAudioFunc(skipAudioFunc), setAudioVolumeFunc(setAudioVolumeFunc),
     recordFunc(recordFunc), isRecFunc(isRecFunc),
- 
-#ifdef USE_USD
-    selectUSDFunc(selectUSDFunc), setUSDParamFunc(setUSDParamFunc), 
-#endif
     selectGodotFunc(selectGodotFunc), godotCmdFunc(godotFunc), quitFunc(quitFunc), setImGuiVisibleFunc(setImGuiVisibleFunc), clearAndRunFunc(clearAndRunFunc), setMouseCaptureFunc(setMouseCaptureFunc), setResizeEnabledFunc(setResizeEnabledFunc), maximizeWindowFunc(maximizeWindowFunc), checkHighScoreFunc(checkHSFunc), addHighScoreFunc(addHSFunc), loadHighScoreFunc(loadHSFunc), saveHighScoreFunc(saveHSFunc) {
     instance = this;
     systemRunning = true;
@@ -207,15 +200,9 @@ void LuaScripting::registerFunctions(lua_State* L_reg) {
     reg("godotInputIsActionPressed", lua_godotInputIsActionPressed);
     reg("selectPlasma", lua_selectPlasma);
     reg("selectFractal", lua_selectFractal);
-#ifdef USE_USD
-    reg("selectUSD", lua_selectUSD);
-#endif
     reg("selectGodot", lua_selectGodot);
     reg("setPlasmaParam", lua_setPlasmaParam);
     reg("setFractalParam", lua_setFractalParam);
-#ifdef USE_USD
-    reg("setUSDParam", lua_setUSDParam);
-#endif
     reg("randomizePlasmaPalette", lua_randomizePlasmaPalette);
     reg("randomizePlasmaXY", lua_randomizePlasmaXY);
     reg("randomizeFractalPalette", lua_randomizeFractalPalette);
@@ -723,24 +710,6 @@ int LuaScripting::lua_selectFractal(lua_State* L) {
     return 0;
 }
 
-#ifdef USE_USD
-int LuaScripting::lua_selectUSD(lua_State* L) {
-    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isinteger(L, 1)) {
-        int index = (int)lua_tointeger(L, 1);
-        if (self && self->selectUSDFunc) {
-            auto sd = std::make_shared<LuaSyncData>();
-            self->selectUSDFunc(index, sd);
-            std::unique_lock<std::mutex> lock(sd->mtx);
-            while (!sd->done && self && self->systemRunning) {
-                sd->cv.wait_for(lock, std::chrono::milliseconds(10));
-            }
-        }
-    }
-    return 0;
-}
-#endif
-
 int LuaScripting::lua_selectGodot(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
     if (lua_isinteger(L, 1)) {
@@ -819,20 +788,6 @@ int LuaScripting::lua_setFractalParam(lua_State* L) {
     }
     return 0;
 }
-
-#ifdef USE_USD
-int LuaScripting::lua_setUSDParam(lua_State* L) {
-    LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));
-    if (lua_isstring(L, 1) && lua_isnumber(L, 2)) {
-        std::string name = lua_tostring(L, 1);
-        double val = lua_tonumber(L, 2);
-        if (self && self->setUSDParamFunc) {
-            self->setUSDParamFunc(name, val);
-        }
-    }
-    return 0;
-}
-#endif
 
 int LuaScripting::lua_randomizePlasmaPalette(lua_State* L) {
     LuaScripting* self = (LuaScripting*)lua_touserdata(L, lua_upvalueindex(1));

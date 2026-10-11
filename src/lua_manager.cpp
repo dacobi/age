@@ -2049,15 +2049,6 @@ void LuaManager::_ready() {
         [](int, const std::string&, int) { UtilityFunctions::print("Stub: recordFunc"); },
         // isRecFunc
         []() { return false; },
-#ifdef USE_USD
-        // selectUSDFunc
-        [](int, std::shared_ptr<LuaSyncData> sd) {
-            UtilityFunctions::print("Stub: selectUSDFunc");
-            if (sd) { std::unique_lock<std::mutex> lock(sd->mtx); sd->done = true; sd->cv.notify_one(); }
-        },
-        // setUSDParamFunc
-        [](const std::string&, double) { UtilityFunctions::print("Stub: setUSDParamFunc"); },
-#endif
         // selectGodotFunc
         [this](int, std::shared_ptr<LuaSyncData> sd, void* target, LuaScripting*) {
             if (sd) {
